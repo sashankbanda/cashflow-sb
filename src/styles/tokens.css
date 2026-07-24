@@ -230,6 +230,11 @@
   }
 }
 
+/* Volt icon glow for active navigation states. */
+@utility glow-volt-icon {
+  filter: drop-shadow(0 0 10px rgba(212, 248, 42, 0.45));
+}
+
 /* ---------- Safe-area utilities ---------- */
 @utility pt-safe {
   padding-top: env(safe-area-inset-top);
