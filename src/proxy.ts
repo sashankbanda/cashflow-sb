@@ -24,6 +24,7 @@ export const config = {
     "/activity/:path*",
     "/profile/:path*",
     "/budgets/:path*",
+    "/recurring/:path*",
     "/expenses/:path*",
     "/friends/:path*",
     "/search/:path*",

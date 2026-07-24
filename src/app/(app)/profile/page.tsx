@@ -6,6 +6,7 @@ import {
   Download,
   Palette,
   PiggyBank,
+  Repeat,
   Tags,
   UsersRound,
   Wallet,
@@ -19,6 +20,7 @@ import { requireUser } from "@/features/auth/session";
 export const metadata: Metadata = { title: "Profile" };
 
 const linkRows = [
+  { icon: Repeat, label: "Recurring expenses", href: "/recurring" },
   { icon: Tags, label: "Categories & tags", href: "/settings/categories" },
 ] as const;
 

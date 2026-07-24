@@ -135,6 +135,7 @@ async function attachTags(
 export async function createExpense(
   user: ActionUser,
   input: CreateExpenseInput,
+  options?: { recurringRuleId?: string },
 ): Promise<{ expenseId: string; participantUserIds: string[] }> {
   return db.transaction(async (tx) => {
     const prepared = await prepare(tx, user, input);
@@ -152,6 +153,7 @@ export async function createExpense(
         splitType: input.splitType,
         expenseDate: input.expenseDate,
         createdBy: user.id,
+        recurringRuleId: options?.recurringRuleId ?? null,
         idempotencyKey: input.idempotencyKey,
       })
       .onConflictDoNothing({ target: expenses.idempotencyKey })
@@ -226,6 +228,7 @@ async function assertCanModify(
 export async function createPersonalExpense(
   user: ActionUser,
   input: CreatePersonalExpenseInput,
+  options?: { recurringRuleId?: string },
 ): Promise<{ expenseId: string }> {
   return db.transaction(async (tx) => {
     const category = await tx.query.categories.findFirst({
@@ -246,6 +249,7 @@ export async function createPersonalExpense(
         splitType: "equal",
         expenseDate: input.expenseDate,
         createdBy: user.id,
+        recurringRuleId: options?.recurringRuleId ?? null,
         idempotencyKey: input.idempotencyKey,
       })
       .onConflictDoNothing({ target: expenses.idempotencyKey })

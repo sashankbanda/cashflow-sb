@@ -38,6 +38,8 @@ export interface TimelineExpense {
   myShareMinor: number;
   participantCount: number;
   createdByUserId: string;
+  /** True when this row was materialized from a recurring rule. */
+  isRecurring: boolean;
   payers: ExpensePartyLine[];
   splits: ExpensePartyLine[];
   trail: ExpenseTrailEntry[];
@@ -174,6 +176,7 @@ export async function getGroupTimeline(userId: string, groupId: string): Promise
       myShareMinor: splits.find((split) => split.isViewer)?.amountMinor ?? 0,
       participantCount: splits.length,
       createdByUserId: row.createdBy,
+      isRecurring: row.recurringRuleId !== null,
       payers,
       splits,
       trail: trailByExpense.get(row.id) ?? [],

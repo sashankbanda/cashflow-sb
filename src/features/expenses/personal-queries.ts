@@ -21,6 +21,8 @@ export interface LedgerEntry {
   source: string | null;
   /** True for standalone personal expenses (deletable from the ledger). */
   isPersonal: boolean;
+  /** True when this expense was materialized from a recurring rule. */
+  isRecurring: boolean;
   tags: LedgerTag[];
 }
 
@@ -42,6 +44,7 @@ export async function getPersonalLedger(
       shareMinor: expenseSplits.amountMinor,
       expenseDate: expenses.expenseDate,
       groupId: expenses.groupId,
+      recurringRuleId: expenses.recurringRuleId,
       categoryId: expenses.categoryId,
       categoryName: sql<string | null>`cat.name`,
       categoryIcon: sql<string | null>`cat.icon`,
@@ -100,6 +103,7 @@ export async function getPersonalLedger(
       : null,
     source: row.groupId ? (row.groupName ?? "Group") : null,
     isPersonal: row.groupId === null,
+    isRecurring: row.recurringRuleId !== null,
     tags: tagsByExpense.get(row.expenseId) ?? [],
   }));
 }

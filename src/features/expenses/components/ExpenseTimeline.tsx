@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { parseISO } from "date-fns";
-import { HandCoins, ListFilter } from "lucide-react";
+import { HandCoins, ListFilter, Repeat } from "lucide-react";
 import { Chip } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -78,7 +78,12 @@ function ExpenseRow({ expense, onOpen }: { expense: TimelineExpense; onOpen: () 
         gradient={expense.category?.gradient ?? "ocean"}
       />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-body text-fg-1">{expense.description}</p>
+        <p className="flex items-center gap-1.5 truncate text-body text-fg-1">
+          {expense.description}
+          {expense.isRecurring ? (
+            <Repeat className="size-3.5 shrink-0 text-fg-3" aria-label="Recurring" />
+          ) : null}
+        </p>
         <p className="truncate text-footnote text-fg-3">
           {expense.payerLabel} paid · split {expense.participantCount} way
           {expense.participantCount === 1 ? "" : "s"}

@@ -26,6 +26,11 @@ import { TagPicker } from "@/features/categories/components/TagPicker";
 import type { TagOption } from "@/features/categories/tags-service";
 import { asPalette, paletteBg } from "@/components/ui/palette";
 import type { GroupSummary } from "@/features/groups/queries";
+import { createRecurringRuleAction } from "@/features/recurring/actions";
+import {
+  RecurrencePicker,
+  type RecurrenceValue,
+} from "@/features/recurring/components/RecurrencePicker";
 import { createExpenseAction, createPersonalExpenseAction, updateExpenseAction } from "../actions";
 import {
   emptyPayerDraft,
@@ -103,6 +108,10 @@ function Flow({
   const [step, setStep] = useState<Step>(1);
   const [direction, setDirection] = useState(1);
   const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const [recurrence, setRecurrence] = useState<RecurrenceValue>({
+    enabled: false,
+    frequency: "monthly",
+  });
 
   const initialGroup = groups.find((group) => group.id === defaultGroupId) ?? groups[0] ?? null;
   // From within a group → that group; from the global dock → Personal;
@@ -149,9 +158,20 @@ function Flow({
       router.refresh();
     },
   });
-  const pending = create.pending || update.pending || createPersonal.pending;
+  const createRecurring = useAction(createRecurringRuleAction, {
+    successMessage: "Recurring expense added",
+    onSuccess: () => {
+      onClose();
+      router.refresh();
+    },
+  });
+  const pending =
+    create.pending || update.pending || createPersonal.pending || createRecurring.pending;
   const fieldError = (field: string) =>
-    create.fieldError(field) ?? update.fieldError(field) ?? createPersonal.fieldError(field);
+    create.fieldError(field) ??
+    update.fieldError(field) ??
+    createPersonal.fieldError(field) ??
+    createRecurring.fieldError(field);
 
   const amountMinor = amountToMinor(draft.amount);
   const payerResult = payerDraftToPayers(draft.payer, amountMinor);
@@ -173,6 +193,21 @@ function Flow({
   };
 
   const submitPersonal = () => {
+    if (recurrence.enabled) {
+      void createRecurring.execute({
+        template: {
+          kind: "personal",
+          description: draft.description,
+          amountMinor,
+          categoryId: draft.categoryId,
+          tagIds: draft.tagIds,
+        },
+        frequency: recurrence.frequency,
+        interval: 1,
+        startsOn: formatISODate(draft.date),
+      });
+      return;
+    }
     void createPersonal.execute({
       description: draft.description,
       amountMinor,
@@ -197,6 +232,23 @@ function Flow({
     };
     if (editing && initial) {
       void update.execute({ ...core, expenseId: initial.expenseId });
+    } else if (recurrence.enabled) {
+      void createRecurring.execute({
+        template: {
+          kind: "group",
+          groupId: group.id,
+          description: draft.description,
+          amountMinor,
+          categoryId: draft.categoryId,
+          splitType: draft.split.type,
+          participants: splitResult.participants,
+          payers: payerResult.payers,
+          tagIds: draft.tagIds,
+        },
+        frequency: recurrence.frequency,
+        interval: 1,
+        startsOn: formatISODate(draft.date),
+      });
     } else {
       void create.execute({ ...core, idempotencyKey, tagIds: draft.tagIds });
     }
@@ -358,6 +410,8 @@ function Flow({
                   onChange={(tagIds) => setDraft((current) => ({ ...current, tagIds }))}
                 />
               ) : null}
+
+              {!editing ? <RecurrencePicker value={recurrence} onChange={setRecurrence} /> : null}
 
               <div className="mt-auto">
                 <AmountKeypad

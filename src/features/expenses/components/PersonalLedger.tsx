@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseISO } from "date-fns";
-import { Trash2 } from "lucide-react";
+import { Repeat, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -86,7 +86,12 @@ export function PersonalLedger({ entries }: { entries: ReadonlyArray<LedgerEntry
                     gradient={entry.category?.gradient ?? "ocean"}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-body text-fg-1">{entry.description}</p>
+                    <p className="flex items-center gap-1.5 truncate text-body text-fg-1">
+                      {entry.description}
+                      {entry.isRecurring ? (
+                        <Repeat className="size-3.5 shrink-0 text-fg-3" aria-label="Recurring" />
+                      ) : null}
+                    </p>
                     <p className="truncate text-footnote text-fg-3">
                       {entry.category?.name ?? "Other"}
                       {entry.source ? (
