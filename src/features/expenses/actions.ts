@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { authedAction } from "@/server/action";
 import { groupBalancesTag } from "@/features/balances/queries";
+import { notifyBudgetThresholds } from "@/features/budgets/notifications";
 import { createExpenseSchema, createPersonalExpenseSchema, updateExpenseSchema } from "./schemas";
 import {
   createExpense,
@@ -17,11 +18,13 @@ export const createExpenseAction = authedAction({
   name: "expenses.create",
   schema: createExpenseSchema,
   handler: async ({ input, ctx }) => {
-    const { expenseId } = await createExpense(ctx.user, input);
+    const { expenseId, participantUserIds } = await createExpense(ctx.user, input);
     revalidateTag(groupBalancesTag(input.groupId), "max");
     revalidatePath(`/groups/${input.groupId}`);
     revalidatePath("/groups");
     revalidatePath("/home");
+    revalidatePath("/budgets");
+    await notifyBudgetThresholds(participantUserIds);
     return { expenseId };
   },
 });
@@ -35,6 +38,7 @@ export const deleteExpenseAction = authedAction({
     revalidatePath(`/groups/${input.groupId}`);
     revalidatePath("/groups");
     revalidatePath("/home");
+    revalidatePath("/budgets");
     return { deleted: true };
   },
 });
@@ -47,6 +51,8 @@ export const createPersonalExpenseAction = authedAction({
     revalidatePath("/expenses");
     revalidatePath("/home");
     revalidatePath("/insights");
+    revalidatePath("/budgets");
+    await notifyBudgetThresholds([ctx.user.id]);
     return { expenseId };
   },
 });
@@ -59,6 +65,7 @@ export const deletePersonalExpenseAction = authedAction({
     revalidatePath("/expenses");
     revalidatePath("/home");
     revalidatePath("/insights");
+    revalidatePath("/budgets");
     return { deleted: true };
   },
 });
@@ -72,6 +79,7 @@ export const updateExpenseAction = authedAction({
     revalidatePath(`/groups/${input.groupId}`);
     revalidatePath("/groups");
     revalidatePath("/home");
+    revalidatePath("/budgets");
     return { expenseId };
   },
 });

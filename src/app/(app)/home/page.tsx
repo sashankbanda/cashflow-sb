@@ -8,6 +8,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ActivityRow } from "@/components/widgets/ActivityRow";
+import { BudgetWidget } from "@/components/widgets/BudgetWidget";
 import { InsightCard } from "@/components/widgets/InsightCard";
 import { MonthSpendWidget } from "@/components/widgets/MonthSpendWidget";
 import { NetBalanceWidget } from "@/components/widgets/NetBalanceWidget";
@@ -17,6 +18,7 @@ import { greetingFor } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { requireDbUser } from "@/features/auth/session";
 import { getHomeSummary } from "@/features/analytics/queries";
+import { getOverallBudgetSnapshot } from "@/features/budgets/queries";
 
 export const metadata: Metadata = { title: "Home" };
 
@@ -26,7 +28,10 @@ function peopleLabel(count: number, verb: string): string {
 }
 
 async function HomeWidgets({ userId }: { userId: string }) {
-  const summary = await getHomeSummary(userId);
+  const [summary, budget] = await Promise.all([
+    getHomeSummary(userId),
+    getOverallBudgetSnapshot(userId),
+  ]);
 
   const insight =
     summary.owedToYouMinor > 0
@@ -60,6 +65,16 @@ async function HomeWidgets({ userId }: { userId: string }) {
           deltaFraction={summary.monthDeltaFraction}
         />
       </Link>
+
+      {budget ? (
+        <Link href="/budgets" className="block">
+          <BudgetWidget
+            spentMinor={budget.spentMinor}
+            budgetMinor={budget.budgetMinor}
+            pace={budget.pace}
+          />
+        </Link>
+      ) : null}
 
       <InsightCard
         text={insight}

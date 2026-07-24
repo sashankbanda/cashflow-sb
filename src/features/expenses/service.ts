@@ -135,7 +135,7 @@ async function attachTags(
 export async function createExpense(
   user: ActionUser,
   input: CreateExpenseInput,
-): Promise<{ expenseId: string }> {
+): Promise<{ expenseId: string; participantUserIds: string[] }> {
   return db.transaction(async (tx) => {
     const prepared = await prepare(tx, user, input);
 
@@ -163,7 +163,8 @@ export async function createExpense(
         columns: { id: true },
       });
       if (!existing) throw notFound("Expense");
-      return { expenseId: existing.id };
+      // Retry of an already-recorded expense — no new spend to evaluate.
+      return { expenseId: existing.id, participantUserIds: [] };
     }
 
     await insertMoneyRows(tx, expenseId, input, prepared);
@@ -183,7 +184,16 @@ export async function createExpense(
       },
     });
 
-    return { expenseId };
+    // Members whose personal budgets this expense counts toward (claimed users).
+    const participantUserIds = [
+      ...new Set(
+        prepared.shares
+          .map((share) => prepared.memberById.get(share.memberId)?.userId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+
+    return { expenseId, participantUserIds };
   });
 }
 
