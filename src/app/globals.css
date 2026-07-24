@@ -1,26 +1,109 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@layer base {
+  html {
+    color-scheme: dark;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-fg-1);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-volt) 30%, transparent);
+    color: var(--color-fg-1);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--color-volt) 60%, transparent);
+    outline-offset: 2px;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+    color: inherit;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ---------- Aurora canvas backdrop ---------- */
+@layer components {
+  .aurora-blob {
+    position: absolute;
+    border-radius: 9999px;
+    will-change: transform;
+    animation: aurora-drift 60s var(--ease-standard) infinite alternate;
+  }
+
+  .aurora-blob-1 {
+    top: -20%;
+    left: -25%;
+    width: 80vmax;
+    height: 80vmax;
+    background: radial-gradient(closest-side, rgba(240, 45, 101, 0.14), transparent 70%);
+  }
+
+  .aurora-blob-2 {
+    top: 10%;
+    right: -30%;
+    width: 70vmax;
+    height: 70vmax;
+    background: radial-gradient(closest-side, rgba(124, 58, 237, 0.12), transparent 70%);
+    animation-delay: -20s;
+    animation-duration: 75s;
+  }
+
+  .aurora-blob-3 {
+    bottom: -30%;
+    left: 5%;
+    width: 75vmax;
+    height: 75vmax;
+    background: radial-gradient(closest-side, rgba(46, 99, 240, 0.1), transparent 70%);
+    animation-delay: -40s;
+    animation-duration: 90s;
+  }
+
+  @keyframes aurora-drift {
+    from {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    to {
+      transform: translate3d(6%, 4%, 0) scale(1.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurora-blob {
+      animation: none;
+    }
+  }
 }

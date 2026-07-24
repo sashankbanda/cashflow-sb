@@ -22,10 +22,10 @@ Stack: Next.js (App Router) · React 19 · TypeScript strict · Tailwind CSS v4 
 
 ## Design documents
 
-| Doc | Contents |
-|---|---|
-| [docs/01-PRODUCT.md](docs/01-PRODUCT.md) | Vision, features, screens, UX principles, settlement logic |
-| [docs/02-DESIGN-SYSTEM.md](docs/02-DESIGN-SYSTEM.md) | Tokens, glass recipe, typography, motion, component kit |
-| [docs/03-ARCHITECTURE.md](docs/03-ARCHITECTURE.md) | Stack decisions, folder structure, server/security/perf/testing |
-| [docs/04-DATABASE.md](docs/04-DATABASE.md) | Full PostgreSQL schema, indexes, integrity rules |
-| [docs/05-ROADMAP.md](docs/05-ROADMAP.md) | 36 implementation phases with acceptance criteria |
+| Doc                                                  | Contents                                                        |
+| ---------------------------------------------------- | --------------------------------------------------------------- |
+| [docs/01-PRODUCT.md](docs/01-PRODUCT.md)             | Vision, features, screens, UX principles, settlement logic      |
+| [docs/02-DESIGN-SYSTEM.md](docs/02-DESIGN-SYSTEM.md) | Tokens, glass recipe, typography, motion, component kit         |
+| [docs/03-ARCHITECTURE.md](docs/03-ARCHITECTURE.md)   | Stack decisions, folder structure, server/security/perf/testing |
+| [docs/04-DATABASE.md](docs/04-DATABASE.md)           | Full PostgreSQL schema, indexes, integrity rules                |
+| [docs/05-ROADMAP.md](docs/05-ROADMAP.md)             | 36 implementation phases with acceptance criteria               |

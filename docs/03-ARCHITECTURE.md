@@ -4,29 +4,29 @@
 
 ## 1. Stack decisions (and why)
 
-| Concern | Choice | Why (vs alternatives) |
-|---|---|---|
-| Framework | **Next.js 15+ (App Router), React 19, TypeScript strict** | Server Components for fast first paint on mobile, Server Actions for typed mutations, streaming, one deploy target. |
-| Styling | **Tailwind CSS v4** | CSS-first `@theme` maps 1:1 to our token spec; zero-runtime; arbitrary values for glass recipes. |
-| Database | **PostgreSQL (Neon)** | Money data is relational and transactional (splits must sum exactly — needs real transactions + constraints). Neon: serverless driver, branching for preview envs, generous free tier, scales later. |
-| ORM | **Drizzle** | SQL-first, no codegen step, tiny runtime (serverless-friendly cold starts), typed migrations, raw SQL escape hatch for balance aggregation queries. Prisma is heavier and hides the SQL we'll want to tune. |
-| Auth | **Better Auth** | TS-native, sessions live in *our* Postgres (no vendor lock-in like Clerk, no pricing cliff), first-class email+password & Google OAuth, plugin system (rate limiting, 2FA later). NextAuth v5 has stalled DX; Better Auth is the current best OSS option. |
-| Server state | **TanStack Query v5** | Cache, optimistic updates (critical for add-expense UX and offline queue), invalidation after Server Actions. |
-| Client state | **Zustand** (sparingly) | Only ephemeral UI state (add-expense wizard draft, sheet stack). Everything else is server state or URL state. |
-| Validation | **Zod v4** | One schema per entity shared by form → action → service; single source of truth. |
-| Forms | **React Hook Form** + zod resolver | Uncontrolled perf on low-end phones; but custom flows (amount keypad) use plain Zustand + Zod. |
-| Animation | **Motion (framer-motion v12)** | Springs, layout animations, gestures (sheet drag), `AnimatePresence` for route transitions. CSS transitions for micro-interactions. |
-| Charts | **Custom SVG + d3-scale/d3-shape** | The design (gradient glows, dot grids, scrubbing) is unachievable by restyling Recharts; d3 math + our own ~6 components is smaller and fully on-language. |
-| Icons | **Lucide** | Consistent 24px stroke system, tree-shakeable. |
-| Dates | **date-fns v4** (+ `@date-fns/tz`) | Tree-shakeable, TZ-safe "day" math for daily analytics. |
-| Money | **Integer paise + in-house `Money` utils** | Never floats. `bigint` in DB, `number` in TS (safe ≪ 2^53). Largest-remainder split distribution. Dinero.js adds weight we don't need for single-currency v1. |
-| Rate limiting / KV | **Upstash Redis** | Serverless-native; `@upstash/ratelimit` sliding window on auth + mutations. |
-| File storage | **Vercel Blob** behind a `StorageAdapter` interface | Zero-config now; adapter lets us swap to R2/S3 without touching features. |
-| PWA / offline | **Serwist** | Maintained successor to next-pwa; precache shell, runtime cache, background sync for queued mutations. |
-| Push | **Web Push (VAPID)** via service worker | No Firebase dependency; works as PWA on Android + iOS 16.4+. |
-| Testing | **Vitest** + Testing Library + **fast-check** + **Playwright** | fast-check property tests are the correctness backbone of the settlement engine; Playwright mobile-viewport E2E for the 5 critical journeys. |
-| Logging / errors | **Pino** (server) + **Sentry** (client+server) | Structured JSON logs with request IDs; Sentry for release-tagged error tracking + Web Vitals. |
-| Deployment | **Vercel** + Neon + Upstash | Preview deploys per PR with Neon DB branches; cron for recurring expenses. |
+| Concern            | Choice                                                         | Why (vs alternatives)                                                                                                                                                                                                                                     |
+| ------------------ | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework          | **Next.js 15+ (App Router), React 19, TypeScript strict**      | Server Components for fast first paint on mobile, Server Actions for typed mutations, streaming, one deploy target.                                                                                                                                       |
+| Styling            | **Tailwind CSS v4**                                            | CSS-first `@theme` maps 1:1 to our token spec; zero-runtime; arbitrary values for glass recipes.                                                                                                                                                          |
+| Database           | **PostgreSQL (Neon)**                                          | Money data is relational and transactional (splits must sum exactly — needs real transactions + constraints). Neon: serverless driver, branching for preview envs, generous free tier, scales later.                                                      |
+| ORM                | **Drizzle**                                                    | SQL-first, no codegen step, tiny runtime (serverless-friendly cold starts), typed migrations, raw SQL escape hatch for balance aggregation queries. Prisma is heavier and hides the SQL we'll want to tune.                                               |
+| Auth               | **Better Auth**                                                | TS-native, sessions live in _our_ Postgres (no vendor lock-in like Clerk, no pricing cliff), first-class email+password & Google OAuth, plugin system (rate limiting, 2FA later). NextAuth v5 has stalled DX; Better Auth is the current best OSS option. |
+| Server state       | **TanStack Query v5**                                          | Cache, optimistic updates (critical for add-expense UX and offline queue), invalidation after Server Actions.                                                                                                                                             |
+| Client state       | **Zustand** (sparingly)                                        | Only ephemeral UI state (add-expense wizard draft, sheet stack). Everything else is server state or URL state.                                                                                                                                            |
+| Validation         | **Zod v4**                                                     | One schema per entity shared by form → action → service; single source of truth.                                                                                                                                                                          |
+| Forms              | **React Hook Form** + zod resolver                             | Uncontrolled perf on low-end phones; but custom flows (amount keypad) use plain Zustand + Zod.                                                                                                                                                            |
+| Animation          | **Motion (framer-motion v12)**                                 | Springs, layout animations, gestures (sheet drag), `AnimatePresence` for route transitions. CSS transitions for micro-interactions.                                                                                                                       |
+| Charts             | **Custom SVG + d3-scale/d3-shape**                             | The design (gradient glows, dot grids, scrubbing) is unachievable by restyling Recharts; d3 math + our own ~6 components is smaller and fully on-language.                                                                                                |
+| Icons              | **Lucide**                                                     | Consistent 24px stroke system, tree-shakeable.                                                                                                                                                                                                            |
+| Dates              | **date-fns v4** (+ `@date-fns/tz`)                             | Tree-shakeable, TZ-safe "day" math for daily analytics.                                                                                                                                                                                                   |
+| Money              | **Integer paise + in-house `Money` utils**                     | Never floats. `bigint` in DB, `number` in TS (safe ≪ 2^53). Largest-remainder split distribution. Dinero.js adds weight we don't need for single-currency v1.                                                                                             |
+| Rate limiting / KV | **Upstash Redis**                                              | Serverless-native; `@upstash/ratelimit` sliding window on auth + mutations.                                                                                                                                                                               |
+| File storage       | **Vercel Blob** behind a `StorageAdapter` interface            | Zero-config now; adapter lets us swap to R2/S3 without touching features.                                                                                                                                                                                 |
+| PWA / offline      | **Serwist**                                                    | Maintained successor to next-pwa; precache shell, runtime cache, background sync for queued mutations.                                                                                                                                                    |
+| Push               | **Web Push (VAPID)** via service worker                        | No Firebase dependency; works as PWA on Android + iOS 16.4+.                                                                                                                                                                                              |
+| Testing            | **Vitest** + Testing Library + **fast-check** + **Playwright** | fast-check property tests are the correctness backbone of the settlement engine; Playwright mobile-viewport E2E for the 5 critical journeys.                                                                                                              |
+| Logging / errors   | **Pino** (server) + **Sentry** (client+server)                 | Structured JSON logs with request IDs; Sentry for release-tagged error tracking + Web Vitals.                                                                                                                                                             |
+| Deployment         | **Vercel** + Neon + Upstash                                    | Preview deploys per PR with Neon DB branches; cron for recurring expenses.                                                                                                                                                                                |
 
 ## 2. Folder structure (feature modules)
 
@@ -68,6 +68,7 @@ src/
 ## 3. Server architecture
 
 ### Data flow
+
 - **Reads:** Server Components call `features/*/queries.ts` directly (no HTTP hop) → stream to client. Client-side refetch/pagination uses TanStack Query hitting thin route handlers that reuse the same queries.
 - **Writes:** Server Actions in `features/*/actions.ts`, always through the wrapper:
 
@@ -87,6 +88,7 @@ authedAction(schema, handler, { limiter })
 - **Error taxonomy:** `AppError(code: 'UNAUTHORIZED'|'FORBIDDEN'|'NOT_FOUND'|'VALIDATION'|'CONFLICT'|'RATE_LIMITED'|'INTERNAL')` — the only error shape that crosses the server boundary; UI maps codes to toasts/inline states.
 
 ### The engines (pure, in `lib/`)
+
 - `split.ts` — computes per-member shares for all split types; **invariant: Σ shares === amount** (largest-remainder, deterministic order).
 - `settle.ts` — net balances → greedy max-debtor/max-creditor matching → transfer list ≤ n−1; **invariants: transfers zero all balances; no transfer exceeds either party's balance; deterministic output.**
 - Both are pure functions of plain data → property-tested with fast-check (thousands of random expense sets per run).
@@ -122,13 +124,13 @@ Phased: (a) PWA install + precached shell + runtime-cached last-seen data (stale
 
 ## 7. Testing strategy
 
-| Layer | Tool | Coverage bar |
-|---|---|---|
-| `lib/` engines | Vitest + fast-check | 100% branch; property invariants (splits sum, settlements zero, determinism) |
-| Services | Vitest + test DB (Neon branch / pglite) | happy + authz + conflict paths per service |
-| UI primitives | Testing Library | interaction states of Button/Sheet/Keypad/forms |
-| E2E | Playwright (390×844 viewport) | 5 journeys: sign-up → create group → add expense (each split type) → settle up → verify zero balances; plus personal expense → budget → analytics |
-| Visual | Playwright screenshots on the widget gallery page | catch glass/token regressions |
+| Layer          | Tool                                              | Coverage bar                                                                                                                                      |
+| -------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/` engines | Vitest + fast-check                               | 100% branch; property invariants (splits sum, settlements zero, determinism)                                                                      |
+| Services       | Vitest + test DB (Neon branch / pglite)           | happy + authz + conflict paths per service                                                                                                        |
+| UI primitives  | Testing Library                                   | interaction states of Button/Sheet/Keypad/forms                                                                                                   |
+| E2E            | Playwright (390×844 viewport)                     | 5 journeys: sign-up → create group → add expense (each split type) → settle up → verify zero balances; plus personal expense → budget → analytics |
+| Visual         | Playwright screenshots on the widget gallery page | catch glass/token regressions                                                                                                                     |
 
 CI: typecheck + lint + unit on every push; E2E on PR against preview deploy.
 

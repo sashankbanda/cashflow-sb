@@ -13,7 +13,10 @@ const serverSchema = z.object({
 
 const clientSchema = z.object({});
 
-function validate<T extends z.ZodTypeAny>(schema: T, values: Record<string, string | undefined>): z.infer<T> {
+function validate<T extends z.ZodTypeAny>(
+  schema: T,
+  values: Record<string, string | undefined>,
+): z.infer<T> {
   const parsed = schema.safeParse(values);
   if (!parsed.success) {
     const issues = parsed.error.issues
