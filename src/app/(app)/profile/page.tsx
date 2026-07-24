@@ -3,6 +3,8 @@ import { Bell, ChevronRight, Download, Palette, Tags } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { SignOutButton } from "@/features/auth/components/SignOutButton";
+import { requireUser } from "@/features/auth/session";
 
 export const metadata: Metadata = { title: "Profile" };
 
@@ -13,17 +15,18 @@ const settingsRows = [
   { icon: Download, label: "Export data" },
 ] as const;
 
-/** Shell-phase Profile; account data arrives with authentication. */
-export default function ProfilePage() {
+export default async function ProfilePage() {
+  const user = await requireUser();
+
   return (
     <div className="flex flex-col gap-6">
       <ScreenHeader title="Profile" />
       <div className="space-y-3 px-5">
         <GlassCard className="flex items-center gap-4 p-5">
-          <Avatar name="Sashank Banda" size="lg" />
+          <Avatar name={user.name} image={user.image} size="lg" />
           <div className="min-w-0">
-            <p className="truncate text-headline">Sashank Banda</p>
-            <p className="truncate text-footnote text-fg-3">banda.s@gozeal.com</p>
+            <p className="truncate text-headline">{user.name}</p>
+            <p className="truncate text-footnote text-fg-3">{user.email}</p>
           </div>
         </GlassCard>
         <GlassCard elevation="inset" className="divide-y divide-white/6">
@@ -35,6 +38,7 @@ export default function ProfilePage() {
             </div>
           ))}
         </GlassCard>
+        <SignOutButton />
       </div>
     </div>
   );

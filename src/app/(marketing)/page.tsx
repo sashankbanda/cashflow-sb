@@ -16,7 +16,7 @@ export default function RootPage() {
         </p>
       </div>
       <Link
-        href="/home"
+        href="/sign-in"
         className="ease-out inline-flex h-14 items-center justify-center gap-2 rounded-full bg-volt px-8 text-headline text-on-volt shadow-glow-volt transition-transform duration-150 active:scale-[0.97]"
       >
         Open Cashflow <ArrowRight className="size-5" />
