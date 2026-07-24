@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Settings2 } from "lucide-react";
+import { ArrowLeft, Settings2, UserRoundPlus } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -14,12 +14,14 @@ import { useSheet } from "@/hooks/useSheet";
 import { archiveGroupAction } from "../actions";
 import type { GroupDetail } from "../queries";
 import { GroupFormSheet } from "./GroupFormSheet";
+import { MembersSheet } from "./MembersSheet";
 
 /** Group detail cover: back, gradient card, member chips, settings. */
 export function GroupDetailHeader({ group }: { group: GroupDetail }) {
   const router = useRouter();
   const editSheet = useSheet();
   const archiveSheet = useSheet();
+  const membersSheet = useSheet();
 
   const archive = useAction(archiveGroupAction, {
     successMessage: "Group archived",
@@ -67,6 +69,16 @@ export function GroupDetailHeader({ group }: { group: GroupDetail }) {
       </div>
 
       <div className="scrollbar-none flex gap-2 overflow-x-auto px-5">
+        <button
+          type="button"
+          onClick={membersSheet.open}
+          className={cn(
+            "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full glass-soft px-3.5",
+            "ease-out text-footnote text-fg-2 transition-transform duration-150 active:scale-[0.97]",
+          )}
+        >
+          <UserRoundPlus className="size-4" /> Invite
+        </button>
         {group.members.map((member) => (
           <span
             key={member.id}
@@ -82,6 +94,8 @@ export function GroupDetailHeader({ group }: { group: GroupDetail }) {
           </span>
         ))}
       </div>
+
+      <MembersSheet open={membersSheet.isOpen} onClose={membersSheet.close} group={group} />
 
       <GroupFormSheet
         open={editSheet.isOpen}

@@ -40,6 +40,16 @@ export const paletteAccentText: Record<Palette, string> = {
   aurora: "text-fg-1",
 };
 
+/** Raw gradient stops per palette — for contexts without CSS (OG images). */
+export const PALETTE_HEX: Record<Palette, [string, string, string]> = {
+  ember: ["#ff5c39", "#f02d65", "#58122e"],
+  ocean: ["#4cc3ff", "#2e63f0", "#0b1e4b"],
+  mint: ["#b7f8c8", "#2ed486", "#0a3d2c"],
+  iris: ["#c99aff", "#7c3aed", "#250b52"],
+  solar: ["#ffe44d", "#f59e0b", "#4a2a05"],
+  aurora: ["#f02d65", "#7c3aed", "#2e63f0"],
+};
+
 /** Narrow an arbitrary string (e.g. a DB column) to a Palette, ocean default. */
 export function asPalette(value: string): Palette {
   return (PALETTES as readonly string[]).includes(value) ? (value as Palette) : "ocean";
