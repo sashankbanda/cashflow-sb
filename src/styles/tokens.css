@@ -111,6 +111,16 @@
   --ease-*: initial;
   --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
+  --animate-shimmer: shimmer 1.8s var(--ease-standard) infinite;
+  @keyframes shimmer {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
 }
 
 /* Non-Tailwind tokens: gradients + motion durations, consumed via var(). */
@@ -200,6 +210,23 @@
 
   @media (prefers-reduced-transparency: reduce) {
     background-color: #101012;
+  }
+}
+
+/* E3 floating surfaces: dock, sheets, sticky CTAs. */
+@utility glass-floating {
+  background-color: var(--color-glass);
+  backdrop-filter: blur(40px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-top-color: var(--color-glass-highlight);
+  box-shadow: var(--shadow-ambient-lg);
+
+  @supports not (backdrop-filter: blur(1px)) {
+    background-color: #17171a;
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: #17171a;
+    backdrop-filter: none;
   }
 }
 

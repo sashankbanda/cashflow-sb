@@ -22,6 +22,12 @@ export default function RootPage() {
           >
             Design tokens →
           </Link>
+          <Link
+            href="/dev/kit"
+            className="rounded-sm px-5 py-3 text-headline text-fg-1 transition-colors duration-150 hover:bg-glass"
+          >
+            Component kit →
+          </Link>
         </nav>
       ) : null}
     </main>
