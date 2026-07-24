@@ -37,6 +37,11 @@ import { DotMatrixAmount } from "@/components/motion/DotMatrixAmount";
 import { NumberTicker } from "@/components/motion/NumberTicker";
 import { Pressable } from "@/components/motion/Pressable";
 import { Stagger } from "@/components/motion/Stagger";
+import { AreaTrend } from "@/components/charts/AreaTrend";
+import { BarPeriod } from "@/components/charts/BarPeriod";
+import { DonutCategory } from "@/components/charts/DonutCategory";
+import { HeatmapCalendar } from "@/components/charts/HeatmapCalendar";
+import { Sparkline } from "@/components/charts/Sparkline";
 import { formatMoney } from "@/lib/format";
 import { useSheet } from "@/hooks/useSheet";
 
@@ -48,6 +53,32 @@ const people = [
   { name: "Meera Nair" },
   { name: "Karan Shah" },
 ];
+
+const trendData = [240, 0, 1290, 560, 3200, 800, 450, 1500, 2100, 300, 0, 1750, 920, 2600].map(
+  (value, index) => ({ label: `${index + 11} Jul`, value: value * 100 }),
+);
+
+const barData = [
+  { label: "Feb", value: 4820000 },
+  { label: "Mar", value: 3910000 },
+  { label: "Apr", value: 6250000 },
+  { label: "May", value: 5100000 },
+  { label: "Jun", value: 7300000 },
+  { label: "Jul", value: 4460000 },
+];
+
+const donutData = [
+  { label: "Food", value: 1820000, palette: "ember" as const },
+  { label: "Travel", value: 1240000, palette: "ocean" as const },
+  { label: "Bills", value: 980000, palette: "iris" as const },
+  { label: "Fun", value: 640000, palette: "solar" as const },
+  { label: "Health", value: 320000, palette: "mint" as const },
+];
+
+const heatmapData = [3, 7, 11, 14, 18, 21, 24, 27].map((day) => ({
+  date: `2026-07-${String(day).padStart(2, "0")}`,
+  value: (day % 5) * 65000 + 40000,
+}));
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -400,6 +431,57 @@ export default function KitPage() {
             </GlassCard>
           ))}
         </Stagger>
+      </Section>
+
+      <Section title="Charts · AreaTrend (drag to scrub)">
+        <GlassCard elevation="inset" className="p-4">
+          <AreaTrend
+            data={trendData}
+            formatValue={(value) => formatMoney(value, { compact: true })}
+            caption="Daily spend this fortnight"
+          />
+        </GlassCard>
+      </Section>
+
+      <Section title="Charts · BarPeriod (tap a bar)">
+        <GlassCard elevation="inset" className="p-4">
+          <BarPeriod
+            data={barData}
+            className="text-ocean-1"
+            formatValue={(value) => formatMoney(value, { compact: true })}
+            caption="Spend by month"
+          />
+        </GlassCard>
+      </Section>
+
+      <Section title="Charts · DonutCategory (tap a slice)">
+        <GlassCard elevation="inset" className="p-5">
+          <DonutCategory
+            data={donutData}
+            formatValue={(value) => formatMoney(value, { compact: true })}
+            caption="Where the money went"
+          />
+        </GlassCard>
+      </Section>
+
+      <Section title="Charts · HeatmapCalendar (tap a day)">
+        <GlassCard elevation="inset" className="p-4">
+          <HeatmapCalendar
+            month={new Date()}
+            data={heatmapData}
+            formatValue={(value) => formatMoney(value, { compact: true })}
+          />
+        </GlassCard>
+      </Section>
+
+      <Section title="Charts · Sparkline">
+        <GlassCard elevation="inset" className="flex items-center justify-between p-4">
+          <p className="text-body text-fg-2">14-day trend</p>
+          <Sparkline
+            data={trendData.map((point) => point.value)}
+            className="h-10 w-28 text-mint-2"
+          />
+        </GlassCard>
       </Section>
     </main>
   );
