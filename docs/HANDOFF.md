@@ -1,23 +1,28 @@
 # Cashflow — Session Handoff
 
 > State snapshot for the next implementation session. Read this, then continue
-> from **Phase 23** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
+> from **Phase 24** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
 > (01–05) remain the source of truth; this file records what is already built.
 
-## Where to resume — Phase 23 (Budgets)
+## Where to resume — Phase 24 (Recurring expenses)
 
-P1–P22 are complete, committed, and pushed to `origin/main`
-(github.com/sashankbanda/cashflow-sb). Next up **P23 Budgets**, then P24→P36 in
-order. Per roadmap P23: `features/budgets` (overall + per-category monthly
-budgets; `budgets` table already exists from P10), Budgets screen with a ring
-grid (reuse `ProgressRing`/`BudgetRingWidget`), ring tone states (volt on pace
-→ solar >80% → ember over), a pace line ("₹412/day keeps you on budget"),
-Home budget widget wired, and budget-threshold events logged for P29's
-notifications. Spend figures come from `getPersonalSpendTotal` /
-`getDailySpend` in `features/expenses/personal-queries.ts` (already
-timezone-window aware). Then P24 recurring (cron), P25 chart kit, P26–P27
-insights, P28 activity/notifications, P29 search, P30 attachments, P31 export,
-P32 PWA, P33 push, P34 perf/a11y, P35 security, P36 observability/E2E/launch.
+P1–P23 are complete, committed, and pushed to `origin/main`
+(github.com/sashankbanda/cashflow-sb, latest `4cdc63b`). Next up **P24 Recurring
+expenses**, then P25→P36 in order. Per roadmap P24: `features/recurring`
+(the `recurring_rules` table already exists from P10; `expenses.recurringRuleId`
+FK is wired in relations), "repeat monthly" from any expense, a rules manager
+(pause/resume/end), a **Vercel Cron** daily materializer at
+`app/api/cron/recurring/` that is idempotent (scans `next_run_on <= today`,
+creates expenses with provenance, advances the cursor; handle Jan 31 → Feb 28
+month-end clamping), and an "Upcoming" section in the ledger. Then P25 chart
+kit, P26–P27 insights, P28 activity/notifications, P29 search, P30 attachments,
+P31 export, P32 PWA, P33 push, P34 perf/a11y, P35 security, P36
+observability/E2E/launch.
+
+Reusable P23 building blocks P24+ will lean on: `lib/dates.ts#monthWindow`
+(timezone-aware month boundary — reuse for cron month math), the pure
+`features/budgets/pace.ts` engine, and the `notifications` table now receiving
+`budget_threshold` rows (P28 renders these in the notification center).
 
 ## Session 3 additions (P16–P22, newest commits)
 
@@ -28,10 +33,11 @@ P32 PWA, P33 push, P34 perf/a11y, P35 security, P36 observability/E2E/launch.
 - **P20 personal & unified ledger** (`2791543`): `createPersonalExpense`/`deletePersonalExpense`, AddExpenseFlow "Personal" context (sentinel `__personal__`, 1-step, `allowPersonal` from dock), `features/expenses/personal-queries.ts` (`getPersonalLedger`/`getPersonalSpendTotal`/`getDailySpend` — share-only, never double-counts), `/expenses` screen.
 - **P21 home real data** (`98c4a92`): `features/analytics/queries.ts` `getHomeSummary`, Home streams live widgets behind Suspense, timezone greeting (`greetingFor`).
 - **P22 categories & tags** (`cf119bd`): `features/categories/{schemas,service,tags-service,actions,queries}.ts`, CategoryManager at `/settings/categories`, usage-ranked category chips, TagPicker (inline create) in the add flow, `expense_tags` written in the create transaction, tag filter in the personal ledger. `CategoryOption` gained `isSystem`. Icon set is the curated `CATEGORY_ICONS` map in `features/categories/icons.tsx`.
+- **P23 budgets** (`4cdc63b`): `lib/dates.ts#monthWindow` (timezone-aware month boundary, tested); `features/budgets/pace.ts` (pure pace engine: `computeBudgetPace` → level ok/warn/over + pace line, `budgetToneClass`; property-tested); `schemas.ts` (`setBudget` categoryId nullable = overall), `service.ts` (`setBudget` upserts on the `budgets_user_category_period_uq` nulls-not-distinct index; `deleteBudget`/`clearOverallBudget`), `queries.ts` (`getBudgetOverview` one-pass + `getOverallBudgetSnapshot` light Home query; spend uses `getPersonalSpendTotal`/category-spend group-by, incl. group shares), `notifications.ts` (`notifyBudgetThresholds` best-effort, idempotent per budget/month/level, writes `notifications` rows type `budget_threshold`). UI: `/budgets` screen (`BudgetsScreen` overall pace hero + category ring cards, `BudgetFormSheet` category/overall picker + AmountKeypad, `BudgetRing`), `components/widgets/BudgetWidget.tsx` on Home (only when an overall budget exists), Profile → Budgets entry. `createExpense` now returns `participantUserIds`; create actions call `notifyBudgetThresholds`. Ring tones: volt (ok) → `text-warning` solar (>80%) → `text-negative` ember (over).
 
 New load-bearing conventions this session: (a) `revalidateTag(tag, "max")` — Next 16 requires the cache-profile arg; (b) bump the `unstable_cache` key version (`group-money-v2`) whenever a cached shape changes — stale entries outlive deploys and surfaced as a `formatMoney(NaN)` crash; (c) `/settings/:path*` added to `proxy.ts`; (d) fast-check properties ≥10k runs need an explicit `{ timeout: 60_000 }` on the `it`.
 
-Test count: **91 unit tests** (added split-draft, pairwise, settle suites). All green; typecheck/lint/build clean at HEAD.
+Test count: **104 unit tests** (P23 added `lib/dates.test.ts` monthWindow + `features/budgets/pace.test.ts`). All green; typecheck/lint/build clean at HEAD.
 
 ---
 
