@@ -13,6 +13,22 @@ export function formatISODate(date: Date): string {
   return formatISO(date, { representation: "date" });
 }
 
+/** Time-of-day greeting for the given IANA timezone. */
+export function greetingFor(timezone: string, now = new Date()): string {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      hour12: false,
+      timeZone: timezone,
+    }).format(now),
+  );
+  if (hour < 5) return "Late night";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 21) return "Good evening";
+  return "Good night";
+}
+
 /** Human day label: "Today", "Yesterday", "Sat, 12 Jul" (+ year when not current). */
 export function formatDayLabel(date: Date): string {
   if (isToday(date)) return "Today";

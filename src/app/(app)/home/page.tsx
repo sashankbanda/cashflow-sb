@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Bell, Search } from "lucide-react";
@@ -5,53 +6,122 @@ import { Stagger } from "@/components/motion/Stagger";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { IconButton } from "@/components/ui/IconButton";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { ActivityRow } from "@/components/widgets/ActivityRow";
-import { BudgetRingWidget } from "@/components/widgets/BudgetRingWidget";
 import { InsightCard } from "@/components/widgets/InsightCard";
 import { MonthSpendWidget } from "@/components/widgets/MonthSpendWidget";
 import { NetBalanceWidget } from "@/components/widgets/NetBalanceWidget";
 import { OwedWidget } from "@/components/widgets/OwedWidget";
 import { WidgetGrid } from "@/components/widgets/Widget";
+import { greetingFor } from "@/lib/dates";
+import { formatMoney } from "@/lib/format";
+import { requireDbUser } from "@/features/auth/session";
+import { getHomeSummary } from "@/features/analytics/queries";
 
 export const metadata: Metadata = { title: "Home" };
 
-/**
- * Widget-phase Home with product-shaped mock data. The dashboard phase wires
- * these widgets to live queries without changing this composition.
- */
-const mock = {
-  netMinor: 234000,
-  owedInMinor: 359000,
-  owedOutMinor: 125000,
-  monthSpendMinor: 1684000,
-  monthTrend: [420, 980, 310, 1250, 640, 890, 400, 1580, 720, 510, 1120, 940, 380, 1490],
-  monthDeltaFraction: -0.12,
-  budgetSpentMinor: 840000,
-  budgetMinor: 1200000,
-  insight: "You're owed ₹3,590 across 2 groups — one tap to remind.",
-  activity: [
-    {
-      actorName: "Rohit Verma",
-      text: "added Dinner at Farzi Café in Goa trip",
-      when: "2h ago",
-      amountMinor: -50000,
-    },
-    { actorName: "Asha Iyer", text: "settled up with you", when: "Yesterday", amountMinor: 125000 },
-    {
-      actorName: "Meera Nair",
-      text: "added Petrol in Flat 402",
-      when: "Tuesday",
-      amountMinor: -30000,
-    },
-  ],
-} as const;
+function peopleLabel(count: number, verb: string): string {
+  if (count === 0) return "no one";
+  return `${verb} ${count} ${count === 1 ? "person" : "people"}`;
+}
 
-export default function HomePage() {
+async function HomeWidgets({ userId }: { userId: string }) {
+  const summary = await getHomeSummary(userId);
+
+  const insight =
+    summary.owedToYouMinor > 0
+      ? `You're owed ${formatMoney(summary.owedToYouMinor)} across ${summary.owedFromCount} ${summary.owedFromCount === 1 ? "friend" : "friends"}.`
+      : summary.youOweMinor > 0
+        ? `You owe ${formatMoney(summary.youOweMinor)} — settle up to clear it.`
+        : "You're all square with everyone. Nice.";
+
+  return (
+    <Stagger className="space-y-3">
+      <NetBalanceWidget netMinor={summary.netMinor} context="Across all your groups and friends" />
+
+      <WidgetGrid>
+        <OwedWidget
+          direction="in"
+          amountMinor={summary.owedToYouMinor}
+          context={peopleLabel(summary.owedFromCount, "from")}
+        />
+        <OwedWidget
+          direction="out"
+          amountMinor={summary.youOweMinor}
+          context={peopleLabel(summary.oweToCount, "to")}
+        />
+      </WidgetGrid>
+
+      <Link href="/expenses" className="block">
+        <MonthSpendWidget
+          label="This month"
+          amountMinor={summary.monthSpendMinor}
+          trend={summary.trend}
+          deltaFraction={summary.monthDeltaFraction}
+        />
+      </Link>
+
+      <InsightCard
+        text={insight}
+        palette={summary.youOweMinor > summary.owedToYouMinor ? "ember" : "mint"}
+      />
+
+      <section className="space-y-3 pt-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-caption text-fg-3 uppercase">Recent activity</h2>
+          <Link href="/activity" className="text-footnote text-fg-3 hover:text-fg-2">
+            See all
+          </Link>
+        </div>
+        {summary.activity.length === 0 ? (
+          <GlassCard elevation="inset" className="p-5">
+            <p className="text-footnote text-fg-3">
+              Nothing yet — add an expense and it&apos;ll show up here.
+            </p>
+          </GlassCard>
+        ) : (
+          <GlassCard elevation="inset" className="divide-y divide-white/6">
+            {summary.activity.map((item) => (
+              <ActivityRow
+                key={item.id}
+                actorName={item.actorName}
+                actorImage={item.actorImage}
+                text={item.text}
+                when=""
+                amountMinor={item.amountMinor}
+              />
+            ))}
+          </GlassCard>
+        )}
+      </section>
+    </Stagger>
+  );
+}
+
+function HomeSkeleton() {
+  return (
+    <div className="space-y-3">
+      <Skeleton className="h-52 rounded-lg" />
+      <div className="grid grid-cols-2 gap-3">
+        <Skeleton className="h-42 rounded-lg" />
+        <Skeleton className="h-42 rounded-lg" />
+      </div>
+      <Skeleton className="h-28 rounded-lg" />
+      <Skeleton className="h-40 rounded-lg" />
+    </div>
+  );
+}
+
+export default async function HomePage() {
+  const user = await requireDbUser();
+  const greeting = greetingFor(user.timezone);
+  const firstName = user.name.split(" ")[0] ?? user.name;
+
   return (
     <div className="flex flex-col gap-5">
       <ScreenHeader
-        title="Home"
-        eyebrow="Welcome back"
+        title={firstName}
+        eyebrow={greeting}
         trailing={
           <>
             <IconButton aria-label="Search" size="sm">
@@ -63,47 +133,11 @@ export default function HomePage() {
           </>
         }
       />
-
-      <Stagger className="space-y-3 px-5">
-        <NetBalanceWidget netMinor={mock.netMinor} context="Across 3 groups and 8 friends" />
-
-        <WidgetGrid>
-          <OwedWidget direction="in" amountMinor={mock.owedInMinor} context="from 3 people" />
-          <OwedWidget direction="out" amountMinor={mock.owedOutMinor} context="to 2 people" />
-        </WidgetGrid>
-
-        <MonthSpendWidget
-          label="July spend"
-          amountMinor={mock.monthSpendMinor}
-          trend={mock.monthTrend}
-          deltaFraction={mock.monthDeltaFraction}
-        />
-
-        <WidgetGrid>
-          <BudgetRingWidget spentMinor={mock.budgetSpentMinor} budgetMinor={mock.budgetMinor} />
-          <InsightCard
-            text="Food is up 32% vs last month."
-            palette="solar"
-            className="col-span-1 min-h-42"
-          />
-        </WidgetGrid>
-
-        <InsightCard text={mock.insight} />
-
-        <section className="space-y-3 pt-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-caption text-fg-3 uppercase">Recent activity</h2>
-            <Link href="/activity" className="text-footnote text-fg-3 hover:text-fg-2">
-              See all
-            </Link>
-          </div>
-          <GlassCard elevation="inset" className="divide-y divide-white/6">
-            {mock.activity.map((item) => (
-              <ActivityRow key={`${item.actorName}-${item.when}`} {...item} />
-            ))}
-          </GlassCard>
-        </section>
-      </Stagger>
+      <div className="px-5">
+        <Suspense fallback={<HomeSkeleton />}>
+          <HomeWidgets userId={user.id} />
+        </Suspense>
+      </div>
     </div>
   );
 }
