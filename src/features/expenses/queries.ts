@@ -1,8 +1,9 @@
 import "server-only";
+import { formatISO } from "date-fns";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import type { SplitType } from "@/lib/split";
 import { db } from "@/server/db";
-import { expenses } from "@/server/db/schema";
+import { expenses, settlements } from "@/server/db/schema";
 import { assertMember } from "@/features/groups/service";
 
 export interface ExpensePartyLine {
@@ -34,11 +35,23 @@ export interface TimelineExpense {
   splits: ExpensePartyLine[];
 }
 
-/** Day-ordered expense timeline for a group with full per-member breakdowns. */
-export async function getGroupTimeline(
-  userId: string,
-  groupId: string,
-): Promise<TimelineExpense[]> {
+export interface TimelineSettlement {
+  id: string;
+  amountMinor: number;
+  /** ISO date (yyyy-mm-dd) of the settlement. */
+  date: string;
+  fromLabel: string;
+  toLabel: string;
+  method: "cash" | "upi" | "bank" | "other";
+  note: string | null;
+  involvesViewer: boolean;
+}
+
+export type TimelineItem =
+  ({ kind: "expense" } & TimelineExpense) | ({ kind: "settlement" } & TimelineSettlement);
+
+/** Day-ordered group timeline: expenses + settlements, viewer-aware. */
+export async function getGroupTimeline(userId: string, groupId: string): Promise<TimelineItem[]> {
   const myMember = await assertMember(db, userId, groupId);
 
   const rows = await db.query.expenses.findMany({
@@ -66,7 +79,30 @@ export async function getGroupTimeline(
     limit: 200,
   });
 
-  return rows.map((row) => {
+  const settlementRows = await db.query.settlements.findMany({
+    where: and(eq(settlements.groupId, groupId), isNull(settlements.deletedAt)),
+    orderBy: [desc(settlements.settledAt)],
+    with: {
+      fromMember: { columns: { id: true, displayName: true } },
+      toMember: { columns: { id: true, displayName: true } },
+    },
+    limit: 100,
+  });
+
+  const settlementItems: TimelineItem[] = settlementRows.map((row) => ({
+    kind: "settlement",
+    id: row.id,
+    amountMinor: row.amountMinor,
+    date: formatISO(row.settledAt, { representation: "date" }),
+    fromLabel:
+      row.fromMember?.id === myMember.id ? "You" : (row.fromMember?.displayName ?? "Someone"),
+    toLabel: row.toMember?.id === myMember.id ? "you" : (row.toMember?.displayName ?? "Someone"),
+    method: row.method,
+    note: row.note,
+    involvesViewer: row.fromMember?.id === myMember.id || row.toMember?.id === myMember.id,
+  }));
+
+  const expenseItems: TimelineItem[] = rows.map((row) => {
     const toLine = (entry: {
       member: { id: string; displayName: string; user: { image: string | null } | null } | null;
       amountMinor: number;
@@ -88,6 +124,7 @@ export async function getGroupTimeline(
       payers.length > 1 ? `${firstPayerName} +${payers.length - 1}` : firstPayerName;
 
     return {
+      kind: "expense" as const,
       id: row.id,
       description: row.description,
       amountMinor: row.amountMinor,
@@ -104,5 +141,11 @@ export async function getGroupTimeline(
       payers,
       splits,
     };
+  });
+
+  const dateOf = (item: TimelineItem) => (item.kind === "expense" ? item.expenseDate : item.date);
+  return [...expenseItems, ...settlementItems].sort((a, b) => {
+    const byDate = dateOf(b).localeCompare(dateOf(a));
+    return byDate !== 0 ? byDate : b.id.localeCompare(a.id);
   });
 }
