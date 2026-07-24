@@ -14,12 +14,13 @@ per-group tab, rendered **purely from `activity_logs.payload`** (no joins),
 cursor pagination on UUIDv7 ids, day grouping; a **notification fan-out** on key
 verbs (expense involving me, settlement to me, member joined, budget threshold)
 written **in the same transaction** as the mutation; a notification-center sheet
-+ unread badge on the dock (the Bell icons on Home/ScreenHeader are inert). The
-`notifications` table exists and **already receives `budget_threshold` rows**
-(P23's `notifyBudgetThresholds`); `activity_logs` is written by
-expense/settlement/member services. Then P29 search, P30 attachments, P31
-export, P32 PWA, P33 push, P34 perf/a11y, P35 security, P36
-observability/E2E/launch.
+
+- unread badge on the dock (the Bell icons on Home/ScreenHeader are inert). The
+  `notifications` table exists and **already receives `budget_threshold` rows**
+  (P23's `notifyBudgetThresholds`); `activity_logs` is written by
+  expense/settlement/member services. Then P29 search, P30 attachments, P31
+  export, P32 PWA, P33 push, P34 perf/a11y, P35 security, P36
+  observability/E2E/launch.
 
 Reusable building blocks: `features/analytics/insights.ts` (`filterByCooldown`
 — reuse for notification dedupe), `activity_logs`/`notifications` schema,

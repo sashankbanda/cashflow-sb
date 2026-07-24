@@ -18,6 +18,7 @@ import {
 import { forbidden, notFound, validationError } from "@/server/errors";
 import type { ActionUser } from "@/server/action-core";
 import { assertMember } from "@/features/groups/service";
+import { notifyUsers } from "@/features/notifications/service";
 import type { CreateExpenseInput, CreatePersonalExpenseInput, UpdateExpenseInput } from "./schemas";
 
 interface PreparedExpense {
@@ -194,6 +195,18 @@ export async function createExpense(
           .filter((id): id is string => Boolean(id)),
       ),
     ];
+
+    // Notify everyone in the split except whoever added it (same transaction).
+    await notifyUsers(tx, user.id, {
+      userIds: participantUserIds,
+      type: "expense_added",
+      payload: {
+        description: input.description,
+        amountMinor: input.amountMinor,
+        groupName: prepared.group.name,
+        actorName: user.name,
+      },
+    });
 
     return { expenseId, participantUserIds };
   });

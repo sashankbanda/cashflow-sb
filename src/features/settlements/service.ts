@@ -6,6 +6,7 @@ import { activityLogs, groupMembers, groups, settlements } from "@/server/db/sch
 import { notFound, validationError } from "@/server/errors";
 import type { ActionUser } from "@/server/action-core";
 import { assertMember } from "@/features/groups/service";
+import { notifyUsers } from "@/features/notifications/service";
 import type { RecordSettlementInput } from "./schemas";
 
 /**
@@ -67,6 +68,19 @@ export async function recordSettlement(
         fromName: fromName ?? "Someone",
         toName: toName ?? "Someone",
         groupName: group.name,
+      },
+    });
+
+    // Notify the other party (same transaction).
+    await notifyUsers(tx, user.id, {
+      userIds: parties.map((member) => member.userId).filter((id): id is string => Boolean(id)),
+      type: "settlement_recorded",
+      payload: {
+        amountMinor: input.amountMinor,
+        groupName: group.name,
+        actorName: user.name,
+        fromName: fromName ?? "Someone",
+        toName: toName ?? "Someone",
       },
     });
 

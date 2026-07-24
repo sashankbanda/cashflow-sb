@@ -3,6 +3,7 @@ import { endOfMonth, formatISO, startOfMonth, subDays, subMonths } from "date-fn
 import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/server/db";
 import { activityLogs, groupMembers } from "@/server/db/schema";
+import { describeActivity, type ActivityPayload } from "@/features/activity/describe";
 import { getFriendBalances } from "@/features/balances/queries";
 import { getDailySpend, getPersonalSpendTotal } from "@/features/expenses/personal-queries";
 
@@ -30,41 +31,6 @@ export interface HomeSummary {
   /** Daily spend for the trailing ~2 weeks (sparkline). */
   trend: number[];
   activity: HomeActivity[];
-}
-
-interface ActivityPayload {
-  description?: string;
-  amountMinor?: number;
-  groupName?: string;
-  displayName?: string;
-  fromName?: string;
-  toName?: string;
-}
-
-function describeActivity(
-  verb: string,
-  payload: ActivityPayload,
-): { text: string; amountMinor?: number } {
-  switch (verb) {
-    case "expense_added":
-      return {
-        text: `added ${payload.description ?? "an expense"}${payload.groupName ? ` in ${payload.groupName}` : ""}`,
-      };
-    case "expense_updated":
-      return { text: `edited ${payload.description ?? "an expense"}` };
-    case "expense_deleted":
-      return { text: `deleted ${payload.description ?? "an expense"}` };
-    case "settlement_recorded":
-      return { text: `recorded a payment${payload.groupName ? ` in ${payload.groupName}` : ""}` };
-    case "member_joined":
-      return { text: `joined ${payload.groupName ?? "a group"}` };
-    case "member_claimed":
-      return { text: `claimed a spot${payload.groupName ? ` in ${payload.groupName}` : ""}` };
-    case "group_created":
-      return { text: `created a group` };
-    default:
-      return { text: "updated the group" };
-  }
 }
 
 /** Everything Home needs, in one aggregation pass. */

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Stagger } from "@/components/motion/Stagger";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { IconButton } from "@/components/ui/IconButton";
@@ -20,6 +20,8 @@ import { requireDbUser } from "@/features/auth/session";
 import { getHomeSummary } from "@/features/analytics/queries";
 import { getTopInsights } from "@/features/analytics/insights-queries";
 import { getOverallBudgetSnapshot } from "@/features/budgets/queries";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
+import { getUnreadCount } from "@/features/notifications/queries";
 
 export const metadata: Metadata = { title: "Home" };
 
@@ -137,6 +139,7 @@ export default async function HomePage() {
   const user = await requireDbUser();
   const greeting = greetingFor(user.timezone);
   const firstName = user.name.split(" ")[0] ?? user.name;
+  const unread = await getUnreadCount(user.id);
 
   return (
     <div className="flex flex-col gap-5">
@@ -148,9 +151,7 @@ export default async function HomePage() {
             <IconButton aria-label="Search" size="sm">
               <Search />
             </IconButton>
-            <IconButton aria-label="Notifications" size="sm">
-              <Bell />
-            </IconButton>
+            <NotificationBell unread={unread} />
           </>
         }
       />
