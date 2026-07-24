@@ -1,33 +1,36 @@
 # Cashflow — Session Handoff
 
 > State snapshot for the next implementation session. Read this, then continue
-> from **Phase 31** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
+> from **Phase 32** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
 > (01–05) remain the source of truth; this file records what is already built.
 
-## Where to resume — Phase 31 (Export & reports)
+## Where to resume — Phase 32 (PWA & offline)
 
-P1–P30 are complete, committed, and pushed to `origin/main`
-(github.com/sashankbanda/cashflow-sb, latest `f389c7c`). Next up **P31 Export &
-reports**, then P32→P36 in order. Per roadmap P31: CSV export (personal ledger +
-per-group, **filter-aware**) via a streamed Route Handler (UTF-8 BOM, ₹ amounts
-as numbers + a currency column, opens clean in Excel/Sheets); a monthly summary
-view (top categories, totals, balances snapshot) shareable as a rendered image
-card (OG-style gradient, 1200×630 — use the `ImageResponse`/`next/og` pattern
-already used by `/join/[token]/opengraph-image`); export entry points in
-settings + the group menu. Reuse: `getPersonalLedger`/`getSpendingInsights`,
-`features/search` filters (the CSV should honor the same filter shape),
-`PALETTE_HEX` for the share card. Then P32 PWA, P33 push, P34 perf/a11y, P35
-security, P36 observability/E2E/launch.
+P1–P31 are complete, committed, and pushed to `origin/main`
+(github.com/sashankbanda/cashflow-sb, latest `4ea35bf`). Next up **P32 PWA &
+offline**, then P33→P36 in order. Per roadmap P32: `app/manifest.ts` (icons,
+maskable, theme `#050506`); a **Serwist** service worker (precached shell, SWR
+runtime caching for data routes) — add `@serwist/next` + `serwist`, wire
+`withSerwist` in `next.config.ts`, an `app/sw.ts`; an **offline outbox**
+(add-expense queued in IndexedDB with idempotency keys, background-sync flush, a
+"pending" chip on queued rows); an offline banner; a custom install prompt
+(after the 2nd session) + an iOS install-hint sheet. Note: SW behavior is hard
+to verify in headless Playwright — verify the manifest + registration + a
+Lighthouse-installable build; the outbox queue logic should be a pure,
+unit-tested module. Then P33 push, P34 perf/a11y, P35 security, P36
+observability/E2E/launch.
 
 **P30 note:** attachments are code-complete but **gated on `BLOB_READ_WRITE_TOKEN`**
-(not in `.env`). Set it (Vercel Blob store) to activate uploads; until then the
-receipts UI shows a "storage not configured" state. A live upload E2E is the
-only P30 acceptance not yet verified end-to-end (needs the token).
+(not in `.env`) — set it (Vercel Blob store) to activate uploads. Live upload
+E2E is the one deferred P30 acceptance.
 
-Reusable building blocks: `authedAction`, route handlers (see
-`app/api/attachments`, `app/api/cron`), `next/og` (join OG image), `env.ts`.
+Reusable building blocks: `hooks/useMounted`, `env.ts`, the add-expense
+idempotency key (already client-generated in `AddExpenseFlow`), `lib/*` pure
+modules pattern for the outbox.
 
-## Session 4 additions (P26–P30, newest first)
+## Session 4 additions (P26–P31, newest first)
+
+- **P31 export & reports** (`4ea35bf`): `lib/csv.ts` (RFC-4180 escaping, CRLF, `CSV_BOM` U+FEFF, `rupeesFromMinor` paise→plain number; `csv.test.ts`). `features/reports/queries.ts` (`getMonthlyReport` calendar-month summary via `monthWindow` + exported `categorySpendInRange` + `getFriendBalances`; filter-aware `getPersonalExportRows` [from `getPersonalLedger`] and `getGroupExportRows` [member-only SQL with payer + split count]). `GET /api/export` (streamed `ReadableStream` CSV; `type=personal|group`, optional `from`/`to`; `text/csv; charset=utf-8` + attachment). `GET /api/report/image` — **`route.tsx`** (JSX needs .tsx) — `next/og` `ImageResponse` 1200×630 aurora card (total + top categories + net). `/reports` page (server component; month stepper via `?month=` searchParam + `shiftMonth`, disables future; `ReportsView` gradient hero + top categories + Download CSV `<a download>` + Share card `<a target=_blank>`). Profile "Reports & export" link; `GroupDetailHeader` "Export CSV" link. Verified live: CSV 200 with BOM + `Date,Description,Category,Source,Amount,Currency,Tags` header + rows; share card 200 image/png (₹2,980, categories reconcile); 0 errors. **Note:** styled `<Link>`/`<a>` for nav, never a `<Link>` inside `IconButton` (invalid nested interactive).
 
 - **P30 attachments & receipts** (`f389c7c`): `server/storage.ts` (`StorageAdapter` + real `VercelBlobAdapter` using `@vercel/blob` `put`/`del`, gated by `isStorageConfigured()` = `BLOB_READ_WRITE_TOKEN` present; env gained the optional token). `lib/attachments.ts` (pure MIME allowlist [jpeg/png/webp] + 2MB cap + `attachmentStorageKey`; `attachments.test.ts`). `lib/image-client.ts` (browser: `processImageFile` → downscale to 1600px, re-encode WebP toward 500KB [drops EXIF], blurhash `encode`; `blurhashToDataUrl` decode). `features/attachments/` — `service` (`addAttachment` validate+authz [`accessibleExpense`: group member or personal owner] + 5/expense cap + blob put + row; `deleteAttachment` blob del + row), `queries` (`getExpenseAttachments` returns authed `/api/attachments/{id}` view URLs; `getAttachmentForView`), `actions` (list/delete). Routes: `POST /api/attachments` (multipart, session + server MIME/size enforce), `GET /api/attachments/[id]` (authz → 302 to blob). UI: `AttachmentGallery` (camera/gallery `<input capture>`, blurhash thumbnails, delete, 5 cap), `BlurImage` (blurhash placeholder via `useMounted` gate — no hydration mismatch), `AttachmentViewer` (full-screen double-tap zoom + drag pan); wired into `ExpenseDetailSheet`. Shared `hooks/useMounted.ts` (deduped from SearchScreen). Deps: `@vercel/blob`, `blurhash`. Verified live: receipts section + gated "not configured" state render, authz path runs, 0 errors. **Upload/storage requires the token to activate (unverified end-to-end).**
 
@@ -52,7 +55,7 @@ Reusable building blocks: `authedAction`, route handlers (see
 
 New load-bearing conventions this session: (a) `revalidateTag(tag, "max")` — Next 16 requires the cache-profile arg; (b) bump the `unstable_cache` key version (`group-money-v2`) whenever a cached shape changes — stale entries outlive deploys and surfaced as a `formatMoney(NaN)` crash; (c) `/settings/:path*` added to `proxy.ts`; (d) fast-check properties ≥10k runs need an explicit `{ timeout: 60_000 }` on the `it`.
 
-Test count: **146 unit tests** (P30 added `lib/attachments.test.ts`; P29 `search/schemas.test.ts`; P28 `activity/describe.test.ts`; P27 `analytics/insights.test.ts`; P26 `trend.test.ts`; P24 `recurrence.test.ts`; P23 `lib/dates.test.ts` + `budgets/pace.test.ts`). P25 charts + P26–P30 UI verified via Playwright. All green; typecheck/lint/build clean at HEAD. Migrations `0000`–`0003` applied. Required secrets not yet set: `BLOB_READ_WRITE_TOKEN` (P30 attachments).
+Test count: **151 unit tests** (P31 added `lib/csv.test.ts`; P30 `lib/attachments.test.ts`; P29 `search/schemas.test.ts`; P28 `activity/describe.test.ts`; P27 `analytics/insights.test.ts`; P26 `trend.test.ts`; P24 `recurrence.test.ts`; P23 `lib/dates.test.ts` + `budgets/pace.test.ts`). P25 charts + P26–P31 UI verified via Playwright. All green; typecheck/lint/build clean at HEAD. Migrations `0000`–`0003` applied. Required secret not yet set: `BLOB_READ_WRITE_TOKEN` (P30 attachments).
 
 ---
 
