@@ -17,6 +17,8 @@ const serverSchema = z.object({
   BETTER_AUTH_URL: z.string().url().default("http://localhost:3000"),
   GOOGLE_CLIENT_ID: z.string().min(1),
   GOOGLE_CLIENT_SECRET: z.string().min(1),
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 });
 
 const clientSchema = z.object({});
@@ -48,6 +50,8 @@ export const env = new Proxy(
         BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+        UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+        UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
       })
     : {}) as z.infer<typeof serverSchema>,
   {
