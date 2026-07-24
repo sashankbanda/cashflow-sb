@@ -12,7 +12,6 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { NumberTicker } from "@/components/motion/NumberTicker";
 import { cn } from "@/lib/cn";
-import { formatDayLabel } from "@/lib/dates";
 import { formatMoney, formatPercent } from "@/lib/format";
 import { useAction } from "@/hooks/useAction";
 import { CategoryBadge } from "@/features/categories/icons";
