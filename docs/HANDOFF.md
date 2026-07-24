@@ -1,8 +1,41 @@
 # Cashflow — Session Handoff
 
 > State snapshot for the next implementation session. Read this, then continue
-> from **Phase 16** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
+> from **Phase 23** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
 > (01–05) remain the source of truth; this file records what is already built.
+
+## Where to resume — Phase 23 (Budgets)
+
+P1–P22 are complete, committed, and pushed to `origin/main`
+(github.com/sashankbanda/cashflow-sb). Next up **P23 Budgets**, then P24→P36 in
+order. Per roadmap P23: `features/budgets` (overall + per-category monthly
+budgets; `budgets` table already exists from P10), Budgets screen with a ring
+grid (reuse `ProgressRing`/`BudgetRingWidget`), ring tone states (volt on pace
+→ solar >80% → ember over), a pace line ("₹412/day keeps you on budget"),
+Home budget widget wired, and budget-threshold events logged for P29's
+notifications. Spend figures come from `getPersonalSpendTotal` /
+`getDailySpend` in `features/expenses/personal-queries.ts` (already
+timezone-window aware). Then P24 recurring (cron), P25 chart kit, P26–P27
+insights, P28 activity/notifications, P29 search, P30 attachments, P31 export,
+P32 PWA, P33 push, P34 perf/a11y, P35 security, P36 observability/E2E/launch.
+
+## Session 3 additions (P16–P22, newest commits)
+
+- **P16 advanced splits & multi-payer** (`8302ba8`): `features/expenses/split-draft.ts` (pure, tested draft→engine models with live remainder messages), SplitEditor (equal/exact/percent/shares SegmentedControl), PayerEditor (single/split payment), `updateExpense` service (weight-preserving edit, creator/payer/owner authz), ExpenseDetailSheet.
+- **P17 balance engine** (`7ecb520`): `lib/pairwise.ts` (proportional multi-payer debt ledger with paise column-repair; property-tested), `features/balances/queries.ts` (SQL nets via `db.execute`, `unstable_cache` keyed `group-money-v2` + `groupBalancesTag(groupId)`, `getGroupBalances`/`getMyNets`/`getFriendBalances`, zero-sum assert), `features/balances/label.ts`, Friends screen.
+- **P18 settlement engine** (`d14b6de`): `lib/settle.ts` (greedy simplify, 10k-case property test, `applyTransfers`), `features/settlements/*`, SettleUpSheet (suggested transfers, partial, method+note), SettleUpLauncher pill, settlements in the timeline, all-settled celebration.
+- **P19 group polish** (`83c83e0`): soft delete (`deleteExpense`, restores balances), per-expense activity trail, TimelineFilterSheet (member/category/date, AND), MemberTotals bars, `components/motion/PullToRefresh.tsx`.
+- **P20 personal & unified ledger** (`2791543`): `createPersonalExpense`/`deletePersonalExpense`, AddExpenseFlow "Personal" context (sentinel `__personal__`, 1-step, `allowPersonal` from dock), `features/expenses/personal-queries.ts` (`getPersonalLedger`/`getPersonalSpendTotal`/`getDailySpend` — share-only, never double-counts), `/expenses` screen.
+- **P21 home real data** (`98c4a92`): `features/analytics/queries.ts` `getHomeSummary`, Home streams live widgets behind Suspense, timezone greeting (`greetingFor`).
+- **P22 categories & tags** (`cf119bd`): `features/categories/{schemas,service,tags-service,actions,queries}.ts`, CategoryManager at `/settings/categories`, usage-ranked category chips, TagPicker (inline create) in the add flow, `expense_tags` written in the create transaction, tag filter in the personal ledger. `CategoryOption` gained `isSystem`. Icon set is the curated `CATEGORY_ICONS` map in `features/categories/icons.tsx`.
+
+New load-bearing conventions this session: (a) `revalidateTag(tag, "max")` — Next 16 requires the cache-profile arg; (b) bump the `unstable_cache` key version (`group-money-v2`) whenever a cached shape changes — stale entries outlive deploys and surfaced as a `formatMoney(NaN)` crash; (c) `/settings/:path*` added to `proxy.ts`; (d) fast-check properties ≥10k runs need an explicit `{ timeout: 60_000 }` on the `it`.
+
+Test count: **91 unit tests** (added split-draft, pairwise, settle suites). All green; typecheck/lint/build clean at HEAD.
+
+---
+
+## (Session 1–2 record below — P1–P15)
 
 ## Completed phases (all committed on `main`)
 
