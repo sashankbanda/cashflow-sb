@@ -4,14 +4,20 @@ import { z } from "zod";
  * Zod-validated environment access. Every phase that introduces an environment
  * variable adds it here; nothing in the app reads `process.env` directly.
  *
- * `server` values must never be imported from client components — the runtime
- * guard below throws if that happens.
+ * Server values are validated only on the server (client bundles never see
+ * them) and the runtime guard throws if one is accessed from the client.
  */
 const serverSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  DATABASE_URL: z
+    .string()
+    .url()
+    .refine((value) => value.startsWith("postgres"), "DATABASE_URL must be a Postgres URL"),
 });
 
 const clientSchema = z.object({});
+
+const isServer = typeof window === "undefined";
 
 function validate<T extends z.ZodTypeAny>(
   schema: T,
@@ -30,12 +36,15 @@ function validate<T extends z.ZodTypeAny>(
 export const clientEnv = validate(clientSchema, {});
 
 export const env = new Proxy(
-  validate(serverSchema, {
-    NODE_ENV: process.env.NODE_ENV,
-  }),
+  (isServer
+    ? validate(serverSchema, {
+        NODE_ENV: process.env.NODE_ENV,
+        DATABASE_URL: process.env.DATABASE_URL,
+      })
+    : {}) as z.infer<typeof serverSchema>,
   {
     get(target, prop: string) {
-      if (typeof window !== "undefined") {
+      if (!isServer) {
         throw new Error(`Attempted to access server env "${prop}" on the client.`);
       }
       return target[prop as keyof typeof target];
