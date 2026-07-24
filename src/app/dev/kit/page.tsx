@@ -1,17 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Bell, Plus, Receipt, Search, Users, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  Bell,
+  Car,
+  Clapperboard,
+  Plus,
+  Receipt,
+  Search,
+  Users,
+  UtensilsCrossed,
+  Wallet,
+} from "lucide-react";
+import { AmountDisplay } from "@/components/ui/AmountDisplay";
+import { AmountKeypad } from "@/components/ui/AmountKeypad";
 import { Avatar, AvatarStack } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
+import { DateChip } from "@/components/ui/DateChip";
 import { Divider } from "@/components/ui/Divider";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GradientPanel } from "@/components/ui/GradientPanel";
 import { IconButton } from "@/components/ui/IconButton";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Select } from "@/components/ui/Select";
+import { Sheet } from "@/components/ui/Sheet";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Slider } from "@/components/ui/Slider";
+import { TextArea, TextField } from "@/components/ui/TextField";
+import { toast } from "@/components/ui/Toast";
+import { Toggle } from "@/components/ui/Toggle";
+import { useSheet } from "@/hooks/useSheet";
 
 const people = [
   { name: "Sashank Banda" },
@@ -34,6 +56,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function KitPage() {
   const [selectedChip, setSelectedChip] = useState("Food");
   const [loading, setLoading] = useState(false);
+  const [splitType, setSplitType] = useState<"equal" | "percent" | "shares">("equal");
+  const [notifications, setNotifications] = useState(true);
+  const [sliderValue, setSliderValue] = useState(40);
+  const [category, setCategory] = useState<"food" | "travel" | "movies" | null>("food");
+  const [expenseDate, setExpenseDate] = useState(() => new Date());
+  const [amountDraft, setAmountDraft] = useState("2500");
+  const demoSheet = useSheet();
 
   return (
     <main className="mx-auto max-w-md space-y-8 px-5 py-10 pb-safe">
@@ -195,6 +224,132 @@ export default function KitPage() {
               </Button>
             }
           />
+        </GlassCard>
+      </Section>
+
+      <Section title="Text fields">
+        <div className="space-y-4">
+          <TextField label="Description" placeholder="Dinner at Farzi Café" leading={<Receipt />} />
+          <TextField label="Group name" defaultValue="Goa trip" hint="Visible to all members." />
+          <TextField
+            label="Email"
+            defaultValue="not-an-email"
+            error="Enter a valid email address."
+          />
+          <TextArea label="Notes" placeholder="Anything the group should know…" />
+        </div>
+      </Section>
+
+      <Section title="Segmented control">
+        <SegmentedControl
+          aria-label="Split type"
+          value={splitType}
+          onChange={setSplitType}
+          options={[
+            { value: "equal", label: "Equal" },
+            { value: "percent", label: "Percent" },
+            { value: "shares", label: "Shares" },
+          ]}
+        />
+      </Section>
+
+      <Section title="Toggle + slider">
+        <GlassCard elevation="inset" className="space-y-5 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-body" id="kit-toggle-label">
+                Notifications
+              </p>
+              <p className="text-footnote text-fg-3">Expense and settlement alerts</p>
+            </div>
+            <Toggle
+              checked={notifications}
+              onChange={setNotifications}
+              aria-labelledby="kit-toggle-label"
+            />
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              <p className="text-body">Budget alert at</p>
+              <p className="text-footnote text-fg-2 tabular-nums">{sliderValue}%</p>
+            </div>
+            <Slider
+              aria-label="Budget alert threshold"
+              value={sliderValue}
+              onChange={setSliderValue}
+            />
+          </div>
+        </GlassCard>
+      </Section>
+
+      <Section title="Select + date">
+        <div className="space-y-4">
+          <Select
+            label="Category"
+            sheetTitle="Category"
+            value={category}
+            onChange={setCategory}
+            options={[
+              { value: "food", label: "Food & Drinks", icon: <UtensilsCrossed /> },
+              { value: "travel", label: "Travel", icon: <Car /> },
+              { value: "movies", label: "Entertainment", icon: <Clapperboard /> },
+            ]}
+          />
+          <div className="flex items-center gap-2">
+            <DateChip value={expenseDate} onChange={setExpenseDate} />
+          </div>
+        </div>
+      </Section>
+
+      <Section title="Sheet">
+        <Button variant="glass" onClick={demoSheet.open}>
+          Open sheet
+        </Button>
+        <Sheet open={demoSheet.isOpen} onClose={demoSheet.close} title="Settle up">
+          <div className="space-y-4 pt-1">
+            <GlassCard elevation="inset" className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <Avatar name="Rohit Verma" size="sm" />
+                <p className="text-body">Rohit → you</p>
+              </div>
+              <p className="text-headline text-positive tabular-nums">₹840</p>
+            </GlassCard>
+            <GlassCard elevation="inset" className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <Avatar name="Asha Iyer" size="sm" />
+                <p className="text-body">You → Asha</p>
+              </div>
+              <p className="text-headline text-negative tabular-nums">₹1,250</p>
+            </GlassCard>
+            <Button variant="volt" block size="lg" onClick={demoSheet.close}>
+              Record payment
+            </Button>
+          </div>
+        </Sheet>
+      </Section>
+
+      <Section title="Toasts">
+        <div className="flex flex-wrap gap-3">
+          <Button variant="glass" size="sm" onClick={() => toast.success("Expense added")}>
+            Success
+          </Button>
+          <Button
+            variant="glass"
+            size="sm"
+            onClick={() => toast.error("Couldn't reach the server")}
+          >
+            Error
+          </Button>
+          <Button variant="glass" size="sm" onClick={() => toast.info("Rohit joined Goa trip")}>
+            Info
+          </Button>
+        </div>
+      </Section>
+
+      <Section title="Amount entry">
+        <GlassCard className="space-y-4 p-5">
+          <AmountDisplay value={amountDraft} />
+          <AmountKeypad value={amountDraft} onChange={setAmountDraft} />
         </GlassCard>
       </Section>
     </main>

@@ -55,6 +55,82 @@
   }
 }
 
+/* ---------- Sheet depth: the app shell recedes behind open sheets ---------- */
+@layer components {
+  .sheet-scale-target {
+    transform-origin: 50% 0;
+    transition:
+      transform 400ms var(--ease-standard),
+      filter 400ms var(--ease-standard),
+      border-radius 400ms var(--ease-standard);
+  }
+
+  html[data-sheet-open="true"] .sheet-scale-target {
+    transform: scale(0.94) translateY(6px);
+    filter: brightness(0.55);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet-scale-target {
+      transition: none;
+    }
+    html[data-sheet-open="true"] .sheet-scale-target {
+      transform: none;
+      border-radius: 0;
+    }
+  }
+
+  /* Custom range input (Slider component). */
+  .cf-slider {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 44px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .cf-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: linear-gradient(
+      to right,
+      var(--color-volt) var(--slider-fill, 0%),
+      var(--color-glass) var(--slider-fill, 0%)
+    );
+  }
+  .cf-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    margin-top: -12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    border: none;
+    background: #ffffff;
+    box-shadow: var(--shadow-ambient);
+  }
+  .cf-slider::-moz-range-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--color-glass);
+  }
+  .cf-slider::-moz-range-progress {
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--color-volt);
+  }
+  .cf-slider::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    border: none;
+    background: #ffffff;
+    box-shadow: var(--shadow-ambient);
+  }
+}
+
 /* ---------- Aurora canvas backdrop ---------- */
 @layer components {
   .aurora-blob {

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Doto, Inter } from "next/font/google";
 import { AuroraBackground } from "@/components/ui/AuroraBackground";
+import { Toaster } from "@/components/ui/Toast";
 import "./globals.css";
 
 const inter = Inter({
@@ -42,9 +43,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${doto.variable} h-full`}>
-      <body className="flex min-h-full flex-col">
+      <body className="min-h-full">
         <AuroraBackground />
-        {children}
+        <div className="sheet-scale-target flex min-h-dvh flex-col">{children}</div>
+        <Toaster />
       </body>
     </html>
   );
