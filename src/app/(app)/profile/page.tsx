@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bell, ChevronRight, Download, Palette, Tags, UsersRound } from "lucide-react";
+import { Bell, ChevronRight, Download, Palette, Tags, UsersRound, Wallet } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
@@ -31,6 +31,14 @@ export default async function ProfilePage() {
           </div>
         </GlassCard>
         <GlassCard elevation="inset" className="divide-y divide-white/6">
+          <Link
+            href="/expenses"
+            className="ease-out flex items-center gap-3 p-4 transition-colors duration-150 active:bg-glass"
+          >
+            <Wallet className="size-5 text-fg-2" />
+            <p className="flex-1 text-body">Spending</p>
+            <ChevronRight className="size-4 text-fg-3" />
+          </Link>
           <Link
             href="/friends"
             className="ease-out flex items-center gap-3 p-4 transition-colors duration-150 active:bg-glass"

@@ -16,7 +16,7 @@ import {
 import { forbidden, notFound, validationError } from "@/server/errors";
 import type { ActionUser } from "@/server/action-core";
 import { assertMember } from "@/features/groups/service";
-import type { CreateExpenseInput, UpdateExpenseInput } from "./schemas";
+import type { CreateExpenseInput, CreatePersonalExpenseInput, UpdateExpenseInput } from "./schemas";
 
 interface PreparedExpense {
   group: { id: string; name: string; currency: string };
@@ -188,6 +188,77 @@ async function assertCanModify(
   if (!isCreator && !isPayer && !isOwner) {
     throw forbidden("Only the person who added or paid this expense can change it.");
   }
+}
+
+/**
+ * Create a personal expense (no group): the owner is the sole payer and sole
+ * participant, so it flows straight into their personal ledger. Idempotent.
+ */
+export async function createPersonalExpense(
+  user: ActionUser,
+  input: CreatePersonalExpenseInput,
+): Promise<{ expenseId: string }> {
+  return db.transaction(async (tx) => {
+    const category = await tx.query.categories.findFirst({
+      where: eq(categories.id, input.categoryId),
+    });
+    if (!category) throw notFound("Category");
+
+    const expenseId = newId();
+    const inserted = await tx
+      .insert(expenses)
+      .values({
+        id: expenseId,
+        groupId: null,
+        description: input.description,
+        amountMinor: input.amountMinor,
+        currency: "INR",
+        categoryId: input.categoryId,
+        splitType: "equal",
+        expenseDate: input.expenseDate,
+        createdBy: user.id,
+        idempotencyKey: input.idempotencyKey,
+      })
+      .onConflictDoNothing({ target: expenses.idempotencyKey })
+      .returning({ id: expenses.id });
+
+    if (inserted.length === 0) {
+      const existing = await tx.query.expenses.findFirst({
+        where: eq(expenses.idempotencyKey, input.idempotencyKey),
+        columns: { id: true },
+      });
+      if (!existing) throw notFound("Expense");
+      return { expenseId: existing.id };
+    }
+
+    await tx.insert(expensePayers).values({
+      id: newId(),
+      expenseId,
+      memberId: null,
+      userId: user.id,
+      amountMinor: input.amountMinor,
+    });
+    await tx.insert(expenseSplits).values({
+      id: newId(),
+      expenseId,
+      memberId: null,
+      userId: user.id,
+      amountMinor: input.amountMinor,
+      weight: null,
+    });
+
+    return { expenseId };
+  });
+}
+
+/** Soft-delete a personal expense (owner only). */
+export async function deletePersonalExpense(user: ActionUser, expenseId: string): Promise<void> {
+  await db.transaction(async (tx) => {
+    const expense = await tx.query.expenses.findFirst({ where: eq(expenses.id, expenseId) });
+    if (!expense || expense.deletedAt || expense.groupId !== null) throw notFound("Expense");
+    if (expense.createdBy !== user.id) throw forbidden("That isn't your expense.");
+    await tx.update(expenses).set({ deletedAt: new Date() }).where(eq(expenses.id, expenseId));
+  });
 }
 
 /** Soft-delete an expense; balances recompute exactly without it. */

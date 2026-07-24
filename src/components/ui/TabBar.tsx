@@ -104,6 +104,7 @@ export function TabBar({ groups, categories, viewerUserId }: TabBarProps) {
         categories={categories}
         defaultGroupId={groupIdInView}
         viewerUserId={viewerUserId}
+        allowPersonal
       />
     </>
   );

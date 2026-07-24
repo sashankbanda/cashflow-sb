@@ -42,5 +42,23 @@ export const updateExpenseSchema = expenseCoreSchema.extend({
   expenseId: z.string().min(1),
 });
 
+/** A personal expense: no group, no split — the owner pays and consumes 100%. */
+export const createPersonalExpenseSchema = z.object({
+  description: z
+    .string()
+    .trim()
+    .min(1, "What was this for?")
+    .max(80, "Keep it under 80 characters."),
+  amountMinor: z
+    .number()
+    .int("Amounts are whole paise.")
+    .positive("Enter an amount.")
+    .max(MAX_AMOUNT_MINOR, "That's beyond the supported amount."),
+  categoryId: z.string().min(1, "Pick a category."),
+  expenseDate: expenseDateSchema,
+  idempotencyKey: z.string().uuid(),
+});
+
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
 export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
+export type CreatePersonalExpenseInput = z.infer<typeof createPersonalExpenseSchema>;

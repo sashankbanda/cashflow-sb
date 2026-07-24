@@ -4,8 +4,14 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { authedAction } from "@/server/action";
 import { groupBalancesTag } from "@/features/balances/queries";
-import { createExpenseSchema, updateExpenseSchema } from "./schemas";
-import { createExpense, deleteExpense, updateExpense } from "./service";
+import { createExpenseSchema, createPersonalExpenseSchema, updateExpenseSchema } from "./schemas";
+import {
+  createExpense,
+  createPersonalExpense,
+  deleteExpense,
+  deletePersonalExpense,
+  updateExpense,
+} from "./service";
 
 export const createExpenseAction = authedAction({
   name: "expenses.create",
@@ -29,6 +35,30 @@ export const deleteExpenseAction = authedAction({
     revalidatePath(`/groups/${input.groupId}`);
     revalidatePath("/groups");
     revalidatePath("/home");
+    return { deleted: true };
+  },
+});
+
+export const createPersonalExpenseAction = authedAction({
+  name: "expenses.createPersonal",
+  schema: createPersonalExpenseSchema,
+  handler: async ({ input, ctx }) => {
+    const { expenseId } = await createPersonalExpense(ctx.user, input);
+    revalidatePath("/expenses");
+    revalidatePath("/home");
+    revalidatePath("/insights");
+    return { expenseId };
+  },
+});
+
+export const deletePersonalExpenseAction = authedAction({
+  name: "expenses.deletePersonal",
+  schema: z.object({ expenseId: z.string().min(1) }),
+  handler: async ({ input, ctx }) => {
+    await deletePersonalExpense(ctx.user, input.expenseId);
+    revalidatePath("/expenses");
+    revalidatePath("/home");
+    revalidatePath("/insights");
     return { deleted: true };
   },
 });

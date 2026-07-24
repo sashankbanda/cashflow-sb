@@ -24,7 +24,7 @@ import type { CategoryOption } from "@/features/categories/queries";
 import { CategoryGlyph } from "@/features/categories/icons";
 import { asPalette, paletteBg } from "@/components/ui/palette";
 import type { GroupSummary } from "@/features/groups/queries";
-import { createExpenseAction, updateExpenseAction } from "../actions";
+import { createExpenseAction, createPersonalExpenseAction, updateExpenseAction } from "../actions";
 import {
   emptyPayerDraft,
   emptySplitDraft,
@@ -58,7 +58,12 @@ export interface AddExpenseFlowProps {
   viewerUserId: string;
   /** Provide to edit an existing expense instead of creating one. */
   initial?: ExpenseEditInitial;
+  /** Offer a "Personal" context that skips payer/split (dock entry). */
+  allowPersonal?: boolean;
 }
+
+/** Sentinel groupId for the personal (no-group) context. */
+const PERSONAL = "__personal__";
 
 type Step = 1 | 2 | 3;
 
@@ -84,6 +89,7 @@ function Flow({
   defaultGroupId,
   viewerUserId,
   initial,
+  allowPersonal = false,
 }: Omit<AddExpenseFlowProps, "open">) {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
@@ -93,12 +99,15 @@ function Flow({
   const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   const initialGroup = groups.find((group) => group.id === defaultGroupId) ?? groups[0] ?? null;
+  // From within a group → that group; from the global dock → Personal;
+  // otherwise the first group.
+  const initialContext = defaultGroupId ?? (allowPersonal ? PERSONAL : (initialGroup?.id ?? ""));
   const initialMemberIds = initialGroup?.members.map((member) => member.id) ?? [];
   const viewerMemberOf = (group: GroupSummary | null): string | null =>
     group?.members.find((member) => member.userId === viewerUserId)?.id ?? null;
 
   const [draft, setDraft] = useState<Draft>(() => ({
-    groupId: initialGroup?.id ?? "",
+    groupId: initialContext,
     amount: initial?.amount ?? "",
     description: initial?.description ?? "",
     categoryId: initial?.categoryId ?? categories[0]?.id ?? "",
@@ -109,9 +118,17 @@ function Flow({
     split: initial?.splitDraft ?? emptySplitDraft(initialMemberIds),
   }));
 
+  const isPersonal = draft.groupId === PERSONAL;
   const group = groups.find((candidate) => candidate.id === draft.groupId) ?? null;
 
   const create = useAction(createExpenseAction, {
+    successMessage: "Expense added",
+    onSuccess: () => {
+      onClose();
+      router.refresh();
+    },
+  });
+  const createPersonal = useAction(createPersonalExpenseAction, {
     successMessage: "Expense added",
     onSuccess: () => {
       onClose();
@@ -125,8 +142,9 @@ function Flow({
       router.refresh();
     },
   });
-  const pending = create.pending || update.pending;
-  const fieldError = (field: string) => create.fieldError(field) ?? update.fieldError(field);
+  const pending = create.pending || update.pending || createPersonal.pending;
+  const fieldError = (field: string) =>
+    create.fieldError(field) ?? update.fieldError(field) ?? createPersonal.fieldError(field);
 
   const amountMinor = amountToMinor(draft.amount);
   const payerResult = payerDraftToPayers(draft.payer, amountMinor);
@@ -137,7 +155,7 @@ function Flow({
     setStep(next);
   };
 
-  const selectGroup = (groupId: string) => {
+  const selectContext = (groupId: string) => {
     const nextGroup = groups.find((candidate) => candidate.id === groupId) ?? null;
     setDraft((current) => ({
       ...current,
@@ -145,6 +163,16 @@ function Flow({
       payer: emptyPayerDraft(viewerMemberOf(nextGroup) ?? nextGroup?.members[0]?.id ?? null),
       split: emptySplitDraft(nextGroup?.members.map((member) => member.id) ?? []),
     }));
+  };
+
+  const submitPersonal = () => {
+    void createPersonal.execute({
+      description: draft.description,
+      amountMinor,
+      categoryId: draft.categoryId,
+      expenseDate: formatISODate(draft.date),
+      idempotencyKey,
+    });
   };
 
   const submit = () => {
@@ -167,12 +195,12 @@ function Flow({
   };
 
   const step1Valid =
-    Boolean(group) &&
+    (isPersonal || Boolean(group)) &&
     isValidAmount(draft.amount) &&
     draft.description.trim().length > 0 &&
     draft.categoryId !== "";
 
-  if (groups.length === 0) {
+  if (groups.length === 0 && !allowPersonal) {
     return (
       <EmptyState
         icon={<Users />}
@@ -249,20 +277,24 @@ function Flow({
         >
           {step === 1 ? (
             <div className="flex h-full flex-col gap-4">
-              {!editing && groups.length > 1 ? (
+              {!editing && (groups.length > 1 || allowPersonal) ? (
                 <Select
-                  sheetTitle="Group"
+                  sheetTitle="Add to"
                   value={draft.groupId}
-                  onChange={selectGroup}
-                  options={groups.map((candidate) => ({
-                    value: candidate.id,
-                    label: `${candidate.emoji ? `${candidate.emoji} ` : ""}${candidate.name}`,
-                  }))}
+                  onChange={selectContext}
+                  options={[
+                    ...(allowPersonal ? [{ value: PERSONAL, label: "🧍 Personal" }] : []),
+                    ...groups.map((candidate) => ({
+                      value: candidate.id,
+                      label: `${candidate.emoji ? `${candidate.emoji} ` : ""}${candidate.name}`,
+                    })),
+                  ]}
                 />
               ) : (
                 <p className="text-center text-footnote text-fg-3">
-                  {group?.emoji ? `${group.emoji} ` : ""}
-                  {group?.name}
+                  {isPersonal
+                    ? "🧍 Personal"
+                    : `${group?.emoji ? `${group.emoji} ` : ""}${group?.name}`}
                 </p>
               )}
 
@@ -321,10 +353,11 @@ function Flow({
                   block
                   size="lg"
                   className="mt-3"
+                  loading={isPersonal && pending}
                   disabled={!step1Valid}
-                  onClick={() => goTo(2)}
+                  onClick={() => (isPersonal ? submitPersonal() : goTo(2))}
                 >
-                  Next
+                  {isPersonal ? `Add expense · ${formatMoney(amountMinor)}` : "Next"}
                 </Button>
               </div>
             </div>
