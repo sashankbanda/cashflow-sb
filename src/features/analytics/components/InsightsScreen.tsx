@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { parseISO } from "date-fns";
 import { TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { AreaTrend } from "@/components/charts/AreaTrend";
 import { DonutCategory } from "@/components/charts/DonutCategory";
 import { HeatmapCalendar } from "@/components/charts/HeatmapCalendar";
@@ -10,13 +11,15 @@ import { Chip } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { InsightCard } from "@/components/widgets/InsightCard";
 import { NumberTicker } from "@/components/motion/NumberTicker";
 import { cn } from "@/lib/cn";
 import { formatMoney, formatPercent } from "@/lib/format";
 import { useAction } from "@/hooks/useAction";
 import { CategoryBadge } from "@/features/categories/icons";
 import { fetchInsightsAction } from "../actions";
-import type { InsightsPayload } from "../insights-queries";
+import type { Cashflow, InsightsPayload } from "../insights-queries";
+import type { Insight } from "../insights";
 import { INSIGHT_PERIODS, type InsightPeriod } from "../trend";
 
 const PREVIOUS_LABEL: Record<InsightPeriod, string> = {
@@ -56,7 +59,61 @@ function CategoryRow({ category }: { category: InsightsPayload["categories"][num
   );
 }
 
-export function InsightsScreen({ initial }: { initial: InsightsPayload }) {
+function CashflowCard({ cashflow }: { cashflow: Cashflow }) {
+  const surplus = cashflow.netFlowMinor >= 0;
+  return (
+    <GlassCard className="p-5">
+      <div className="flex items-center justify-between">
+        <p className="text-caption text-fg-3 uppercase">Cash flow · {cashflow.monthLabel}</p>
+        <p
+          className={cn(
+            "text-body font-semibold tabular-nums",
+            surplus ? "text-positive" : "text-warning",
+          )}
+        >
+          {formatMoney(cashflow.netFlowMinor, { sign: "always" })}
+        </p>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="rounded-md glass-soft p-3">
+          <p className="flex items-center gap-1 text-caption text-fg-3">
+            <ArrowDownLeft className="size-3.5 text-positive" /> In
+          </p>
+          <p className="mt-1 text-headline text-fg-1 tabular-nums">
+            {formatMoney(cashflow.inflowMinor, { compact: cashflow.inflowMinor >= 1_000_00 })}
+          </p>
+          <p className="text-caption text-fg-3">settlements received</p>
+        </div>
+        <div className="rounded-md glass-soft p-3">
+          <p className="flex items-center gap-1 text-caption text-fg-3">
+            <ArrowUpRight className="size-3.5 text-negative" /> Out
+          </p>
+          <p className="mt-1 text-headline text-fg-1 tabular-nums">
+            {formatMoney(cashflow.outflowMinor, { compact: cashflow.outflowMinor >= 1_000_00 })}
+          </p>
+          <p className="text-caption text-fg-3">spend + settlements paid</p>
+        </div>
+      </div>
+      {cashflow.owedToYouMinor > 0 || cashflow.youOweMinor > 0 ? (
+        <p className="mt-3 text-footnote text-fg-3">
+          {cashflow.owedToYouMinor > 0 ? `Owed to you ${formatMoney(cashflow.owedToYouMinor)}` : ""}
+          {cashflow.owedToYouMinor > 0 && cashflow.youOweMinor > 0 ? " · " : ""}
+          {cashflow.youOweMinor > 0 ? `You owe ${formatMoney(cashflow.youOweMinor)}` : ""}
+        </p>
+      ) : null}
+    </GlassCard>
+  );
+}
+
+export function InsightsScreen({
+  initial,
+  cashflow,
+  cards,
+}: {
+  initial: InsightsPayload;
+  cashflow: Cashflow;
+  cards: ReadonlyArray<Insight>;
+}) {
   const [active, setActive] = useState<InsightPeriod>(initial.period);
   const [cache, setCache] = useState<Partial<Record<InsightPeriod, InsightsPayload>>>({
     [initial.period]: initial,
@@ -90,6 +147,16 @@ export function InsightsScreen({ initial }: { initial: InsightsPayload }) {
       <ScreenHeader title="Insights" eyebrow="Where your money goes" />
 
       <div className="space-y-5 px-5">
+        {cards.length > 0 ? (
+          <div className="space-y-3">
+            {cards.slice(0, 3).map((card) => (
+              <InsightCard key={card.key} text={card.text} palette={card.palette} />
+            ))}
+          </div>
+        ) : null}
+
+        <CashflowCard cashflow={cashflow} />
+
         <div className="-mx-1 flex gap-2 px-1">
           {INSIGHT_PERIODS.map((period) => (
             <Chip

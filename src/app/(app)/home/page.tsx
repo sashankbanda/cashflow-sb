@@ -18,6 +18,7 @@ import { greetingFor } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { requireDbUser } from "@/features/auth/session";
 import { getHomeSummary } from "@/features/analytics/queries";
+import { getTopInsights } from "@/features/analytics/insights-queries";
 import { getOverallBudgetSnapshot } from "@/features/budgets/queries";
 
 export const metadata: Metadata = { title: "Home" };
@@ -28,17 +29,20 @@ function peopleLabel(count: number, verb: string): string {
 }
 
 async function HomeWidgets({ userId }: { userId: string }) {
-  const [summary, budget] = await Promise.all([
+  const [summary, budget, topInsights] = await Promise.all([
     getHomeSummary(userId),
     getOverallBudgetSnapshot(userId),
+    getTopInsights(userId, 1),
   ]);
 
+  const topInsight = topInsights[0];
   const insight =
-    summary.owedToYouMinor > 0
+    topInsight?.text ??
+    (summary.owedToYouMinor > 0
       ? `You're owed ${formatMoney(summary.owedToYouMinor)} across ${summary.owedFromCount} ${summary.owedFromCount === 1 ? "friend" : "friends"}.`
       : summary.youOweMinor > 0
         ? `You owe ${formatMoney(summary.youOweMinor)} — settle up to clear it.`
-        : "You're all square with everyone. Nice.";
+        : "You're all square with everyone. Nice.");
 
   return (
     <Stagger className="space-y-3">
@@ -78,7 +82,9 @@ async function HomeWidgets({ userId }: { userId: string }) {
 
       <InsightCard
         text={insight}
-        palette={summary.youOweMinor > summary.owedToYouMinor ? "ember" : "mint"}
+        palette={
+          topInsight?.palette ?? (summary.youOweMinor > summary.owedToYouMinor ? "ember" : "mint")
+        }
       />
 
       <section className="space-y-3 pt-2">

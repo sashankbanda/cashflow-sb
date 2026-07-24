@@ -11,7 +11,7 @@ P1–P26 are complete, committed, and pushed to `origin/main`
 II**, then P28→P36 in order. Per roadmap P27: a **cashflow view** (money in =
 settlements received / owed-to-me vs money out = spend + settlements paid; net
 flow hero) and a rule-based **insight generator** at
-`features/analytics/insights.ts` — a *pure* function turning fixtures into
+`features/analytics/insights.ts` — a _pure_ function turning fixtures into
 ranked insight cards (category spikes ≥30%, budget pace warnings, "owed ₹X
 across N groups", largest-expense callouts, weekend-vs-weekday pattern) with
 unit tests against fixture months and a per-insight cooldown so nothing repeats
