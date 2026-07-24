@@ -21,6 +21,8 @@ const serverSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
   /** Shared secret Vercel Cron sends as `Authorization: Bearer …`. */
   CRON_SECRET: z.string().min(1).optional(),
+  /** Vercel Blob RW token — enables receipt attachments when present. */
+  BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
 });
 
 const clientSchema = z.object({});
@@ -55,6 +57,7 @@ export const env = new Proxy(
         UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
         UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
         CRON_SECRET: process.env.CRON_SECRET,
+        BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
       })
     : {}) as z.infer<typeof serverSchema>,
   {

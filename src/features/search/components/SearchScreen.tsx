@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { parseISO } from "date-fns";
@@ -15,6 +15,7 @@ import { formatDayLabel } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { useSheet } from "@/hooks/useSheet";
 import { useAction } from "@/hooks/useAction";
+import { useMounted } from "@/hooks/useMounted";
 import { CategoryBadge } from "@/features/categories/icons";
 import { searchAction } from "../actions";
 import { activeFilterCount, hasSearchCriteria, type SearchFilters } from "../schemas";
@@ -32,15 +33,6 @@ function readRecent(): string[] {
   } catch {
     return [];
   }
-}
-
-/** Client-only mount flag (avoids hydration mismatch when reading localStorage). */
-function useMounted(): boolean {
-  return useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
 }
 
 export function SearchScreen({ options }: { options: SearchOptions }) {

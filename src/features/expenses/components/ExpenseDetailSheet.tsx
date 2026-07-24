@@ -17,6 +17,7 @@ import { deleteExpenseAction } from "../actions";
 import type { CategoryOption } from "@/features/categories/queries";
 import { CategoryBadge } from "@/features/categories/icons";
 import type { GroupDetail } from "@/features/groups/queries";
+import { AttachmentGallery } from "@/features/attachments/components/AttachmentGallery";
 import type { ExpensePartyLine, TimelineExpense } from "../queries";
 import type { PayerDraft, SplitDraft } from "../split-draft";
 import { AddExpenseFlow, type ExpenseEditInitial } from "./AddExpenseFlow";
@@ -190,6 +191,8 @@ export function ExpenseDetailSheet({
               lines={expense.splits}
               note={(line) => weightNote(expense, line)}
             />
+
+            <AttachmentGallery expenseId={expense.id} groupId={group.id} />
 
             {expense.trail.length > 0 ? (
               <div className="space-y-1 px-1">
