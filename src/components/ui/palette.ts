@@ -40,6 +40,11 @@ export const paletteAccentText: Record<Palette, string> = {
   aurora: "text-fg-1",
 };
 
+/** Narrow an arbitrary string (e.g. a DB column) to a Palette, ocean default. */
+export function asPalette(value: string): Palette {
+  return (PALETTES as readonly string[]).includes(value) ? (value as Palette) : "ocean";
+}
+
 /** Deterministically assign a palette to an arbitrary name (avatars, covers). */
 export function paletteForName(name: string): (typeof PALETTES)[number] {
   let hash = 0;

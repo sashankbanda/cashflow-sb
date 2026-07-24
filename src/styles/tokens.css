@@ -235,6 +235,14 @@
   filter: drop-shadow(0 0 10px rgba(212, 248, 42, 0.45));
 }
 
+/* Horizontal chip rows scroll without a visible bar. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* ---------- Safe-area utilities ---------- */
 @utility pt-safe {
   padding-top: env(safe-area-inset-top);

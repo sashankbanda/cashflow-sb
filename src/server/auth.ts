@@ -26,6 +26,11 @@ export const auth = betterAuth({
       clientSecret: env.GOOGLE_CLIENT_SECRET,
     },
   },
+  // Dev/test-only credentials path (no UI): powers automated end-to-end
+  // verification. Production stays Google-only.
+  emailAndPassword: {
+    enabled: env.NODE_ENV !== "production",
+  },
   account: {
     accountLinking: {
       enabled: true,
