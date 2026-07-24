@@ -1,32 +1,33 @@
 # Cashflow — Session Handoff
 
 > State snapshot for the next implementation session. Read this, then continue
-> from **Phase 27** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
+> from **Phase 28** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
 > (01–05) remain the source of truth; this file records what is already built.
 
-## Where to resume — Phase 27 (Insights II — cashflow & insight engine)
+## Where to resume — Phase 28 (Activity feed & notification center)
 
-P1–P26 are complete, committed, and pushed to `origin/main`
-(github.com/sashankbanda/cashflow-sb, latest `f4751b2`). Next up **P27 Insights
-II**, then P28→P36 in order. Per roadmap P27: a **cashflow view** (money in =
-settlements received / owed-to-me vs money out = spend + settlements paid; net
-flow hero) and a rule-based **insight generator** at
-`features/analytics/insights.ts` — a _pure_ function turning fixtures into
-ranked insight cards (category spikes ≥30%, budget pace warnings, "owed ₹X
-across N groups", largest-expense callouts, weekend-vs-weekday pattern) with
-unit tests against fixture months and a per-insight cooldown so nothing repeats
-verbatim. Surface insight cards on Home + Insights. Cashflow in−out must
-reconcile with balances. Reuse: `features/balances/queries.ts` (nets),
-`features/analytics/insights-queries.ts` + `trend.ts`, `features/budgets/pace.ts`,
-`components/widgets/InsightCard.tsx`. Then P28 activity/notifications, P29
-search, P30 attachments, P31 export, P32 PWA, P33 push, P34 perf/a11y, P35
-security, P36 observability/E2E/launch.
+P1–P27 are complete, committed, and pushed to `origin/main`
+(github.com/sashankbanda/cashflow-sb, latest `514f274`). Next up **P28 Activity
+& notifications**, then P29→P36 in order. Per roadmap P28: an `/activity` screen
+(currently a mock shell) with a global feed (all my groups + personal) + a
+per-group tab, rendered **purely from `activity_logs.payload`** (no joins),
+cursor pagination on UUIDv7 ids, day grouping; a **notification fan-out** on key
+verbs (expense involving me, settlement to me, member joined, budget threshold)
+written **in the same transaction** as the mutation; a notification-center sheet
++ unread badge on the dock (the Bell icons on Home/ScreenHeader are inert). The
+`notifications` table exists and **already receives `budget_threshold` rows**
+(P23's `notifyBudgetThresholds`); `activity_logs` is written by
+expense/settlement/member services. Then P29 search, P30 attachments, P31
+export, P32 PWA, P33 push, P34 perf/a11y, P35 security, P36
+observability/E2E/launch.
 
-Reusable building blocks: `components/charts/*` (all pure), `features/analytics/
-{insights-queries,trend}.ts`, `lib/dates.ts#monthWindow`, palette maps.
+Reusable building blocks: `features/analytics/insights.ts` (`filterByCooldown`
+— reuse for notification dedupe), `activity_logs`/`notifications` schema,
+`components/ui/*`, `lib/dates.ts` day-label helpers.
 
-## Session 4 additions (P26, newest first)
+## Session 4 additions (P26–P27, newest first)
 
+- **P27 insights II — cashflow & insight engine** (`514f274`): `features/analytics/insights.ts` (PURE, no I/O — `generateInsights(input)` ranks cards: budget over(100)/warn(80), category spike ≥30% biggest-abs(70), owed(55)/owe(50), weekend≥1.5×weekday(40), biggest expense ≥₹1000(30); `filterByCooldown(insights, lastShown, today)` per-key cooldown; `insights.test.ts`). `insights-queries.ts` grew `getCashflow` (money in = settlements received via `settled_at::date` in month vs out = personal spend + settlements paid; reconciles with balances; owed/owe snapshot from `getFriendBalances`), `buildInsightInput` (reconstructs per-category prev from Δ, weekend/weekday avg from the month heatmap, budget levels from `getBudgetOverview`), `getInsightsBundle` (spending+cashflow+cards one pass) and `getTopInsights` (Home). `InsightsScreen` renders rule InsightCards + a `CashflowCard` above the period analytics (month-scoped, not re-fetched on W/M/3M/Y switch). Home's InsightCard now comes from the rule engine (owed/owe fallback). Verified live: cashflow net −₹1,655 (In ₹1.2K, Out ₹2.8K), cards "owed ₹175", "biggest ₹1,250 Fuel stop at Leh".
 - **P26 insights I — spending analytics** (`f4751b2`): `features/analytics/trend.ts` (pure — `periodWindow` trailing windows + equal prior window, `periodDays`, `denseDaily` fill, `bucketTrend` daily→weekly(3M)→monthly(Y); unit-tested in `trend.test.ts`), `features/analytics/insights-queries.ts` (`server-only`; `getSpendingInsights(userId, period)` one-pass: total + prev total + per-category spend with Δ + biggest single expense + current-month heatmap; timezone-correct via `monthWindow().today`), `features/analytics/actions.ts` (`fetchInsightsAction` read action for chip switching), `components/InsightsScreen.tsx` (client; W/M/3M/Y `Chip` selector, client-side per-period cache so the screen never remounts on switch, `NumberTicker` hero, `AreaTrend`+`DonutCategory`+`HeatmapCalendar`+ ranked category list with Δ + avg/day & biggest stat tiles, empty state). Replaced the mock `/insights` shell. **Import rule learned:** a `"use client"` file must not import a runtime value from a `server-only` module — `INSIGHT_PERIODS`/`InsightPeriod` come from the pure `trend.ts`, and `InsightsPayload` is a type-only import from `insights-queries.ts` (erased). Numbers reconcile with the ledger (verified live: ₹1,500+₹1,250+₹80 = ₹2.8K, avg ₹94.33/day, biggest ₹1.3K).
 
 ## Session 3 additions (P16–P22, newest commits)
@@ -44,7 +45,7 @@ Reusable building blocks: `components/charts/*` (all pure), `features/analytics/
 
 New load-bearing conventions this session: (a) `revalidateTag(tag, "max")` — Next 16 requires the cache-profile arg; (b) bump the `unstable_cache` key version (`group-money-v2`) whenever a cached shape changes — stale entries outlive deploys and surfaced as a `formatMoney(NaN)` crash; (c) `/settings/:path*` added to `proxy.ts`; (d) fast-check properties ≥10k runs need an explicit `{ timeout: 60_000 }` on the `it`.
 
-Test count: **122 unit tests** (P26 added `features/analytics/trend.test.ts`; P24 added `features/recurring/recurrence.test.ts`; P23 added `lib/dates.test.ts` + `features/budgets/pace.test.ts`). P25 charts + P26 InsightsScreen are presentational/UI (verified via Playwright). All green; typecheck/lint/build clean at HEAD.
+Test count: **131 unit tests** (P27 added `features/analytics/insights.test.ts`; P26 added `trend.test.ts`; P24 `recurrence.test.ts`; P23 `lib/dates.test.ts` + `budgets/pace.test.ts`). P25 charts + P26/P27 screens are presentational/UI (verified via Playwright). All green; typecheck/lint/build clean at HEAD.
 
 ---
 
