@@ -70,7 +70,7 @@ interface CategorySpendRow {
 }
 
 /** This-user category spend within a date range (personal + group shares). */
-async function categorySpendInRange(
+export async function categorySpendInRange(
   userId: string,
   range: { from: string; to: string },
 ): Promise<CategorySpendRow[]> {

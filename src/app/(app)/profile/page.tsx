@@ -22,12 +22,12 @@ export const metadata: Metadata = { title: "Profile" };
 const linkRows = [
   { icon: Repeat, label: "Recurring expenses", href: "/recurring" },
   { icon: Tags, label: "Categories & tags", href: "/settings/categories" },
+  { icon: Download, label: "Reports & export", href: "/reports" },
 ] as const;
 
 const settingsRows = [
   { icon: Bell, label: "Notifications" },
   { icon: Palette, label: "Appearance" },
-  { icon: Download, label: "Export data" },
 ] as const;
 
 export default async function ProfilePage() {

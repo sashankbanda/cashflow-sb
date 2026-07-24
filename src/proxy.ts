@@ -25,6 +25,7 @@ export const config = {
     "/profile/:path*",
     "/budgets/:path*",
     "/recurring/:path*",
+    "/reports/:path*",
     "/expenses/:path*",
     "/friends/:path*",
     "/search/:path*",

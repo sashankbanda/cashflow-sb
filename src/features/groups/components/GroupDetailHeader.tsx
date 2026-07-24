@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Settings2, UserRoundPlus } from "lucide-react";
+import { ArrowLeft, Download, Settings2, UserRoundPlus } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -130,13 +130,20 @@ export function GroupDetailHeader({
         group={{ id: group.id, name: group.name, emoji: group.emoji, gradient: group.gradient }}
       />
 
-      {group.myRole === "owner" && !group.archived ? (
-        <div className="px-5">
+      <div className="flex items-center gap-3 px-5">
+        <a
+          href={`/api/export?type=group&groupId=${group.id}`}
+          download
+          className="ease-out inline-flex items-center gap-1.5 text-footnote text-fg-3 transition-colors duration-150 hover:text-fg-1"
+        >
+          <Download className="size-4" /> Export CSV
+        </a>
+        {group.myRole === "owner" && !group.archived ? (
           <Button variant="ghost" size="sm" onClick={archiveSheet.open}>
             Archive group
           </Button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       <Sheet open={archiveSheet.isOpen} onClose={archiveSheet.close} title="Archive group?">
         <div className="space-y-4 pt-1">
