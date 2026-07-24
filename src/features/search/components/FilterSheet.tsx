@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { endOfDay, formatISO, startOfMonth, startOfYear, subDays } from "date-fns";
+import { formatISO, startOfMonth, startOfYear, subDays } from "date-fns";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Sheet } from "@/components/ui/Sheet";

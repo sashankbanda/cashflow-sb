@@ -1,31 +1,34 @@
 # Cashflow — Session Handoff
 
 > State snapshot for the next implementation session. Read this, then continue
-> from **Phase 29** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
+> from **Phase 30** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
 > (01–05) remain the source of truth; this file records what is already built.
 
-## Where to resume — Phase 29 (Search & filters)
+## Where to resume — Phase 30 (Attachments & receipts)
 
-P1–P28 are complete, committed, and pushed to `origin/main`
-(github.com/sashankbanda/cashflow-sb, latest `0f397a2`). Next up **P29 Search &
-filters**, then P30→P36 in order. Per roadmap P29: a `/search` screen (the Home
-header Search button is currently inert — wire it) with debounced omnisearch
-over expenses (description, notes), groups, and friends via Postgres trigram /
-`websearch_to_tsquery`; a filter sheet (date range, categories, groups, members,
-amount range, tags) with **composable AND** chips shown as active filters; and
-recent searches (localStorage). Search must return **only my-visible data**
-(authz in the SQL — restrict to the user's groups + personal), p95 < 150ms on
-1k expenses (add a migration for a trigram/GIN index if needed — migrations are
-`0000`–`0002`, add `0003`), and empty results must be designed. Then P30
-attachments, P31 export, P32 PWA, P33 push, P34 perf/a11y, P35 security, P36
-observability/E2E/launch.
+P1–P29 are complete, committed, and pushed to `origin/main`
+(github.com/sashankbanda/cashflow-sb, latest `d6e27d4`). Next up **P30
+Attachments & receipts**, then P31→P36 in order. Per roadmap P30: `server/
+storage.ts` StorageAdapter (Vercel Blob impl — needs `@vercel/blob` +
+`BLOB_READ_WRITE_TOKEN` env; **the user must provide the token or this stays
+gated** — if absent, implement the adapter + a clear "storage not configured"
+path and note it as a required secret), receipt capture in the add/edit flow
+(camera/gallery), client-side compress + strip EXIF, MIME/size validation
+server-side, blurhash placeholders, full-screen pinch-zoom viewer, delete with
+blob cleanup. The `attachments` table already exists (schema). Only group
+members may fetch a receipt (authorized/signed access). Then P31 export, P32
+PWA, P33 push, P34 perf/a11y, P35 security, P36 observability/E2E/launch.
 
-Reusable building blocks: `features/expenses/personal-queries.ts` (visible-
-expense patterns), `getMyGroups`/`getFriendBalances`, `getCategoriesForUser`/
-`getTagsForUser`, the `Chip`/`Sheet`/`TextField` primitives, `lib/dates.ts`.
-Add `/search` to `proxy.ts`. `pnpm db:generate`/`db:migrate` apply migrations.
+**Heads-up:** P30 needs a Vercel Blob token (real-world secret). If it's not in
+`.env`, build the adapter behind an env check and surface "attachments require
+BLOB_READ_WRITE_TOKEN", then continue — don't block the whole run on it.
 
-## Session 4 additions (P26–P28, newest first)
+Reusable building blocks: `authedAction`, `expenses` service transaction,
+`Sheet`/`Button`, `env.ts` (add the token there), `features/expenses/*`.
+
+## Session 4 additions (P26–P29, newest first)
+
+- **P29 search & filters** (`d6e27d4`): migration `0003_search_indexes.sql` (`CREATE EXTENSION pg_trgm` + trigram GIN indexes on `expenses.description`/`notes` + `groups.name`; applied to Neon — migrations now `0000`–`0003`). `features/search/schemas.ts` (pure `hasSearchCriteria`/`activeFilterCount`, tested), `queries.ts` (`searchAll` — authz-scoped to `groupId in myGroups OR (groupId null AND createdBy=me)`, ILIKE over description/notes, groups/friends by name in JS; composable AND filters: categoryIds/groupIds/tagIds/memberUserIds via EXISTS + amount/date ranges; `getSearchOptions`), `actions.ts` (`searchAction`). `SearchScreen` (debounced via a timeout ref — not effect; active-filter badge; recent searches in localStorage gated behind a `useSyncExternalStore` mount flag to avoid hydration mismatch; expense/group/friend result sections), `FilterSheet` (chip multi-selects + date presets + amount range, inner form keyed by `open` so the draft resets). `/search` page; Home Search button is a styled `Link` (IconButton has no `asChild`). **E2E note:** Playwright `.fill()` didn't trigger the debounced React handler — use `pressSequentially`. Verified live: "lunch" → the Team lunch expense + Office lunches group; filter badge; 0 errors.
 
 - **P28 activity feed & notification center** (`0f397a2`): `features/activity/describe.ts` (PURE — `describeActivity` predicate + `describeNotification` full sentence, both from denormalized payload, no joins; `describe.test.ts`), `features/activity/queries.ts` `getActivityFeed(userId,{groupId?,cursor?})` (visible scope = my groups ∪ my personal actions; UUIDv7 `id < cursor` keyset pagination stable under concurrent writes; **one batched actor lookup**, no N+1; text from payload), `ActivityFeed` (All + per-group `Chip`s, day-grouped rows, Load more via two `useAction`s — no refs-in-render), real `/activity`. `features/notifications/` — `notifyUsers(client, actorUserId, {userIds,type,payload})` inserts in the caller's **tx** and never notifies the actor; `getNotifications`/`getUnreadCount`; list/markRead/markAllRead actions; `NotificationBell` (unread badge + lazy-loaded center sheet + mark-all-read). Fan-out wired IN-TRANSACTION: `createExpense` → `expense_added` to split participants; `recordSettlement` → `settlement_recorded` to both parties; `budget_threshold` already flows via P23. Home bell is live; `analytics/queries` deduped onto the shared `describeActivity`. Verified two-user live: friend's group expense appears in the e2e user's feed **and** as an unread notification; mark-all-read clears the badge; 0 page errors. **Lint note:** `react-hooks/refs` forbids reading `ref.current` during render — use state or split hooks.
 - **P27 insights II — cashflow & insight engine** (`514f274`): `features/analytics/insights.ts` (PURE, no I/O — `generateInsights(input)` ranks cards: budget over(100)/warn(80), category spike ≥30% biggest-abs(70), owed(55)/owe(50), weekend≥1.5×weekday(40), biggest expense ≥₹1000(30); `filterByCooldown(insights, lastShown, today)` per-key cooldown; `insights.test.ts`). `insights-queries.ts` grew `getCashflow` (money in = settlements received via `settled_at::date` in month vs out = personal spend + settlements paid; reconciles with balances; owed/owe snapshot from `getFriendBalances`), `buildInsightInput` (reconstructs per-category prev from Δ, weekend/weekday avg from the month heatmap, budget levels from `getBudgetOverview`), `getInsightsBundle` (spending+cashflow+cards one pass) and `getTopInsights` (Home). `InsightsScreen` renders rule InsightCards + a `CashflowCard` above the period analytics (month-scoped, not re-fetched on W/M/3M/Y switch). Home's InsightCard now comes from the rule engine (owed/owe fallback). Verified live: cashflow net −₹1,655 (In ₹1.2K, Out ₹2.8K), cards "owed ₹175", "biggest ₹1,250 Fuel stop at Leh".
@@ -46,7 +49,7 @@ Add `/search` to `proxy.ts`. `pnpm db:generate`/`db:migrate` apply migrations.
 
 New load-bearing conventions this session: (a) `revalidateTag(tag, "max")` — Next 16 requires the cache-profile arg; (b) bump the `unstable_cache` key version (`group-money-v2`) whenever a cached shape changes — stale entries outlive deploys and surfaced as a `formatMoney(NaN)` crash; (c) `/settings/:path*` added to `proxy.ts`; (d) fast-check properties ≥10k runs need an explicit `{ timeout: 60_000 }` on the `it`.
 
-Test count: **136 unit tests** (P28 added `features/activity/describe.test.ts`; P27 `analytics/insights.test.ts`; P26 `trend.test.ts`; P24 `recurrence.test.ts`; P23 `lib/dates.test.ts` + `budgets/pace.test.ts`). P25 charts + P26–P28 screens are presentational/UI (verified via Playwright). All green; typecheck/lint/build clean at HEAD.
+Test count: **141 unit tests** (P29 added `features/search/schemas.test.ts`; P28 `activity/describe.test.ts`; P27 `analytics/insights.test.ts`; P26 `trend.test.ts`; P24 `recurrence.test.ts`; P23 `lib/dates.test.ts` + `budgets/pace.test.ts`). P25 charts + P26–P29 screens are presentational/UI (verified via Playwright). All green; typecheck/lint/build clean at HEAD. Migrations `0000`–`0003` applied.
 
 ---
 
