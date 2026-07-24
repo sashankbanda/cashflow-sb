@@ -10,7 +10,6 @@ import { Chip } from "@/components/ui/Chip";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { IconButton } from "@/components/ui/IconButton";
 import { Spinner } from "@/components/ui/Spinner";
-import { cn } from "@/lib/cn";
 import { formatDayLabel } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { useSheet } from "@/hooks/useSheet";

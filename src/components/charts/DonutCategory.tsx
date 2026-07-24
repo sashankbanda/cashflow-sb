@@ -3,7 +3,6 @@
 import { useId, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { arc, pie } from "d3-shape";
-import { cn } from "@/lib/cn";
 import { formatPercent } from "@/lib/format";
 import { useHaptics } from "@/hooks/useHaptics";
 import { PALETTE_HEX, type Palette } from "@/components/ui/palette";

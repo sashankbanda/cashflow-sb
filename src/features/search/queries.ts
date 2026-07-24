@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq, gte, ilike, inArray, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/server/db";
-import { expenses, expenseSplits, groupMembers } from "@/server/db/schema";
+import { expenses, groupMembers } from "@/server/db/schema";
 import { getCategoriesForUser, type CategoryOption } from "@/features/categories/queries";
 import { getTagsForUser, type TagOption } from "@/features/categories/tags-service";
 import { getFriendBalances } from "@/features/balances/queries";

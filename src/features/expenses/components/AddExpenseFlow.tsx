@@ -19,6 +19,8 @@ import { cn } from "@/lib/cn";
 import { amountToMinor, isValidAmount } from "@/lib/amount-input";
 import { formatISODate } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
+import { enqueueExpense } from "@/lib/outbox";
+import { toast } from "@/components/ui/Toast";
 import { useAction } from "@/hooks/useAction";
 import type { CategoryOption } from "@/features/categories/queries";
 import { CategoryGlyph } from "@/features/categories/icons";
@@ -205,6 +207,29 @@ function Flow({
         frequency: recurrence.frequency,
         interval: 1,
         startsOn: formatISODate(draft.date),
+      });
+      return;
+    }
+    // Offline: queue for background sync (idempotency key dedupes the replay).
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      const category = categories.find((option) => option.id === draft.categoryId);
+      void enqueueExpense({
+        id: idempotencyKey,
+        attempts: 0,
+        payload: {
+          description: draft.description,
+          amountMinor,
+          categoryId: draft.categoryId,
+          expenseDate: formatISODate(draft.date),
+          tagIds: draft.tagIds,
+          categoryName: category?.name ?? "Other",
+          categoryIcon: category?.icon ?? "shapes",
+          categoryGradient: category?.gradient ?? "ocean",
+        },
+      }).then(() => {
+        toast.success("Saved offline — will sync when you reconnect");
+        onClose();
+        router.refresh();
       });
       return;
     }

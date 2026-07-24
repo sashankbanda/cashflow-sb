@@ -1,5 +1,9 @@
 import { PullToRefresh } from "@/components/motion/PullToRefresh";
 import { TabBar } from "@/components/ui/TabBar";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { OfflineBanner } from "@/components/pwa/OfflineBanner";
+import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar";
+import { OutboxSync } from "@/features/expenses/components/OutboxSync";
 import { getSession } from "@/features/auth/session";
 import { getCategoriesForUser } from "@/features/categories/queries";
 import { getTagsForUser } from "@/features/categories/tags-service";
@@ -22,6 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <>
+      <OfflineBanner />
       <PullToRefresh>
         <div className="mx-auto w-full max-w-md flex-1 pb-dock">{children}</div>
       </PullToRefresh>
@@ -31,6 +36,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         tags={tags}
         viewerUserId={session?.user.id ?? ""}
       />
+      <InstallPrompt />
+      <ServiceWorkerRegistrar />
+      <OutboxSync />
     </>
   );
 }

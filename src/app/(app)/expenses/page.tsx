@@ -9,6 +9,7 @@ import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { formatDayLabel } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { requireUser } from "@/features/auth/session";
+import { PendingExpenses } from "@/features/expenses/components/PendingExpenses";
 import { PersonalLedger } from "@/features/expenses/components/PersonalLedger";
 import { getPersonalLedger, getPersonalSpendTotal } from "@/features/expenses/personal-queries";
 import { getUpcomingOccurrences } from "@/features/recurring/queries";
@@ -40,6 +41,8 @@ export default async function ExpensesPage() {
             Personal spends plus your share of group expenses
           </p>
         </GradientPanel>
+
+        <PendingExpenses />
 
         {upcoming.length > 0 ? (
           <Link href="/recurring" className="block">
