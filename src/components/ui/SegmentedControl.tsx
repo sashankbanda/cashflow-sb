@@ -3,6 +3,7 @@
 import { useId, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/cn";
+import { springSnappy } from "@/components/motion/transitions";
 
 export interface SegmentOption<T extends string> {
   value: T;
@@ -69,9 +70,7 @@ export function SegmentedControl<T extends string>({
               <motion.span
                 layoutId={layoutId}
                 aria-hidden
-                transition={
-                  reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }
-                }
+                transition={reducedMotion ? { duration: 0 } : springSnappy}
                 className="absolute inset-0 rounded-full border border-glass-border bg-glass"
               />
             ) : null}

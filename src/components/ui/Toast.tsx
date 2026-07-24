@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { AlertCircle, CheckCircle2, Info } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { springSnappy } from "@/components/motion/transitions";
 
 type ToastVariant = "info" | "success" | "error";
 
@@ -78,7 +79,7 @@ export function Toaster() {
             initial={{ opacity: 0, y: -16, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 420, damping: 30 }}
+            transition={springSnappy}
             className={cn(
               "pointer-events-auto flex max-w-full items-center gap-2 rounded-full glass-floating px-4 py-2.5",
               "text-footnote text-fg-1",

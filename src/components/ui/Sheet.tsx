@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { easeStandard, springSmooth } from "@/components/motion/transitions";
 import { IconButton } from "./IconButton";
 
 /**
@@ -123,7 +124,7 @@ export function Sheet({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+            transition={easeStandard}
             onClick={onClose}
           />
           <motion.div
@@ -139,11 +140,7 @@ export function Sheet({
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            transition={
-              reducedMotion
-                ? { duration: 0.15 }
-                : { type: "spring", stiffness: 260, damping: 28, mass: 0.9 }
-            }
+            transition={reducedMotion ? { duration: 0.15 } : springSmooth}
             drag="y"
             dragListener={false}
             dragControls={dragControls}

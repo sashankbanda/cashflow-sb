@@ -33,6 +33,11 @@ import { Slider } from "@/components/ui/Slider";
 import { TextArea, TextField } from "@/components/ui/TextField";
 import { toast } from "@/components/ui/Toast";
 import { Toggle } from "@/components/ui/Toggle";
+import { DotMatrixAmount } from "@/components/motion/DotMatrixAmount";
+import { NumberTicker } from "@/components/motion/NumberTicker";
+import { Pressable } from "@/components/motion/Pressable";
+import { Stagger } from "@/components/motion/Stagger";
+import { formatMoney } from "@/lib/format";
 import { useSheet } from "@/hooks/useSheet";
 
 const people = [
@@ -62,6 +67,8 @@ export default function KitPage() {
   const [category, setCategory] = useState<"food" | "travel" | "movies" | null>("food");
   const [expenseDate, setExpenseDate] = useState(() => new Date());
   const [amountDraft, setAmountDraft] = useState("2500");
+  const [tickerMinor, setTickerMinor] = useState(1284500);
+  const [staggerKey, setStaggerKey] = useState(0);
   const demoSheet = useSheet();
 
   return (
@@ -351,6 +358,48 @@ export default function KitPage() {
           <AmountDisplay value={amountDraft} />
           <AmountKeypad value={amountDraft} onChange={setAmountDraft} />
         </GlassCard>
+      </Section>
+
+      <Section title="Motion · Pressable">
+        <Pressable className="rounded-lg">
+          <GlassCard className="flex items-center justify-between p-5">
+            <div>
+              <p className="text-headline">Goa trip</p>
+              <p className="text-footnote text-fg-3">Press me — 0.97 spring</p>
+            </div>
+            <ArrowRight className="size-5 text-fg-3" />
+          </GlassCard>
+        </Pressable>
+      </Section>
+
+      <Section title="Motion · DotMatrixAmount + NumberTicker">
+        <GlassCard className="space-y-5 p-5 text-center">
+          <DotMatrixAmount amountMinor={8425000} />
+          <div className="text-title-2">
+            <NumberTicker value={formatMoney(tickerMinor)} />
+          </div>
+          <Button
+            variant="glass"
+            size="sm"
+            onClick={() => setTickerMinor(Math.round(Math.random() * 5000000))}
+          >
+            Randomize
+          </Button>
+        </GlassCard>
+      </Section>
+
+      <Section title="Motion · Stagger">
+        <Button variant="glass" size="sm" onClick={() => setStaggerKey((key) => key + 1)}>
+          Replay entrance
+        </Button>
+        <Stagger key={staggerKey} className="mt-3 space-y-2">
+          {people.slice(0, 4).map((person) => (
+            <GlassCard key={person.name} elevation="inset" className="flex items-center gap-3 p-4">
+              <Avatar name={person.name} size="sm" />
+              <p className="text-body">{person.name}</p>
+            </GlassCard>
+          ))}
+        </Stagger>
       </Section>
     </main>
   );

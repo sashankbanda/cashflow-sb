@@ -2,6 +2,7 @@
 
 import { Delete } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { useHaptics } from "@/hooks/useHaptics";
 import { applyKeypadKey, type KeypadKey } from "@/lib/amount-input";
 
 const KEYS: ReadonlyArray<KeypadKey> = [
@@ -30,10 +31,9 @@ export interface AmountKeypadProps {
  * component over the lib/amount-input draft model.
  */
 export function AmountKeypad({ value, onChange, className }: AmountKeypadProps) {
+  const haptics = useHaptics();
   const press = (key: KeypadKey) => {
-    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-      navigator.vibrate(3);
-    }
+    haptics.tap();
     onChange(applyKeypadKey(value, key));
   };
 
