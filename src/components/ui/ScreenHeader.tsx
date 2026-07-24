@@ -31,7 +31,9 @@ function useCollapsed(sentinel: React.RefObject<HTMLDivElement | null>): boolean
           listenersRef.current.forEach((listener) => listener());
         }
       },
-      { rootMargin: "-8px 0px 0px 0px" },
+      // The intersection region starts below the compact bar (h-12 = 48px):
+      // once the sentinel slips under it, the bar fades in.
+      { rootMargin: "-48px 0px 0px 0px" },
     );
     observer.observe(node);
     return () => observer.disconnect();
@@ -83,7 +85,6 @@ export function ScreenHeader({
         </div>
       </div>
 
-      <div ref={sentinelRef} aria-hidden />
       <header className={cn("flex items-end justify-between gap-3 px-5 pt-safe", className)}>
         <div className="pt-4">
           {eyebrow ? <p className="text-footnote text-fg-3">{eyebrow}</p> : null}
@@ -101,6 +102,7 @@ export function ScreenHeader({
         </div>
         {trailing ? <div className="flex shrink-0 items-center gap-2 pt-4">{trailing}</div> : null}
       </header>
+      <div ref={sentinelRef} aria-hidden className="h-px w-full" />
     </>
   );
 }
