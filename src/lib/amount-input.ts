@@ -59,3 +59,33 @@ export function minorToAmount(minor: number): string {
 export function isValidAmount(value: string): boolean {
   return amountToMinor(value) > 0;
 }
+
+/**
+ * Sanitize free typing (OS keyboard) into a valid decimal draft: digits and
+ * one dot, capped integer/decimal digits. Keeps a trailing dot while typing.
+ */
+export function sanitizeDecimalInput(
+  raw: string,
+  maxIntDigits: number,
+  maxDecimals: number,
+): string {
+  const cleaned = raw.replace(/[^\d.]/g, "");
+  const dotIndex = cleaned.indexOf(".");
+  if (dotIndex === -1) {
+    return cleaned.replace(/^0+(?=\d)/, "").slice(0, maxIntDigits);
+  }
+  const intPart = cleaned
+    .slice(0, dotIndex)
+    .replace(/^0+(?=\d)/, "")
+    .slice(0, maxIntDigits);
+  const decPart = cleaned
+    .slice(dotIndex + 1)
+    .replace(/\./g, "")
+    .slice(0, maxDecimals);
+  return `${intPart === "" ? "0" : intPart}.${decPart}`;
+}
+
+/** Rupee-amount variant of sanitizeDecimalInput. */
+export function sanitizeAmountInput(raw: string): string {
+  return sanitizeDecimalInput(raw, MAX_INTEGER_DIGITS, MAX_DECIMAL_DIGITS);
+}

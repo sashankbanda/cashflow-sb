@@ -3,7 +3,18 @@ import { MAX_AMOUNT_MINOR } from "@/lib/money";
 
 export const expenseDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a calendar date.");
 
-export const createExpenseSchema = z.object({
+const participantSchema = z.object({
+  memberId: z.string().min(1),
+  /** exact → paise · percent → % · shares → count. Absent for equal. */
+  weight: z.number().finite().nonnegative().optional(),
+});
+
+const payerSchema = z.object({
+  memberId: z.string().min(1),
+  amountMinor: z.number().int().positive(),
+});
+
+const expenseCoreSchema = z.object({
   groupId: z.string().min(1),
   description: z
     .string()
@@ -17,12 +28,19 @@ export const createExpenseSchema = z.object({
     .max(MAX_AMOUNT_MINOR, "That's beyond the supported amount."),
   categoryId: z.string().min(1, "Pick a category."),
   expenseDate: expenseDateSchema,
-  paidByMemberId: z.string().min(1, "Who paid?"),
-  participantMemberIds: z
-    .array(z.string().min(1))
-    .min(1, "Pick at least one person to split with."),
+  splitType: z.enum(["equal", "exact", "percent", "shares"]),
+  participants: z.array(participantSchema).min(1, "Pick at least one person to split with."),
+  payers: z.array(payerSchema).min(1, "Who paid?"),
+});
+
+export const createExpenseSchema = expenseCoreSchema.extend({
   /** Client-generated; makes offline retries and double-taps idempotent. */
   idempotencyKey: z.string().uuid(),
 });
 
+export const updateExpenseSchema = expenseCoreSchema.extend({
+  expenseId: z.string().min(1),
+});
+
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
+export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;

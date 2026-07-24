@@ -1,10 +1,15 @@
+"use client";
+
+import { useState } from "react";
 import { parseISO } from "date-fns";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 import { formatSectionLabel } from "@/lib/dates";
+import type { CategoryOption } from "@/features/categories/queries";
 import { CategoryBadge } from "@/features/categories/icons";
+import type { GroupDetail } from "@/features/groups/queries";
 import type { TimelineExpense } from "../queries";
+import { ExpenseDetailSheet } from "./ExpenseDetailSheet";
 
 function groupByDay(items: ReadonlyArray<TimelineExpense>): Array<[string, TimelineExpense[]]> {
   const sections = new Map<string, TimelineExpense[]>();
@@ -16,9 +21,14 @@ function groupByDay(items: ReadonlyArray<TimelineExpense>): Array<[string, Timel
   return [...sections.entries()];
 }
 
-export function ExpenseRow({ expense }: { expense: TimelineExpense }) {
+function ExpenseRow({ expense, onOpen }: { expense: TimelineExpense; onOpen: () => void }) {
   return (
-    <div className="flex items-center gap-3 p-4">
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`${expense.description}, ${formatMoney(expense.amountMinor)}`}
+      className="ease-out flex w-full items-center gap-3 p-4 text-left transition-colors duration-150 active:bg-glass"
+    >
       <CategoryBadge
         icon={expense.category?.icon ?? "shapes"}
         gradient={expense.category?.gradient ?? "ocean"}
@@ -34,19 +44,33 @@ export function ExpenseRow({ expense }: { expense: TimelineExpense }) {
         <p className="text-body font-semibold text-fg-1 tabular-nums">
           {formatMoney(expense.amountMinor)}
         </p>
-        <p className={cn("text-caption tabular-nums", "text-fg-3")}>
+        <p className="text-caption text-fg-3 tabular-nums">
           {expense.myShareMinor > 0
             ? `your share ${formatMoney(expense.myShareMinor)}`
             : "not involved"}
         </p>
       </div>
-    </div>
+    </button>
   );
 }
 
-/** Day-grouped expense list with sticky section captions. */
-export function ExpenseTimeline({ expenses }: { expenses: ReadonlyArray<TimelineExpense> }) {
+export interface ExpenseTimelineProps {
+  expenses: ReadonlyArray<TimelineExpense>;
+  group: GroupDetail;
+  categories: ReadonlyArray<CategoryOption>;
+  viewerUserId: string;
+}
+
+/** Day-grouped expense list; rows open the full breakdown sheet. */
+export function ExpenseTimeline({
+  expenses,
+  group,
+  categories,
+  viewerUserId,
+}: ExpenseTimelineProps) {
+  const [openId, setOpenId] = useState<string | null>(null);
   const sections = groupByDay(expenses);
+  const openExpense = expenses.find((expense) => expense.id === openId) ?? null;
 
   return (
     <div className="space-y-5">
@@ -57,11 +81,19 @@ export function ExpenseTimeline({ expenses }: { expenses: ReadonlyArray<Timeline
           </h3>
           <GlassCard elevation="inset" className="divide-y divide-white/6">
             {items.map((expense) => (
-              <ExpenseRow key={expense.id} expense={expense} />
+              <ExpenseRow key={expense.id} expense={expense} onOpen={() => setOpenId(expense.id)} />
             ))}
           </GlassCard>
         </section>
       ))}
+
+      <ExpenseDetailSheet
+        expense={openExpense}
+        onClose={() => setOpenId(null)}
+        group={group}
+        categories={categories}
+        viewerUserId={viewerUserId}
+      />
     </div>
   );
 }

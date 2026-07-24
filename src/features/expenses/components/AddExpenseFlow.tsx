@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, Check, Users, X } from "lucide-react";
+import { ArrowLeft, Users, X } from "lucide-react";
+import { parseISO } from "date-fns";
 import { AmountDisplay } from "@/components/ui/AmountDisplay";
 import { AmountKeypad } from "@/components/ui/AmountKeypad";
-import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { DateChip } from "@/components/ui/DateChip";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -19,13 +19,33 @@ import { cn } from "@/lib/cn";
 import { amountToMinor, isValidAmount } from "@/lib/amount-input";
 import { formatISODate } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
-import { computeSplits } from "@/lib/split";
 import { useAction } from "@/hooks/useAction";
 import type { CategoryOption } from "@/features/categories/queries";
 import { CategoryGlyph } from "@/features/categories/icons";
 import { asPalette, paletteBg } from "@/components/ui/palette";
 import type { GroupSummary } from "@/features/groups/queries";
-import { createExpenseAction } from "../actions";
+import { createExpenseAction, updateExpenseAction } from "../actions";
+import {
+  emptyPayerDraft,
+  emptySplitDraft,
+  payerDraftToPayers,
+  splitDraftToParticipants,
+  type PayerDraft,
+  type SplitDraft,
+} from "../split-draft";
+import { PayerEditor } from "./PayerEditor";
+import { SplitEditor } from "./SplitEditor";
+
+/** Prefill for edit mode, derived from a TimelineExpense. */
+export interface ExpenseEditInitial {
+  expenseId: string;
+  description: string;
+  amount: string;
+  categoryId: string;
+  expenseDate: string;
+  splitDraft: SplitDraft;
+  payerDraft: PayerDraft;
+}
 
 export interface AddExpenseFlowProps {
   open: boolean;
@@ -36,6 +56,8 @@ export interface AddExpenseFlowProps {
   defaultGroupId?: string;
   /** The signed-in user's id, to preselect "you" as payer. */
   viewerUserId: string;
+  /** Provide to edit an existing expense instead of creating one. */
+  initial?: ExpenseEditInitial;
 }
 
 type Step = 1 | 2 | 3;
@@ -46,12 +68,13 @@ interface Draft {
   description: string;
   categoryId: string;
   date: Date;
-  payerMemberId: string | null;
-  participantIds: ReadonlySet<string>;
+  payer: PayerDraft;
+  split: SplitDraft;
 }
 
-function stepTitle(step: Step): string {
-  return step === 1 ? "Add expense" : step === 2 ? "Who paid?" : "Split it";
+function stepTitle(step: Step, editing: boolean): string {
+  if (step === 1) return editing ? "Edit expense" : "Add expense";
+  return step === 2 ? "Who paid?" : "Split it";
 }
 
 function Flow({
@@ -60,27 +83,33 @@ function Flow({
   categories,
   defaultGroupId,
   viewerUserId,
+  initial,
 }: Omit<AddExpenseFlowProps, "open">) {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
+  const editing = Boolean(initial);
   const [step, setStep] = useState<Step>(1);
   const [direction, setDirection] = useState(1);
   const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   const initialGroup = groups.find((group) => group.id === defaultGroupId) ?? groups[0] ?? null;
+  const initialMemberIds = initialGroup?.members.map((member) => member.id) ?? [];
+  const viewerMemberOf = (group: GroupSummary | null): string | null =>
+    group?.members.find((member) => member.userId === viewerUserId)?.id ?? null;
 
   const [draft, setDraft] = useState<Draft>(() => ({
     groupId: initialGroup?.id ?? "",
-    amount: "",
-    description: "",
-    categoryId: categories[0]?.id ?? "",
-    date: new Date(),
-    payerMemberId: null,
-    participantIds: new Set(initialGroup?.members.map((member) => member.id) ?? []),
+    amount: initial?.amount ?? "",
+    description: initial?.description ?? "",
+    categoryId: initial?.categoryId ?? categories[0]?.id ?? "",
+    date: initial ? parseISO(initial.expenseDate) : new Date(),
+    payer:
+      initial?.payerDraft ??
+      emptyPayerDraft(viewerMemberOf(initialGroup) ?? initialGroup?.members[0]?.id ?? null),
+    split: initial?.splitDraft ?? emptySplitDraft(initialMemberIds),
   }));
 
   const group = groups.find((candidate) => candidate.id === draft.groupId) ?? null;
-  const myMemberId = group?.members.find((member) => member.userId === viewerUserId)?.id ?? null;
 
   const create = useAction(createExpenseAction, {
     successMessage: "Expense added",
@@ -89,18 +118,19 @@ function Flow({
       router.refresh();
     },
   });
+  const update = useAction(updateExpenseAction, {
+    successMessage: "Expense updated",
+    onSuccess: () => {
+      onClose();
+      router.refresh();
+    },
+  });
+  const pending = create.pending || update.pending;
+  const fieldError = (field: string) => create.fieldError(field) ?? update.fieldError(field);
 
   const amountMinor = amountToMinor(draft.amount);
-  const participants = useMemo(() => [...draft.participantIds], [draft.participantIds]);
-  const perHead = useMemo(() => {
-    if (amountMinor <= 0 || participants.length === 0) return new Map<string, number>();
-    const shares = computeSplits({
-      amountMinor,
-      type: "equal",
-      participants: participants.map((memberId) => ({ memberId })),
-    });
-    return new Map(shares.map((share) => [share.memberId, share.amountMinor]));
-  }, [amountMinor, participants]);
+  const payerResult = payerDraftToPayers(draft.payer, amountMinor);
+  const splitResult = splitDraftToParticipants(draft.split, amountMinor);
 
   const goTo = (next: Step) => {
     setDirection(next > step ? 1 : -1);
@@ -108,42 +138,34 @@ function Flow({
   };
 
   const selectGroup = (groupId: string) => {
-    const nextGroup = groups.find((candidate) => candidate.id === groupId);
+    const nextGroup = groups.find((candidate) => candidate.id === groupId) ?? null;
     setDraft((current) => ({
       ...current,
       groupId,
-      payerMemberId: null,
-      participantIds: new Set(nextGroup?.members.map((member) => member.id) ?? []),
+      payer: emptyPayerDraft(viewerMemberOf(nextGroup) ?? nextGroup?.members[0]?.id ?? null),
+      split: emptySplitDraft(nextGroup?.members.map((member) => member.id) ?? []),
     }));
   };
 
-  const toggleParticipant = (memberId: string) => {
-    setDraft((current) => {
-      const next = new Set(current.participantIds);
-      if (next.has(memberId)) {
-        if (next.size > 1) next.delete(memberId);
-      } else {
-        next.add(memberId);
-      }
-      return { ...current, participantIds: next };
-    });
-  };
-
   const submit = () => {
-    if (!group || !effectivePayerId) return;
-    void create.execute({
+    if (!group || !payerResult.ok || !splitResult.ok) return;
+    const core = {
       groupId: group.id,
       description: draft.description,
       amountMinor,
       categoryId: draft.categoryId,
       expenseDate: formatISODate(draft.date),
-      paidByMemberId: effectivePayerId,
-      participantMemberIds: participants,
-      idempotencyKey,
-    });
+      splitType: draft.split.type,
+      participants: splitResult.participants,
+      payers: payerResult.payers,
+    };
+    if (editing && initial) {
+      void update.execute({ ...core, expenseId: initial.expenseId });
+    } else {
+      void create.execute({ ...core, idempotencyKey });
+    }
   };
 
-  const effectivePayerId = draft.payerMemberId ?? myMemberId ?? group?.members[0]?.id ?? null;
   const step1Valid =
     Boolean(group) &&
     isValidAmount(draft.amount) &&
@@ -196,7 +218,7 @@ function Flow({
             <X />
           </IconButton>
         )}
-        <h2 className="text-headline">{stepTitle(step)}</h2>
+        <h2 className="text-headline">{stepTitle(step, editing)}</h2>
         <div
           className="flex w-9 items-center justify-center gap-1"
           aria-label={`Step ${step} of 3`}
@@ -227,7 +249,7 @@ function Flow({
         >
           {step === 1 ? (
             <div className="flex h-full flex-col gap-4">
-              {groups.length > 1 ? (
+              {!editing && groups.length > 1 ? (
                 <Select
                   sheetTitle="Group"
                   value={draft.groupId}
@@ -252,7 +274,7 @@ function Flow({
                 onChange={(event) =>
                   setDraft((current) => ({ ...current, description: event.target.value }))
                 }
-                error={create.fieldError("description")}
+                error={fieldError("description")}
                 maxLength={80}
               />
 
@@ -309,37 +331,22 @@ function Flow({
           ) : null}
 
           {step === 2 && group ? (
-            <div className="flex h-full flex-col gap-2">
-              <ul className="space-y-1.5">
-                {group.members.map((member) => {
-                  const selected = member.id === effectivePayerId;
-                  return (
-                    <li key={member.id}>
-                      <button
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() =>
-                          setDraft((current) => ({ ...current, payerMemberId: member.id }))
-                        }
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-md p-3.5 text-left",
-                          "ease-out transition-colors duration-150",
-                          selected ? "glass" : "glass-soft hover:bg-glass",
-                        )}
-                      >
-                        <Avatar name={member.displayName} image={member.image} size="sm" />
-                        <span className="flex-1 truncate text-body">
-                          {member.userId === viewerUserId ? "You" : member.displayName}
-                        </span>
-                        {selected ? <Check className="size-5 text-volt" /> : null}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+            <div className="flex h-full flex-col">
+              <PayerEditor
+                members={group.members}
+                viewerUserId={viewerUserId}
+                amountMinor={amountMinor}
+                value={draft.payer}
+                onChange={(payer) => setDraft((current) => ({ ...current, payer }))}
+              />
               <div className="mt-auto pt-3">
-                <Button variant="volt" block size="lg" onClick={() => goTo(3)}>
+                <Button
+                  variant="volt"
+                  block
+                  size="lg"
+                  disabled={!payerResult.ok}
+                  onClick={() => goTo(3)}
+                >
                   Next
                 </Button>
               </div>
@@ -347,53 +354,24 @@ function Flow({
           ) : null}
 
           {step === 3 && group ? (
-            <div className="flex h-full flex-col gap-2">
-              <p className="pb-1 text-center text-footnote text-fg-3">
-                Splitting {formatMoney(amountMinor)} equally
-              </p>
-              <ul className="space-y-1.5">
-                {group.members.map((member) => {
-                  const included = draft.participantIds.has(member.id);
-                  const share = perHead.get(member.id) ?? 0;
-                  return (
-                    <li key={member.id}>
-                      <button
-                        type="button"
-                        role="checkbox"
-                        aria-checked={included}
-                        onClick={() => toggleParticipant(member.id)}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-md p-3.5 text-left",
-                          "ease-out transition-[background-color,opacity] duration-150",
-                          included ? "glass" : "glass-soft opacity-50 hover:opacity-80",
-                        )}
-                      >
-                        <Avatar name={member.displayName} image={member.image} size="sm" />
-                        <span className="flex-1 truncate text-body">
-                          {member.userId === viewerUserId ? "You" : member.displayName}
-                        </span>
-                        {included ? (
-                          <span className="text-footnote text-fg-2 tabular-nums">
-                            {formatMoney(share)}
-                          </span>
-                        ) : (
-                          <span className="text-caption text-fg-3 uppercase">out</span>
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+            <div className="flex h-full flex-col">
+              <SplitEditor
+                members={group.members}
+                viewerUserId={viewerUserId}
+                amountMinor={amountMinor}
+                value={draft.split}
+                onChange={(split) => setDraft((current) => ({ ...current, split }))}
+              />
               <div className="mt-auto pt-3">
                 <Button
                   variant="volt"
                   block
                   size="lg"
-                  loading={create.pending}
-                  disabled={participants.length === 0}
+                  loading={pending}
+                  disabled={!splitResult.ok}
                   onClick={submit}
                 >
-                  Add expense · {formatMoney(amountMinor)}
+                  {editing ? "Save changes" : "Add expense"} · {formatMoney(amountMinor)}
                 </Button>
               </div>
             </div>
@@ -404,7 +382,7 @@ function Flow({
   );
 }
 
-/** The 3-step expense flow inside a full-height sheet. */
+/** The 3-step expense flow (create or edit) inside a full-height sheet. */
 export function AddExpenseFlow({ open, onClose, ...props }: AddExpenseFlowProps) {
   return (
     <Sheet open={open} onClose={onClose} detent="full" hideHeader contentClassName="flex flex-col">

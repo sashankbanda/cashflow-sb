@@ -4,6 +4,8 @@ import {
   applyKeypadKey,
   isValidAmount,
   minorToAmount,
+  sanitizeAmountInput,
+  sanitizeDecimalInput,
   type KeypadKey,
 } from "./amount-input";
 
@@ -76,5 +78,27 @@ describe("isValidAmount", () => {
     expect(isValidAmount("0")).toBe(false);
     expect(isValidAmount("0.00")).toBe(false);
     expect(isValidAmount("0.01")).toBe(true);
+  });
+});
+
+describe("sanitizeDecimalInput / sanitizeAmountInput", () => {
+  it("strips non-numeric characters", () => {
+    expect(sanitizeAmountInput("₹1,2a50")).toBe("1250");
+  });
+
+  it("keeps a single dot and a trailing dot while typing", () => {
+    expect(sanitizeAmountInput("12.")).toBe("12.");
+    expect(sanitizeAmountInput("12.3.4")).toBe("12.34");
+  });
+
+  it("caps decimals and integer digits", () => {
+    expect(sanitizeAmountInput("1.999")).toBe("1.99");
+    expect(sanitizeAmountInput("12345678901")).toBe("123456789");
+    expect(sanitizeDecimalInput("123.456", 3, 2)).toBe("123.45");
+  });
+
+  it("normalizes leading zeros and bare dots", () => {
+    expect(sanitizeAmountInput("007")).toBe("7");
+    expect(sanitizeAmountInput(".5")).toBe("0.5");
   });
 });
