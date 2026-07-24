@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { Stagger } from "@/components/motion/Stagger";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { IconButton } from "@/components/ui/IconButton";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ActivityRow } from "@/components/widgets/ActivityRow";
@@ -148,9 +147,13 @@ export default async function HomePage() {
         eyebrow={greeting}
         trailing={
           <>
-            <IconButton aria-label="Search" size="sm">
+            <Link
+              href="/search"
+              aria-label="Search"
+              className="ease-out inline-flex size-9 items-center justify-center rounded-full glass text-fg-2 transition-[transform,filter] duration-150 hover:text-fg-1 active:scale-[0.97] [&_svg]:size-4"
+            >
               <Search />
-            </IconButton>
+            </Link>
             <NotificationBell unread={unread} />
           </>
         }
