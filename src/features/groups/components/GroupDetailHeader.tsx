@@ -11,13 +11,26 @@ import { Sheet } from "@/components/ui/Sheet";
 import { cn } from "@/lib/cn";
 import { useAction } from "@/hooks/useAction";
 import { useSheet } from "@/hooks/useSheet";
+import {
+  memberBalanceLabel,
+  myBalanceLabel,
+  toneOnGradientClass,
+  toneTextClass,
+} from "@/features/balances/label";
+import type { GroupBalances } from "@/features/balances/queries";
 import { archiveGroupAction } from "../actions";
 import type { GroupDetail } from "../queries";
 import { GroupFormSheet } from "./GroupFormSheet";
 import { MembersSheet } from "./MembersSheet";
 
-/** Group detail cover: back, gradient card, member chips, settings. */
-export function GroupDetailHeader({ group }: { group: GroupDetail }) {
+/** Group detail cover: back, gradient card with balances, member chips. */
+export function GroupDetailHeader({
+  group,
+  balances,
+}: {
+  group: GroupDetail;
+  balances: GroupBalances;
+}) {
   const router = useRouter();
   const editSheet = useSheet();
   const archiveSheet = useSheet();
@@ -59,7 +72,15 @@ export function GroupDetailHeader({ group }: { group: GroupDetail }) {
                 ) : null}
                 {group.name}
               </h1>
-              <p className="mt-1 text-footnote text-white/70">
+              <p
+                className={cn(
+                  "mt-1 text-headline",
+                  toneOnGradientClass[myBalanceLabel(balances.myNetMinor).tone],
+                )}
+              >
+                {myBalanceLabel(balances.myNetMinor).text}
+              </p>
+              <p className="mt-0.5 text-footnote text-white/70">
                 {group.memberCount} member{group.memberCount === 1 ? "" : "s"}
               </p>
             </div>
@@ -79,20 +100,26 @@ export function GroupDetailHeader({ group }: { group: GroupDetail }) {
         >
           <UserRoundPlus className="size-4" /> Invite
         </button>
-        {group.members.map((member) => (
-          <span
-            key={member.id}
-            className={cn(
-              "inline-flex h-9 shrink-0 items-center gap-2 rounded-full glass-soft pr-3.5 pl-1.5",
-            )}
-          >
-            <Avatar name={member.displayName} image={member.image} size="xs" />
-            <span className="text-footnote text-fg-2">
-              {member.displayName}
-              {member.isGhost ? <span className="text-fg-3"> · ghost</span> : null}
+        {group.members.map((member) => {
+          const net = balances.byMember[member.id] ?? 0;
+          const label = memberBalanceLabel(net);
+          return (
+            <span
+              key={member.id}
+              className={cn(
+                "inline-flex h-9 shrink-0 items-center gap-2 rounded-full glass-soft pr-3.5 pl-1.5",
+              )}
+            >
+              <Avatar name={member.displayName} image={member.image} size="xs" />
+              <span className="text-footnote text-fg-2">
+                {member.displayName}
+                <span className={cn("ml-1.5 tabular-nums", toneTextClass[label.tone])}>
+                  {label.text}
+                </span>
+              </span>
             </span>
-          </span>
-        ))}
+          );
+        })}
       </div>
 
       <MembersSheet open={membersSheet.isOpen} onClose={membersSheet.close} group={group} />

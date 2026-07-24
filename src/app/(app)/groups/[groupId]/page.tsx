@@ -4,6 +4,7 @@ import { ReceiptText } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { requireUser } from "@/features/auth/session";
+import { getGroupBalances } from "@/features/balances/queries";
 import { getCategoriesForUser } from "@/features/categories/queries";
 import { ExpenseTimeline } from "@/features/expenses/components/ExpenseTimeline";
 import { getGroupTimeline } from "@/features/expenses/queries";
@@ -31,14 +32,15 @@ export default async function GroupDetailPage({
     throw error;
   }
 
-  const [timeline, categories] = await Promise.all([
+  const [timeline, categories, balances] = await Promise.all([
     getGroupTimeline(user.id, groupId),
     getCategoriesForUser(user.id),
+    getGroupBalances(user.id, groupId),
   ]);
 
   return (
     <div className="flex flex-col gap-6">
-      <GroupDetailHeader group={group} />
+      <GroupDetailHeader group={group} balances={balances} />
       <div className="px-5">
         {timeline.length === 0 ? (
           <GlassCard elevation="inset">

@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { authedAction } from "@/server/action";
+import { groupBalancesTag } from "@/features/balances/queries";
 import { createExpenseSchema, updateExpenseSchema } from "./schemas";
 import { createExpense, updateExpense } from "./service";
 
@@ -10,6 +11,7 @@ export const createExpenseAction = authedAction({
   schema: createExpenseSchema,
   handler: async ({ input, ctx }) => {
     const { expenseId } = await createExpense(ctx.user, input);
+    revalidateTag(groupBalancesTag(input.groupId), "max");
     revalidatePath(`/groups/${input.groupId}`);
     revalidatePath("/groups");
     revalidatePath("/home");
@@ -22,6 +24,7 @@ export const updateExpenseAction = authedAction({
   schema: updateExpenseSchema,
   handler: async ({ input, ctx }) => {
     const { expenseId } = await updateExpense(ctx.user, input);
+    revalidateTag(groupBalancesTag(input.groupId), "max");
     revalidatePath(`/groups/${input.groupId}`);
     revalidatePath("/groups");
     revalidatePath("/home");
