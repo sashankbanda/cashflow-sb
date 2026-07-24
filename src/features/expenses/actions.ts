@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
+import { z } from "zod";
 import { authedAction } from "@/server/action";
 import { groupBalancesTag } from "@/features/balances/queries";
 import { createExpenseSchema, updateExpenseSchema } from "./schemas";
-import { createExpense, updateExpense } from "./service";
+import { createExpense, deleteExpense, updateExpense } from "./service";
 
 export const createExpenseAction = authedAction({
   name: "expenses.create",
@@ -16,6 +17,19 @@ export const createExpenseAction = authedAction({
     revalidatePath("/groups");
     revalidatePath("/home");
     return { expenseId };
+  },
+});
+
+export const deleteExpenseAction = authedAction({
+  name: "expenses.delete",
+  schema: z.object({ expenseId: z.string().min(1), groupId: z.string().min(1) }),
+  handler: async ({ input, ctx }) => {
+    await deleteExpense(ctx.user, input.expenseId, input.groupId);
+    revalidateTag(groupBalancesTag(input.groupId), "max");
+    revalidatePath(`/groups/${input.groupId}`);
+    revalidatePath("/groups");
+    revalidatePath("/home");
+    return { deleted: true };
   },
 });
 

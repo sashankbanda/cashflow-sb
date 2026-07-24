@@ -1,10 +1,17 @@
 import "server-only";
 import { formatISO } from "date-fns";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import type { SplitType } from "@/lib/split";
 import { db } from "@/server/db";
-import { expenses, settlements } from "@/server/db/schema";
+import { activityLogs, expenses, settlements } from "@/server/db/schema";
 import { assertMember } from "@/features/groups/service";
+
+export interface ExpenseTrailEntry {
+  verb: "expense_added" | "expense_updated" | "expense_deleted";
+  actorName: string;
+  /** ISO datetime. */
+  at: string;
+}
 
 export interface ExpensePartyLine {
   memberId: string;
@@ -33,6 +40,7 @@ export interface TimelineExpense {
   createdByUserId: string;
   payers: ExpensePartyLine[];
   splits: ExpensePartyLine[];
+  trail: ExpenseTrailEntry[];
 }
 
 export interface TimelineSettlement {
@@ -40,6 +48,8 @@ export interface TimelineSettlement {
   amountMinor: number;
   /** ISO date (yyyy-mm-dd) of the settlement. */
   date: string;
+  fromMemberId: string;
+  toMemberId: string;
   fromLabel: string;
   toLabel: string;
   method: "cash" | "upi" | "bank" | "other";
@@ -94,6 +104,8 @@ export async function getGroupTimeline(userId: string, groupId: string): Promise
     id: row.id,
     amountMinor: row.amountMinor,
     date: formatISO(row.settledAt, { representation: "date" }),
+    fromMemberId: row.fromMemberId,
+    toMemberId: row.toMemberId,
     fromLabel:
       row.fromMember?.id === myMember.id ? "You" : (row.fromMember?.displayName ?? "Someone"),
     toLabel: row.toMember?.id === myMember.id ? "you" : (row.toMember?.displayName ?? "Someone"),
@@ -101,6 +113,30 @@ export async function getGroupTimeline(userId: string, groupId: string): Promise
     note: row.note,
     involvesViewer: row.fromMember?.id === myMember.id || row.toMember?.id === myMember.id,
   }));
+
+  const trailRows = await db.query.activityLogs.findMany({
+    where: and(eq(activityLogs.groupId, groupId), eq(activityLogs.objectType, "expense")),
+    orderBy: [asc(activityLogs.id)],
+    columns: { objectId: true, verb: true, createdAt: true },
+    with: { actor: { columns: { name: true } } },
+  });
+  const trailByExpense = new Map<string, ExpenseTrailEntry[]>();
+  for (const row of trailRows) {
+    if (
+      row.verb !== "expense_added" &&
+      row.verb !== "expense_updated" &&
+      row.verb !== "expense_deleted"
+    ) {
+      continue;
+    }
+    const list = trailByExpense.get(row.objectId) ?? [];
+    list.push({
+      verb: row.verb,
+      actorName: row.actor?.name ?? "Someone",
+      at: row.createdAt.toISOString(),
+    });
+    trailByExpense.set(row.objectId, list);
+  }
 
   const expenseItems: TimelineItem[] = rows.map((row) => {
     const toLine = (entry: {
@@ -140,6 +176,7 @@ export async function getGroupTimeline(userId: string, groupId: string): Promise
       createdByUserId: row.createdBy,
       payers,
       splits,
+      trail: trailByExpense.get(row.id) ?? [],
     };
   });
 

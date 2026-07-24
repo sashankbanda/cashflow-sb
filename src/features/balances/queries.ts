@@ -13,6 +13,10 @@ export interface MemberBalance {
   image: string | null;
   userId: string | null;
   netMinor: number;
+  /** Total they put down (Σ payer rows). */
+  paidMinor: number;
+  /** Total consumption (Σ split shares). */
+  spentMinor: number;
 }
 
 interface GroupMoneyGraph {
@@ -38,7 +42,9 @@ async function fetchGroupMoneyGraph(groupId: string): Promise<GroupMoneyGraph> {
       (
         coalesce(p.total, 0) - coalesce(s.total, 0)
         + coalesce(so.total, 0) - coalesce(si.total, 0)
-      )::bigint as net_minor
+      )::bigint as net_minor,
+      coalesce(p.total, 0)::bigint as paid_minor,
+      coalesce(s.total, 0)::bigint as spent_minor
     from group_members m
     left join users u on u.id = m.user_id
     left join (
@@ -78,6 +84,8 @@ async function fetchGroupMoneyGraph(groupId: string): Promise<GroupMoneyGraph> {
       user_id: string | null;
       image: string | null;
       net_minor: string | number;
+      paid_minor: string | number;
+      spent_minor: string | number;
     }>
   ).map((row) => ({
     memberId: row.member_id,
@@ -85,6 +93,8 @@ async function fetchGroupMoneyGraph(groupId: string): Promise<GroupMoneyGraph> {
     image: row.image,
     userId: row.user_id,
     netMinor: Number(row.net_minor),
+    paidMinor: Number(row.paid_minor),
+    spentMinor: Number(row.spent_minor),
   }));
 
   // Runtime sanity: nets must sum to zero (leave rule guarantees it holds
@@ -125,7 +135,9 @@ async function fetchGroupMoneyGraph(groupId: string): Promise<GroupMoneyGraph> {
 }
 
 function cachedGroupMoneyGraph(groupId: string): Promise<GroupMoneyGraph> {
-  return unstable_cache(() => fetchGroupMoneyGraph(groupId), ["group-money", groupId], {
+  // Bump the version segment whenever GroupMoneyGraph's shape changes —
+  // cached entries outlive deploys.
+  return unstable_cache(() => fetchGroupMoneyGraph(groupId), ["group-money-v2", groupId], {
     tags: [groupBalancesTag(groupId)],
   })();
 }

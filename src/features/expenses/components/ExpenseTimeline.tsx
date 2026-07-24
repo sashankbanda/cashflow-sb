@@ -1,16 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { parseISO } from "date-fns";
-import { HandCoins } from "lucide-react";
+import { HandCoins, ListFilter } from "lucide-react";
+import { Chip } from "@/components/ui/Chip";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { formatMoney } from "@/lib/format";
 import { formatSectionLabel } from "@/lib/dates";
 import type { CategoryOption } from "@/features/categories/queries";
 import { CategoryBadge } from "@/features/categories/icons";
 import type { GroupDetail } from "@/features/groups/queries";
+import { useSheet } from "@/hooks/useSheet";
 import type { TimelineExpense, TimelineItem, TimelineSettlement } from "../queries";
 import { ExpenseDetailSheet } from "./ExpenseDetailSheet";
+import {
+  activeFilterCount,
+  applyTimelineFilter,
+  EMPTY_FILTER,
+  TimelineFilterSheet,
+  type TimelineFilter,
+} from "./TimelineFilterSheet";
 
 function dateOf(item: TimelineItem): string {
   return item.kind === "expense" ? item.expenseDate : item.date;
@@ -98,7 +108,12 @@ export interface ExpenseTimelineProps {
 /** Day-grouped group timeline: expense rows open the breakdown sheet. */
 export function ExpenseTimeline({ items, group, categories, viewerUserId }: ExpenseTimelineProps) {
   const [openId, setOpenId] = useState<string | null>(null);
-  const sections = groupByDay(items);
+  const [filter, setFilter] = useState<TimelineFilter>(EMPTY_FILTER);
+  const filterSheet = useSheet();
+
+  const filtered = useMemo(() => applyTimelineFilter(items, filter), [items, filter]);
+  const filterCount = activeFilterCount(filter);
+  const sections = groupByDay(filtered);
   const openExpense =
     items.find(
       (item): item is { kind: "expense" } & TimelineExpense =>
@@ -107,6 +122,29 @@ export function ExpenseTimeline({ items, group, categories, viewerUserId }: Expe
 
   return (
     <div className="space-y-5">
+      <div className="-mx-1 scrollbar-none flex items-center gap-2 overflow-x-auto px-1">
+        <Chip
+          icon={<ListFilter />}
+          selected={filterCount > 0}
+          onClick={filterSheet.open}
+          aria-haspopup="dialog"
+        >
+          Filter{filterCount > 0 ? ` · ${filterCount}` : ""}
+        </Chip>
+        {filterCount > 0 ? <Chip onClick={() => setFilter(EMPTY_FILTER)}>Clear</Chip> : null}
+      </div>
+
+      {filtered.length === 0 ? (
+        <GlassCard elevation="inset">
+          <EmptyState
+            icon={<ListFilter />}
+            palette="iris"
+            title="Nothing matches"
+            description="Loosen the filters to see this group's history again."
+          />
+        </GlassCard>
+      ) : null}
+
       {sections.map(([date, sectionItems]) => (
         <section key={date} aria-label={formatSectionLabel(parseISO(date))}>
           <h3 className="sticky top-12 z-10 px-1 pb-2 text-caption text-fg-3 uppercase">
@@ -130,6 +168,15 @@ export function ExpenseTimeline({ items, group, categories, viewerUserId }: Expe
         group={group}
         categories={categories}
         viewerUserId={viewerUserId}
+      />
+
+      <TimelineFilterSheet
+        open={filterSheet.isOpen}
+        onClose={filterSheet.close}
+        members={group.members}
+        categories={categories}
+        value={filter}
+        onChange={setFilter}
       />
     </div>
   );

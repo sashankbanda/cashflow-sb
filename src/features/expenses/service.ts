@@ -190,6 +190,32 @@ async function assertCanModify(
   }
 }
 
+/** Soft-delete an expense; balances recompute exactly without it. */
+export async function deleteExpense(
+  user: ActionUser,
+  expenseId: string,
+  groupId: string,
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    await assertCanModify(tx, user, expenseId, groupId);
+    const expense = await tx.query.expenses.findFirst({
+      where: eq(expenses.id, expenseId),
+      columns: { description: true, amountMinor: true },
+    });
+    if (!expense) throw notFound("Expense");
+    await tx.update(expenses).set({ deletedAt: new Date() }).where(eq(expenses.id, expenseId));
+    await tx.insert(activityLogs).values({
+      id: newId(),
+      groupId,
+      actorUserId: user.id,
+      verb: "expense_deleted",
+      objectType: "expense",
+      objectId: expenseId,
+      payload: { description: expense.description, amountMinor: expense.amountMinor },
+    });
+  });
+}
+
 /**
  * Rewrite an expense: replaces payers/splits atomically with re-validated
  * engine output; original input weights are preserved for the next edit.

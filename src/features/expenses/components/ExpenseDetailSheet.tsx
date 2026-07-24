@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { parseISO } from "date-fns";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -9,7 +11,9 @@ import { Sheet } from "@/components/ui/Sheet";
 import { formatDayLabel } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { minorToAmount } from "@/lib/amount-input";
+import { useAction } from "@/hooks/useAction";
 import { useSheet } from "@/hooks/useSheet";
+import { deleteExpenseAction } from "../actions";
 import type { CategoryOption } from "@/features/categories/queries";
 import { CategoryBadge } from "@/features/categories/icons";
 import type { GroupDetail } from "@/features/groups/queries";
@@ -126,6 +130,12 @@ export interface ExpenseDetailSheetProps {
 }
 
 /** Full expense breakdown with the edit entry point. */
+const TRAIL_VERB_LABEL = {
+  expense_added: "Added",
+  expense_updated: "Edited",
+  expense_deleted: "Deleted",
+} as const;
+
 export function ExpenseDetailSheet({
   expense,
   onClose,
@@ -133,7 +143,18 @@ export function ExpenseDetailSheet({
   categories,
   viewerUserId,
 }: ExpenseDetailSheetProps) {
+  const router = useRouter();
   const editSheet = useSheet();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  const remove = useAction(deleteExpenseAction, {
+    successMessage: "Expense deleted",
+    onSuccess: () => {
+      setConfirmingDelete(false);
+      onClose();
+      router.refresh();
+    },
+  });
 
   const canEdit =
     expense !== null &&
@@ -170,10 +191,44 @@ export function ExpenseDetailSheet({
               note={(line) => weightNote(expense, line)}
             />
 
+            {expense.trail.length > 0 ? (
+              <div className="space-y-1 px-1">
+                {expense.trail.map((entry, index) => (
+                  <p key={`${entry.at}-${index}`} className="text-caption text-fg-3">
+                    {TRAIL_VERB_LABEL[entry.verb]} by {entry.actorName} ·{" "}
+                    {formatDayLabel(new Date(entry.at))}
+                  </p>
+                ))}
+              </div>
+            ) : null}
+
             {canEdit ? (
-              <Button variant="glass" block onClick={editSheet.open}>
-                <Pencil className="size-4" /> Edit expense
-              </Button>
+              <div className="space-y-2">
+                <Button variant="glass" block onClick={editSheet.open}>
+                  <Pencil className="size-4" /> Edit expense
+                </Button>
+                {confirmingDelete ? (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="destructive"
+                      block
+                      loading={remove.pending}
+                      onClick={() =>
+                        void remove.execute({ expenseId: expense.id, groupId: group.id })
+                      }
+                    >
+                      <Trash2 className="size-4" /> Delete forever
+                    </Button>
+                    <Button variant="ghost" block onClick={() => setConfirmingDelete(false)}>
+                      Keep it
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="ghost" block onClick={() => setConfirmingDelete(true)}>
+                    <Trash2 className="size-4" /> Delete expense
+                  </Button>
+                )}
+              </div>
             ) : null}
           </div>
         ) : null}

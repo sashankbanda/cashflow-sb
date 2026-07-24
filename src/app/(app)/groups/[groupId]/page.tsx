@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { PartyPopper, ReceiptText } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { Avatar } from "@/components/ui/Avatar";
+import { formatMoney } from "@/lib/format";
 import { requireUser } from "@/features/auth/session";
-import { getGroupBalances } from "@/features/balances/queries";
+import { getGroupBalances, type MemberBalance } from "@/features/balances/queries";
 import { getCategoriesForUser } from "@/features/categories/queries";
 import { ExpenseTimeline } from "@/features/expenses/components/ExpenseTimeline";
 import { getGroupTimeline } from "@/features/expenses/queries";
@@ -14,6 +16,41 @@ import { SettleUpLauncher } from "@/features/settlements/components/SettleUpLaun
 import { AppError } from "@/server/errors";
 
 export const metadata: Metadata = { title: "Group" };
+
+/** Per-member spending mini-summary (share consumed, with relative bars). */
+function MemberTotals({ members }: { members: MemberBalance[] }) {
+  const max = Math.max(...members.map((member) => member.spentMinor), 1);
+  const total = members.reduce((sum, member) => sum + member.spentMinor, 0);
+  return (
+    <GlassCard elevation="inset" className="space-y-3 p-4">
+      <div className="flex items-baseline justify-between">
+        <p className="text-caption text-fg-3 uppercase">Spending by member</p>
+        <p className="text-footnote text-fg-2 tabular-nums">{formatMoney(total)} total</p>
+      </div>
+      <div className="space-y-2.5">
+        {members.map((member) => (
+          <div key={member.memberId} className="space-y-1">
+            <div className="flex items-center justify-between gap-3">
+              <span className="flex min-w-0 items-center gap-2">
+                <Avatar name={member.displayName} image={member.image} size="xs" />
+                <span className="truncate text-footnote text-fg-2">{member.displayName}</span>
+              </span>
+              <span className="shrink-0 text-footnote text-fg-1 tabular-nums">
+                {formatMoney(member.spentMinor)}
+              </span>
+            </div>
+            <div className="h-1 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-volt"
+                style={{ width: `${Math.round((member.spentMinor / max) * 100)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </GlassCard>
+  );
+}
 
 export default async function GroupDetailPage({
   params,
@@ -67,12 +104,15 @@ export default async function GroupDetailPage({
             />
           </GlassCard>
         ) : (
-          <ExpenseTimeline
-            items={timeline}
-            group={group}
-            categories={categories}
-            viewerUserId={user.id}
-          />
+          <>
+            <MemberTotals members={balances.members} />
+            <ExpenseTimeline
+              items={timeline}
+              group={group}
+              categories={categories}
+              viewerUserId={user.id}
+            />
+          </>
         )}
       </div>
       <SettleUpLauncher groupId={group.id} balances={balances} viewerUserId={user.id} />

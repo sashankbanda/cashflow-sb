@@ -1,3 +1,4 @@
+import { PullToRefresh } from "@/components/motion/PullToRefresh";
 import { TabBar } from "@/components/ui/TabBar";
 import { getSession } from "@/features/auth/session";
 import { getCategoriesForUser } from "@/features/categories/queries";
@@ -16,7 +17,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <>
-      <div className="mx-auto w-full max-w-md flex-1 pb-dock">{children}</div>
+      <PullToRefresh>
+        <div className="mx-auto w-full max-w-md flex-1 pb-dock">{children}</div>
+      </PullToRefresh>
       <TabBar groups={groups} categories={categories} viewerUserId={session?.user.id ?? ""} />
     </>
   );
