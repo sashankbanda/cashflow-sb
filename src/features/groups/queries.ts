@@ -12,6 +12,8 @@ export interface GroupMemberSummary {
   image: string | null;
   isGhost: boolean;
   role: "owner" | "member";
+  /** Linked account, null for ghosts. Used to spot "you" in member lists. */
+  userId: string | null;
 }
 
 export interface GroupSummary {
@@ -43,6 +45,7 @@ function toMemberSummary(member: {
     image: member.user?.image ?? null,
     isGhost: member.userId === null,
     role: member.role,
+    userId: member.userId,
   };
 }
 

@@ -1,4 +1,17 @@
-import { format, isSameYear, isToday, isYesterday, startOfMonth, getDaysInMonth } from "date-fns";
+import {
+  format,
+  formatISO,
+  getDaysInMonth,
+  isSameYear,
+  isToday,
+  isYesterday,
+  startOfMonth,
+} from "date-fns";
+
+/** Local-timezone calendar date as yyyy-mm-dd (for date columns). */
+export function formatISODate(date: Date): string {
+  return formatISO(date, { representation: "date" });
+}
 
 /** Human day label: "Today", "Yesterday", "Sat, 12 Jul" (+ year when not current). */
 export function formatDayLabel(date: Date): string {

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChartPie, CircleUserRound, House, Plus, Sparkles, Users } from "lucide-react";
+import { ChartPie, CircleUserRound, House, Plus, Users } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useSheet } from "@/hooks/useSheet";
-import { EmptyState } from "./EmptyState";
-import { Sheet } from "./Sheet";
+import type { CategoryOption } from "@/features/categories/queries";
+import type { GroupSummary } from "@/features/groups/queries";
+import { AddExpenseFlow } from "@/features/expenses/components/AddExpenseFlow";
 
 const LEFT_TABS = [
   { href: "/home", icon: House, label: "Home" },
@@ -48,16 +49,23 @@ function TabLink({
   );
 }
 
+export interface TabBarProps {
+  groups: GroupSummary[];
+  categories: CategoryOption[];
+  viewerUserId: string;
+}
+
 /**
  * The floating glass dock: Home · Groups · [volt Add] · Insights · Profile.
- * Fixed above the bottom safe-area; content behind it pads with pb-dock.
+ * The volt button opens the expense flow, preselecting the group in view.
  */
-export function TabBar() {
+export function TabBar({ groups, categories, viewerUserId }: TabBarProps) {
   const pathname = usePathname();
   const addSheet = useSheet();
   const haptics = useHaptics();
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const groupIdInView = /^\/groups\/([^/]+)/.exec(pathname)?.[1];
 
   return (
     <>
@@ -89,15 +97,14 @@ export function TabBar() {
         </div>
       </nav>
 
-      {/* Interim target for the volt button; replaced by the expense flow phase. */}
-      <Sheet open={addSheet.isOpen} onClose={addSheet.close} title="Add expense">
-        <EmptyState
-          icon={<Sparkles />}
-          palette="iris"
-          title="Almost here"
-          description="The three-step expense flow lands in an upcoming phase of this build."
-        />
-      </Sheet>
+      <AddExpenseFlow
+        open={addSheet.isOpen}
+        onClose={addSheet.close}
+        groups={groups}
+        categories={categories}
+        defaultGroupId={groupIdInView}
+        viewerUserId={viewerUserId}
+      />
     </>
   );
 }
