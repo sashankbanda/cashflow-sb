@@ -9,8 +9,11 @@ import { requireUser } from "@/features/auth/session";
 
 export const metadata: Metadata = { title: "Profile" };
 
+const linkRows = [
+  { icon: Tags, label: "Categories & tags", href: "/settings/categories" },
+] as const;
+
 const settingsRows = [
-  { icon: Tags, label: "Categories & tags" },
   { icon: Bell, label: "Notifications" },
   { icon: Palette, label: "Appearance" },
   { icon: Download, label: "Export data" },
@@ -47,6 +50,17 @@ export default async function ProfilePage() {
             <p className="flex-1 text-body">Friends</p>
             <ChevronRight className="size-4 text-fg-3" />
           </Link>
+          {linkRows.map((row) => (
+            <Link
+              key={row.label}
+              href={row.href}
+              className="ease-out flex items-center gap-3 p-4 transition-colors duration-150 active:bg-glass"
+            >
+              <row.icon className="size-5 text-fg-2" />
+              <p className="flex-1 text-body">{row.label}</p>
+              <ChevronRight className="size-4 text-fg-3" />
+            </Link>
+          ))}
           {settingsRows.map((row) => (
             <div key={row.label} className="flex items-center gap-3 p-4">
               <row.icon className="size-5 text-fg-2" />

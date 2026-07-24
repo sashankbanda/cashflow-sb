@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseISO } from "date-fns";
 import { Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Sheet } from "@/components/ui/Sheet";
 import { cn } from "@/lib/cn";
@@ -30,7 +31,22 @@ function groupByDay(entries: ReadonlyArray<LedgerEntry>): Array<[string, LedgerE
 export function PersonalLedger({ entries }: { entries: ReadonlyArray<LedgerEntry> }) {
   const router = useRouter();
   const [pendingDelete, setPendingDelete] = useState<LedgerEntry | null>(null);
-  const sections = groupByDay(entries);
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+
+  const allTags = useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const entry of entries) {
+      for (const tag of entry.tags) byId.set(tag.id, tag.name);
+    }
+    return [...byId.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [entries]);
+
+  const visible = tagFilter
+    ? entries.filter((entry) => entry.tags.some((tag) => tag.id === tagFilter))
+    : entries;
+  const sections = groupByDay(visible);
 
   const remove = useAction(deletePersonalExpenseAction, {
     successMessage: "Expense deleted",
@@ -42,6 +58,20 @@ export function PersonalLedger({ entries }: { entries: ReadonlyArray<LedgerEntry
 
   return (
     <div className="space-y-5">
+      {allTags.length > 0 ? (
+        <div className="-mx-1 scrollbar-none flex gap-2 overflow-x-auto px-1">
+          {allTags.map((tag) => (
+            <Chip
+              key={tag.id}
+              selected={tagFilter === tag.id}
+              onClick={() => setTagFilter(tagFilter === tag.id ? null : tag.id)}
+            >
+              #{tag.name}
+            </Chip>
+          ))}
+        </div>
+      ) : null}
+
       {sections.map(([date, items]) => (
         <section key={date} aria-label={formatSectionLabel(parseISO(date))}>
           <h3 className="sticky top-12 z-10 px-1 pb-2 text-caption text-fg-3 uppercase">
@@ -65,6 +95,9 @@ export function PersonalLedger({ entries }: { entries: ReadonlyArray<LedgerEntry
                           <span className="text-fg-2">via {entry.source}</span>
                         </>
                       ) : null}
+                      {entry.tags.length > 0
+                        ? ` · ${entry.tags.map((tag) => `#${tag.name}`).join(" ")}`
+                        : ""}
                     </p>
                   </div>
                   <p className="shrink-0 text-body font-semibold text-fg-1 tabular-nums">

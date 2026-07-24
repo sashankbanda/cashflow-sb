@@ -1,7 +1,12 @@
 import "server-only";
-import { and, desc, eq, gte, isNotNull, isNull, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, sql } from "drizzle-orm";
 import { db } from "@/server/db";
-import { expenses, expenseSplits } from "@/server/db/schema";
+import { expenses, expenseSplits, expenseTags, tags } from "@/server/db/schema";
+
+export interface LedgerTag {
+  id: string;
+  name: string;
+}
 
 export interface LedgerEntry {
   /** Split id for group shares, expense id for personal — stable per row. */
@@ -16,6 +21,7 @@ export interface LedgerEntry {
   source: string | null;
   /** True for standalone personal expenses (deletable from the ledger). */
   isPersonal: boolean;
+  tags: LedgerTag[];
 }
 
 /**
@@ -57,6 +63,27 @@ export async function getPersonalLedger(
     .orderBy(desc(expenses.expenseDate), desc(expenses.id))
     .limit(range ? 5000 : 300);
 
+  // Tags for the returned expenses, in one pass.
+  const expenseIds = rows.map((row) => row.expenseId);
+  const tagRows =
+    expenseIds.length > 0
+      ? await db
+          .select({
+            expenseId: expenseTags.expenseId,
+            id: tags.id,
+            name: tags.name,
+          })
+          .from(expenseTags)
+          .innerJoin(tags, eq(tags.id, expenseTags.tagId))
+          .where(inArray(expenseTags.expenseId, expenseIds))
+      : [];
+  const tagsByExpense = new Map<string, LedgerTag[]>();
+  for (const tag of tagRows) {
+    const list = tagsByExpense.get(tag.expenseId) ?? [];
+    list.push({ id: tag.id, name: tag.name });
+    tagsByExpense.set(tag.expenseId, list);
+  }
+
   return rows.map((row) => ({
     id: row.splitId,
     expenseId: row.expenseId,
@@ -73,6 +100,7 @@ export async function getPersonalLedger(
       : null,
     source: row.groupId ? (row.groupName ?? "Group") : null,
     isPersonal: row.groupId === null,
+    tags: tagsByExpense.get(row.expenseId) ?? [],
   }));
 }
 

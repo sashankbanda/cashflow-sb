@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useSheet } from "@/hooks/useSheet";
 import type { CategoryOption } from "@/features/categories/queries";
+import type { TagOption } from "@/features/categories/tags-service";
 import type { GroupSummary } from "@/features/groups/queries";
 import { AddExpenseFlow } from "@/features/expenses/components/AddExpenseFlow";
 
@@ -52,6 +53,7 @@ function TabLink({
 export interface TabBarProps {
   groups: GroupSummary[];
   categories: CategoryOption[];
+  tags: TagOption[];
   viewerUserId: string;
 }
 
@@ -59,7 +61,7 @@ export interface TabBarProps {
  * The floating glass dock: Home · Groups · [volt Add] · Insights · Profile.
  * The volt button opens the expense flow, preselecting the group in view.
  */
-export function TabBar({ groups, categories, viewerUserId }: TabBarProps) {
+export function TabBar({ groups, categories, tags, viewerUserId }: TabBarProps) {
   const pathname = usePathname();
   const addSheet = useSheet();
   const haptics = useHaptics();
@@ -104,6 +106,7 @@ export function TabBar({ groups, categories, viewerUserId }: TabBarProps) {
         categories={categories}
         defaultGroupId={groupIdInView}
         viewerUserId={viewerUserId}
+        availableTags={tags}
         allowPersonal
       />
     </>

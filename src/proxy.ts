@@ -27,5 +27,6 @@ export const config = {
     "/expenses/:path*",
     "/friends/:path*",
     "/search/:path*",
+    "/settings/:path*",
   ],
 };

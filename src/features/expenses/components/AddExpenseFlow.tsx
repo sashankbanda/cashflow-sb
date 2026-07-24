@@ -22,6 +22,8 @@ import { formatMoney } from "@/lib/format";
 import { useAction } from "@/hooks/useAction";
 import type { CategoryOption } from "@/features/categories/queries";
 import { CategoryGlyph } from "@/features/categories/icons";
+import { TagPicker } from "@/features/categories/components/TagPicker";
+import type { TagOption } from "@/features/categories/tags-service";
 import { asPalette, paletteBg } from "@/components/ui/palette";
 import type { GroupSummary } from "@/features/groups/queries";
 import { createExpenseAction, createPersonalExpenseAction, updateExpenseAction } from "../actions";
@@ -60,6 +62,8 @@ export interface AddExpenseFlowProps {
   initial?: ExpenseEditInitial;
   /** Offer a "Personal" context that skips payer/split (dock entry). */
   allowPersonal?: boolean;
+  /** The user's tags, for the create-path tag picker. */
+  availableTags?: ReadonlyArray<TagOption>;
 }
 
 /** Sentinel groupId for the personal (no-group) context. */
@@ -75,6 +79,7 @@ interface Draft {
   date: Date;
   payer: PayerDraft;
   split: SplitDraft;
+  tagIds: string[];
 }
 
 function stepTitle(step: Step, editing: boolean): string {
@@ -90,6 +95,7 @@ function Flow({
   viewerUserId,
   initial,
   allowPersonal = false,
+  availableTags = [],
 }: Omit<AddExpenseFlowProps, "open">) {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
@@ -116,6 +122,7 @@ function Flow({
       initial?.payerDraft ??
       emptyPayerDraft(viewerMemberOf(initialGroup) ?? initialGroup?.members[0]?.id ?? null),
     split: initial?.splitDraft ?? emptySplitDraft(initialMemberIds),
+    tagIds: [],
   }));
 
   const isPersonal = draft.groupId === PERSONAL;
@@ -172,6 +179,7 @@ function Flow({
       categoryId: draft.categoryId,
       expenseDate: formatISODate(draft.date),
       idempotencyKey,
+      tagIds: draft.tagIds,
     });
   };
 
@@ -190,7 +198,7 @@ function Flow({
     if (editing && initial) {
       void update.execute({ ...core, expenseId: initial.expenseId });
     } else {
-      void create.execute({ ...core, idempotencyKey });
+      void create.execute({ ...core, idempotencyKey, tagIds: draft.tagIds });
     }
   };
 
@@ -342,6 +350,14 @@ function Flow({
                   onChange={(date) => setDraft((current) => ({ ...current, date }))}
                 />
               </div>
+
+              {!editing ? (
+                <TagPicker
+                  available={availableTags}
+                  selected={draft.tagIds}
+                  onChange={(tagIds) => setDraft((current) => ({ ...current, tagIds }))}
+                />
+              ) : null}
 
               <div className="mt-auto">
                 <AmountKeypad

@@ -2,6 +2,7 @@ import { PullToRefresh } from "@/components/motion/PullToRefresh";
 import { TabBar } from "@/components/ui/TabBar";
 import { getSession } from "@/features/auth/session";
 import { getCategoriesForUser } from "@/features/categories/queries";
+import { getTagsForUser } from "@/features/categories/tags-service";
 import { getMyGroups } from "@/features/groups/queries";
 
 /**
@@ -11,16 +12,25 @@ import { getMyGroups } from "@/features/groups/queries";
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
-  const [groups, categories] = session
-    ? await Promise.all([getMyGroups(session.user.id), getCategoriesForUser(session.user.id)])
-    : [[], []];
+  const [groups, categories, tags] = session
+    ? await Promise.all([
+        getMyGroups(session.user.id),
+        getCategoriesForUser(session.user.id),
+        getTagsForUser(session.user.id),
+      ])
+    : [[], [], []];
 
   return (
     <>
       <PullToRefresh>
         <div className="mx-auto w-full max-w-md flex-1 pb-dock">{children}</div>
       </PullToRefresh>
-      <TabBar groups={groups} categories={categories} viewerUserId={session?.user.id ?? ""} />
+      <TabBar
+        groups={groups}
+        categories={categories}
+        tags={tags}
+        viewerUserId={session?.user.id ?? ""}
+      />
     </>
   );
 }

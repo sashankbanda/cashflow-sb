@@ -33,9 +33,12 @@ const expenseCoreSchema = z.object({
   payers: z.array(payerSchema).min(1, "Who paid?"),
 });
 
+const tagIdsSchema = z.array(z.string().min(1)).max(8).optional();
+
 export const createExpenseSchema = expenseCoreSchema.extend({
   /** Client-generated; makes offline retries and double-taps idempotent. */
   idempotencyKey: z.string().uuid(),
+  tagIds: tagIdsSchema,
 });
 
 export const updateExpenseSchema = expenseCoreSchema.extend({
@@ -57,6 +60,7 @@ export const createPersonalExpenseSchema = z.object({
   categoryId: z.string().min(1, "Pick a category."),
   expenseDate: expenseDateSchema,
   idempotencyKey: z.string().uuid(),
+  tagIds: tagIdsSchema,
 });
 
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;

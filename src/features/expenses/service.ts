@@ -1,5 +1,5 @@
 import "server-only";
-import { eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { newId } from "@/lib/ids";
 import { computeSplits, SplitError, validatePayers, type SplitShare } from "@/lib/split";
 import { db, type Transaction } from "@/server/db";
@@ -9,8 +9,10 @@ import {
   expensePayers,
   expenses,
   expenseSplits,
+  expenseTags,
   groupMembers,
   groups,
+  tags,
   type GroupMember,
 } from "@/server/db/schema";
 import { forbidden, notFound, validationError } from "@/server/errors";
@@ -110,6 +112,22 @@ async function insertMoneyRows(
   );
 }
 
+/** Attach the user's own tags to an expense (ignores ids that aren't theirs). */
+async function attachTags(
+  tx: Transaction,
+  userId: string,
+  expenseId: string,
+  tagIds: ReadonlyArray<string> | undefined,
+): Promise<void> {
+  if (!tagIds || tagIds.length === 0) return;
+  const owned = await tx
+    .select({ id: tags.id })
+    .from(tags)
+    .where(and(eq(tags.userId, userId), inArray(tags.id, [...tagIds])));
+  if (owned.length === 0) return;
+  await tx.insert(expenseTags).values(owned.map((tag) => ({ expenseId, tagId: tag.id })));
+}
+
 /**
  * Create a group expense (any split type, one or many payers) in a single
  * transaction. Idempotent on the client key — retries return the original.
@@ -149,6 +167,7 @@ export async function createExpense(
     }
 
     await insertMoneyRows(tx, expenseId, input, prepared);
+    await attachTags(tx, user.id, expenseId, input.tagIds);
     await tx.insert(activityLogs).values({
       id: newId(),
       groupId: input.groupId,
@@ -246,6 +265,7 @@ export async function createPersonalExpense(
       amountMinor: input.amountMinor,
       weight: null,
     });
+    await attachTags(tx, user.id, expenseId, input.tagIds);
 
     return { expenseId };
   });
