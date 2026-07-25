@@ -129,3 +129,22 @@ decision · reasoning · rejected alternatives. Newest at the bottom of each pha
 - **Decision:** not shipping A/Statement (light) and C/Grid as enabled themes this pass; the token blocks are scaffolded and documented.
 - **Reasoning:** a correct **light** theme needs every hard-coded `white/x` border/divider/tint (used widely in components) swept into tokens first — otherwise borders vanish and tints invert on light, i.e. exactly the "leftover values bleeding through / half-applied" failure the brief forbids. That sweep is large and unverifiable blind. Enabling a broken light theme would be worse than deferring it. The infra (D6.2) makes adding them later a pure token + sweep job.
 - **Rejected:** enabling `?theme=statement` with invisible borders (ships broken); claiming completeness I can't stand behind.
+
+---
+
+## NEXT round — closing the gaps
+
+### DN1.1 — `useAction` flipped to optimistic-by-default (opt-*out*)
+- **Decision:** `optimistic` is now a REQUIRED option — `{ state, apply }` or `false` with a one-line reason. All ~30 call sites updated. Coverage enumerated in `docs/MUTATIONS.md`.
+- **Reasoning:** the finding was that mutations block by default and the next one written would too. Making the decision mandatory at the type level means a slow mutation can only ship deliberately, with a stated reason — the pattern no longer re-creates the problem.
+- **Rejected:** a lint rule flagging missing `optimistic` (weaker than the type system, and easy to disable); keeping it optional (the exact regression risk the brief called out).
+
+### DN1.2 — Two optimistic shapes: `useOptimistic` overlay, and non-blocking instant-close
+- **Decision:** where the mutating component owns the displayed list (personal-expense delete, attachment delete, category archive) → a real `useOptimistic` overlay (vanish on tap, auto-revert on failure). Where the display is a **server-derived aggregate owned by another component** (settle → group balance; budget → budget list) or **one list is mutated by several actions** (recurring pause/resume/end/delete) → **instant-close**: the sheet closes on tap and the write runs in the background, with the success toast firing only on the real `ok` and an error toast on failure.
+- **Reasoning:** the finding's actual pain is *blocking on the round-trip*; instant-close removes the block for the sheet mutations without hand-rolling a cross-component overlay (which the brief forbids) and without the danger of a premature success. Settle and budget — the named non-negotiables — no longer block. A local balance/budget-number overlay would need a parent-owned `useOptimistic` lifted across the sheet boundary; logged as the next increment.
+- **Rejected:** a premature success toast on instant-close (a money app must not say "recorded" before it is — the brief's own warning); forcing a shared overlay across recurring's four actions (that is call-site hand-rolling); leaving settle/budget blocking (violates the non-negotiable).
+
+### DN1.3 — Revert-path test + RTL/jsdom dev dependency
+- **Decision:** added `@testing-library/react` + `jsdom` (dev-only, **zero runtime bundle cost**) and `src/hooks/useAction.test.tsx`, which asserts the overlay **reverts to base when the action fails**, applies while in flight, and is absent when `optimistic:false`. The jsdom env is scoped to that file via a docblock pragma so the 157 node tests are unaffected.
+- **Reasoning:** the brief specifically wanted the revert path tested — "a money app that silently keeps a failed optimistic value is worse than a slow one." That behaviour is now pinned by a test, not just React's guarantee.
+- **Rejected:** testing only the pure `apply` reducers (doesn't exercise revert); a global jsdom env (would change how the existing node tests run).
