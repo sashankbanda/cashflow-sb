@@ -29,6 +29,13 @@
       "when": 1784917537443,
       "tag": "0003_search_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784950388573,
+      "tag": "0004_graceful_gauntlet",
+      "breakpoints": true
     }
   ]
 }

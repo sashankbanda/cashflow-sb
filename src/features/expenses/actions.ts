@@ -3,6 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { authedAction } from "@/server/action";
+import { sendPushToUsers } from "@/server/push";
 import { groupBalancesTag } from "@/features/balances/queries";
 import { notifyBudgetThresholds } from "@/features/budgets/notifications";
 import { createExpenseSchema, createPersonalExpenseSchema, updateExpenseSchema } from "./schemas";
@@ -25,6 +26,16 @@ export const createExpenseAction = authedAction({
     revalidatePath("/home");
     revalidatePath("/budgets");
     await notifyBudgetThresholds(participantUserIds);
+    await sendPushToUsers(
+      participantUserIds.filter((id) => id !== ctx.user.id),
+      "expense_added",
+      {
+        title: "New expense",
+        body: `${ctx.user.name} added ${input.description}`,
+        url: `/groups/${input.groupId}`,
+        tag: `expense-${expenseId}`,
+      },
+    );
     return { expenseId };
   },
 });

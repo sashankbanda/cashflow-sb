@@ -22,13 +22,11 @@ export const metadata: Metadata = { title: "Profile" };
 const linkRows = [
   { icon: Repeat, label: "Recurring expenses", href: "/recurring" },
   { icon: Tags, label: "Categories & tags", href: "/settings/categories" },
+  { icon: Bell, label: "Notifications", href: "/settings/notifications" },
   { icon: Download, label: "Reports & export", href: "/reports" },
 ] as const;
 
-const settingsRows = [
-  { icon: Bell, label: "Notifications" },
-  { icon: Palette, label: "Appearance" },
-] as const;
+const settingsRows = [{ icon: Palette, label: "Appearance" }] as const;
 
 export default async function ProfilePage() {
   const user = await requireUser();

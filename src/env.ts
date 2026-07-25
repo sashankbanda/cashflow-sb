@@ -23,6 +23,10 @@ const serverSchema = z.object({
   CRON_SECRET: z.string().min(1).optional(),
   /** Vercel Blob RW token — enables receipt attachments when present. */
   BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
+  /** Web Push VAPID keypair (self-generated) — enables push when present. */
+  VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+  VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+  VAPID_SUBJECT: z.string().min(1).default("mailto:support@cashflow.app"),
 });
 
 const clientSchema = z.object({});
@@ -58,6 +62,9 @@ export const env = new Proxy(
         UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
         CRON_SECRET: process.env.CRON_SECRET,
         BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
+        VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY,
+        VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
+        VAPID_SUBJECT: process.env.VAPID_SUBJECT,
       })
     : {}) as z.infer<typeof serverSchema>,
   {

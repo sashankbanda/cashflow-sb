@@ -9,6 +9,7 @@ import { formatMoney } from "@/lib/format";
 import { requireUser } from "@/features/auth/session";
 import { myBalanceLabel, toneTextClass } from "@/features/balances/label";
 import { getFriendBalances } from "@/features/balances/queries";
+import { RemindButton } from "@/features/notifications/components/RemindButton";
 
 export const metadata: Metadata = { title: "Friends" };
 
@@ -77,6 +78,18 @@ export default async function FriendsPage() {
                         );
                       })}
                   </div>
+                  {friend.netMinor > 0 ? (
+                    <RemindButton
+                      toUserId={friend.userId}
+                      groupId={
+                        [...friend.groups]
+                          .filter((line) => line.netMinor > 0)
+                          .sort((a, b) => b.netMinor - a.netMinor)[0]?.groupId ??
+                        friend.groups[0]?.groupId ??
+                        ""
+                      }
+                    />
+                  ) : null}
                 </div>
               );
             })}
