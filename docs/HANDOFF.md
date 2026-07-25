@@ -1,34 +1,35 @@
 # Cashflow — Session Handoff
 
 > State snapshot for the next implementation session. Read this, then continue
-> from **Phase 35** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
+> from **Phase 36** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
 > (01–05) remain the source of truth; this file records what is already built.
 
-## Where to resume — Phase 35 (Security hardening)
+## Where to resume — Phase 36 (Observability, E2E & launch) — FINAL
 
-P1–P34 are complete, committed, and pushed to `origin/main`
-(github.com/sashankbanda/cashflow-sb, latest `0132e40`). Next up **P35 Security
-hardening**, then P36. Per roadmap P35: security headers + a strict CSP in
-`proxy.ts` (note: `proxy.ts` is the Next 16 middleware — nonce-based CSP is
-hard with RSC/Turbopack; a strict `script-src 'self'` + the standard header set
-[HSTS, X-Content-Type-Options, Referrer-Policy, X-Frame-Options/frame-ancestors,
-Permissions-Policy] is the pragmatic target — confirm zero console CSP
-violations); review rate limits on every mutation + invite/token endpoints (the
-`authedAction` wrapper already rate-limits via `mutationLimiter`; the upload
-route + cron are outside it); an **authz test suite** (`tests/authz/` — ≥1
-negative test per action: non-member/wrong-role must fail — the services already
-throw `forbidden`/`notFound`, so unit-test those guards); `pnpm audit`; session
-hardening review; document the invite-token brute-force math (128-bit, 7-day).
-Then P36 observability/E2E/launch + the final production audit.
+P1–P35 are complete, committed, and pushed to `origin/main`
+(github.com/sashankbanda/cashflow-sb, latest `513b52b`). Last roadmap phase:
+**P36 Observability/E2E/launch**, then the **final production audit** the user
+requested. Per roadmap P36: Sentry (client+server, release tagging, Web Vitals —
+**gate on a `SENTRY_DSN` secret**, no-op without it) + pino drain + an
+`/api/health` route (DB ping); a Playwright **E2E suite** (390×844) for the 5
+critical journeys — formalize the many verified `scratchpad/*-check.js` scripts
+into committed `tests/e2e/`; a CI pipeline (`.github/workflows/ci.yml`:
+typecheck → lint → unit → build; E2E against a preview needs DB/secrets, wire as
+optional); a production env checklist + `docs/RUNBOOK.md` (deploy → health check
+→ rollback). After P36, run the whole-repo Principal-Engineer audit (dead code,
+dup, a11y, perf, indexes, error/empty/loading states, test gaps) and fix what's
+reasonable, then the final production-readiness report.
 
-**Gated secrets (both code-complete):** `BLOB_READ_WRITE_TOKEN` (P30, unset) and
-`VAPID_*` (P33, self-generated into local `.env` — copy to Vercel for prod).
+**Gated secrets (all code-complete):** `BLOB_READ_WRITE_TOKEN` (P30, unset),
+`VAPID_*` (P33, local `.env`), and P36's `SENTRY_DSN` (optional).
 
-Reusable building blocks: `proxy.ts` (add headers), `server/action-core.ts` +
-`server/ratelimit.ts`, the service `assert*`/`forbidden` guards, `vitest` for
-the authz suite, `pnpm audit`.
+**Build note:** on memory-constrained machines `next build` static generation
+can OOM-crash workers — `next.config.ts` caps `experimental.cpus: 2`. Migrations
+`0000`–`0004`. `pnpm audit` clean (overrides in `pnpm-workspace.yaml`).
 
-## Session 4 additions (P26–P34, newest first)
+## Session 4 additions (P26–P35, newest first)
+
+- **P35 security hardening** (`513b52b`): `proxy.ts` now emits a **nonce-based CSP** (`script-src 'self' 'nonce-…' 'strict-dynamic'`; `style-src 'self' 'unsafe-inline'`; `frame-ancestors/object-src 'none'`; img allows data/blob/google/vercel-blob; dev-only `'unsafe-eval'`+`ws:`) — set on both the forwarded request headers (so Next stamps its scripts) and the response — plus HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options: DENY`, `Permissions-Policy: camera=(self)`. Matcher broadened to all non-asset routes; the auth redirect kept for the `PROTECTED` list. **Verified 0 CSP console violations.** Authz: pure `canModifyExpense` (`features/expenses/authz.ts` + test, negative case) wired into `assertCanModify`; **cross-tenant group export → 403** (real foreign + nonexistent group). Rate limit: `uploadLimiter` 30/min/user on `POST /api/attachments`. Deps: `pnpm-workspace.yaml` `overrides` pin patched `postcss`/`sharp`/`esbuild` → **`pnpm audit` clean** (was 3 high + 2 moderate, all transitive to Next's bundled tooling). `/dev/*` → `notFound()` in production (`app/dev/layout.tsx`) — off the prod surface + unblocks the memory-constrained static build. `next.config.ts` caps `experimental.cpus: 2` (build OOM guard) + allows the blob image host. `docs/SECURITY.md` written (headers, authz, rate limits, invite-token math, secrets rotation).
 
 - **P34 performance & accessibility** (`0132e40`): **a11y** — `--color-fg-3` 0.4 → **0.52** (tertiary captions now clear WCAG AA 4.5:1 on inset glass); `@axe-core/playwright` audit over Home/Insights/Expenses/Groups/Friends/Reports/Profile reports **0 violations** (was 12 contrast nodes on /insights); `aria-live="polite"` on the Home net-position hero. **Perf** — `TabBar` lazy-loads `AddExpenseFlow` via `next/dynamic` (`ssr:false`), mounted only after the volt button's first tap, so motion + keypad + split editors leave every authed page's initial JS (verified the flow still opens). Charts/`d3` already route-split to `/insights`; fonts self-hosted; Home streams behind Suspense. Dev deps: `@axe-core/playwright`, `axe-core`. Axe harness: `scratchpad/axe-check.js` (formalize into `tests/` at P36).
 
@@ -61,7 +62,7 @@ the authz suite, `pnpm audit`.
 
 New load-bearing conventions this session: (a) `revalidateTag(tag, "max")` — Next 16 requires the cache-profile arg; (b) bump the `unstable_cache` key version (`group-money-v2`) whenever a cached shape changes — stale entries outlive deploys and surfaced as a `formatMoney(NaN)` crash; (c) `/settings/:path*` added to `proxy.ts`; (d) fast-check properties ≥10k runs need an explicit `{ timeout: 60_000 }` on the `it`.
 
-Test count: **155 unit tests** (P32 added `lib/outbox-model.test.ts`; P31 `lib/csv.test.ts`; P30 `lib/attachments.test.ts`; P29 `search/schemas.test.ts`; P28 `activity/describe.test.ts`; P27 `analytics/insights.test.ts`; P26 `trend.test.ts`; P24 `recurrence.test.ts`; P23 `lib/dates.test.ts` + `budgets/pace.test.ts`). P25 charts + P26–P31 UI verified via Playwright. All green; typecheck/lint/build clean at HEAD. Migrations `0000`–`0004` applied. Gated secrets: `BLOB_READ_WRITE_TOKEN` (P30, unset) and `VAPID_*` (P33, set in local `.env` — copy to Vercel for prod).
+Test count: **157 unit tests** (P35 added `features/expenses/authz.test.ts`; P32 `lib/outbox-model.test.ts`; P31 `lib/csv.test.ts`; P30 `lib/attachments.test.ts`; P29 `search/schemas.test.ts`; P28 `activity/describe.test.ts`; P27 `analytics/insights.test.ts`; P26 `trend.test.ts`; P24 `recurrence.test.ts`; P23 `lib/dates.test.ts` + `budgets/pace.test.ts`). P25 charts + P26–P31 UI verified via Playwright. All green; typecheck/lint/build clean at HEAD. Migrations `0000`–`0004` applied. Gated secrets: `BLOB_READ_WRITE_TOKEN` (P30, unset) and `VAPID_*` (P33, set in local `.env` — copy to Vercel for prod).
 
 ---
 
