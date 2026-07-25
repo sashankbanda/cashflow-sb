@@ -27,7 +27,7 @@ export function PendingExpenses() {
   if (items.length === 0) return null;
 
   return (
-    <GlassCard elevation="inset" className="divide-y divide-white/6">
+    <GlassCard elevation="inset" className="divide-y divide-hairline">
       {items.map((item) => (
         <div key={item.id} className="flex items-center gap-3 p-4 opacity-70">
           <CategoryBadge

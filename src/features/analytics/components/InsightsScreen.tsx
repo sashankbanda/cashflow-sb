@@ -179,19 +179,19 @@ export function InsightsScreen({
           aria-busy={fetchPeriod.pending}
         >
           <GlassCard gradient="iris" glow className="p-6">
-            <p className="text-caption text-white/70 uppercase">Total spend</p>
+            <p className="text-caption text-fg-on-grad uppercase">Total spend</p>
             <p className="mt-2 font-dot text-display font-black text-white tabular-nums">
               <NumberTicker
                 value={formatMoney(data.totalMinor, { compact: data.totalMinor >= 1_000_00 })}
               />
             </p>
             {data.deltaFraction !== null ? (
-              <p className="mt-1 flex items-center gap-1 text-footnote text-white/80">
+              <p className="mt-1 flex items-center gap-1 text-footnote text-fg-on-grad-2">
                 {down ? <TrendingDown className="size-3.5" /> : <TrendingUp className="size-3.5" />}
                 {formatPercent(Math.abs(data.deltaFraction))} vs {PREVIOUS_LABEL[data.period]}
               </p>
             ) : (
-              <p className="mt-1 text-footnote text-white/70">
+              <p className="mt-1 text-footnote text-fg-on-grad">
                 No spend in the {PREVIOUS_LABEL[data.period]}
               </p>
             )}
@@ -250,7 +250,7 @@ export function InsightsScreen({
                 />
               </GlassCard>
 
-              <GlassCard elevation="inset" className="divide-y divide-white/6">
+              <GlassCard elevation="inset" className="divide-y divide-hairline">
                 {data.categories.slice(0, 8).map((category) => (
                   <CategoryRow key={category.id} category={category} />
                 ))}

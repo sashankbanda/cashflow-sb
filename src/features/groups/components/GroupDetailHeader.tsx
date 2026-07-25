@@ -81,7 +81,7 @@ export function GroupDetailHeader({
               >
                 {myBalanceLabel(balances.myNetMinor).text}
               </p>
-              <p className="mt-0.5 text-footnote text-white/70">
+              <p className="mt-0.5 text-footnote text-fg-on-grad">
                 {group.memberCount} member{group.memberCount === 1 ? "" : "s"}
               </p>
             </div>

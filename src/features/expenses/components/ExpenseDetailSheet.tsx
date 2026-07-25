@@ -95,7 +95,7 @@ function PartyList({
   return (
     <section className="space-y-2">
       <h3 className="text-caption text-fg-3 uppercase">{title}</h3>
-      <GlassCard elevation="inset" className="divide-y divide-white/6">
+      <GlassCard elevation="inset" className="divide-y divide-hairline">
         {lines.map((line) => (
           <div key={line.memberId} className="flex items-center gap-3 p-3.5">
             <Avatar name={line.displayName} image={line.image} size="sm" />

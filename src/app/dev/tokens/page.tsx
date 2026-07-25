@@ -115,7 +115,7 @@ export default function TokensPage() {
           {gradients.map((gradient) => (
             <div key={gradient.name} className={`h-32 rounded-lg p-4 ${gradient.cls}`}>
               <p className="text-headline text-white">{gradient.name}</p>
-              <p className="text-caption text-white/70 uppercase">{gradient.use}</p>
+              <p className="text-caption text-fg-on-grad uppercase">{gradient.use}</p>
             </div>
           ))}
         </div>
@@ -185,7 +185,7 @@ export default function TokensPage() {
             <p className="text-caption text-on-volt">glow-volt</p>
           </div>
           <div className="h-24 rounded-lg bg-grad-mint p-4 shadow-glow-mint">
-            <p className="text-caption text-white/80">glow-mint</p>
+            <p className="text-caption text-fg-on-grad-2">glow-mint</p>
           </div>
         </div>
       </Section>

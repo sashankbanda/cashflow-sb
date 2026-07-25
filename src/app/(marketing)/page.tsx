@@ -53,7 +53,7 @@ const VOLT_PILL =
 /** A peek at the real Home dashboard, framed as a phone screen. */
 function ProductPreview() {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/40 p-3 shadow-ambient-lg">
+    <div className="rounded-2xl border border-line bg-frame p-3 shadow-ambient-lg">
       {/* Status bar — this is where 9:41 actually belongs. */}
       <div className="flex items-center justify-between px-3 pt-1 pb-3">
         <span className="font-dot text-footnote font-black tabular-nums text-fg-1">9:41</span>
@@ -76,7 +76,7 @@ function ProductPreview() {
         />
       </WidgetGrid>
 
-      <GlassCard className="mt-3 divide-y divide-white/10 overflow-hidden p-0">
+      <GlassCard className="mt-3 divide-y divide-line overflow-hidden p-0">
         <ActivityRow
           actorName="Priya"
           text="settled up with you"

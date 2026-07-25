@@ -49,6 +49,20 @@
   --color-negative: #f02d65;
   --color-warning: #f59e0b;
 
+  /* Overlay lines, scrims, and on-gradient text — themeable so a light theme
+     can flip the white overlays to dark. No component uses a raw white/x or
+     black/x utility; they all resolve through these. */
+  --color-hairline: rgba(255, 255, 255, 0.06);
+  --color-line: rgba(255, 255, 255, 0.1);
+  --color-line-2: rgba(255, 255, 255, 0.15);
+  --color-handle: rgba(255, 255, 255, 0.2);
+  --color-tint: rgba(255, 255, 255, 0.25);
+  --color-fg-on-grad: rgba(255, 255, 255, 0.7);
+  --color-fg-on-grad-2: rgba(255, 255, 255, 0.8);
+  --color-scrim: rgba(0, 0, 0, 0.6);
+  --color-scrim-strong: rgba(0, 0, 0, 0.95);
+  --color-frame: rgba(0, 0, 0, 0.4);
+
   /* ---------- Typography ---------- */
   --font-sans:
     -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), system-ui, sans-serif;

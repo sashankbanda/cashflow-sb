@@ -44,11 +44,11 @@ export function ReportsView({
         </div>
 
         <GradientPanel palette="aurora" className="p-6">
-          <p className="text-caption text-white/70 uppercase">Spent</p>
+          <p className="text-caption text-fg-on-grad uppercase">Spent</p>
           <p className="mt-2 font-dot text-display font-black text-white tabular-nums">
             {formatMoney(report.totalMinor, { compact: report.totalMinor >= 10_000_00 })}
           </p>
-          <p className="mt-1 text-footnote text-white/70">
+          <p className="mt-1 text-footnote text-fg-on-grad">
             {formatMoney(report.avgPerDayMinor)}/day ·{" "}
             {report.netMinor >= 0
               ? `owed ${formatMoney(report.netMinor)}`
@@ -63,7 +63,7 @@ export function ReportsView({
               <p className="text-footnote text-fg-3">No spending recorded this month.</p>
             </GlassCard>
           ) : (
-            <GlassCard elevation="inset" className="divide-y divide-white/6">
+            <GlassCard elevation="inset" className="divide-y divide-hairline">
               {report.topCategories.map((category) => (
                 <div key={category.name} className="flex items-center gap-3 p-4">
                   <span

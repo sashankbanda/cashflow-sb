@@ -33,7 +33,7 @@ export function Widget({ size = "sm", gradient, glow, label, children, className
       glow={glow}
       className={cn("flex flex-col p-5", sizeClasses[size], className)}
     >
-      <p className={cn("text-caption uppercase", gradient ? "text-white/70" : "text-fg-3")}>
+      <p className={cn("text-caption uppercase", gradient ? "text-fg-on-grad" : "text-fg-3")}>
         {label}
       </p>
       <div className="flex min-h-0 flex-1 flex-col justify-end pt-3">{children}</div>

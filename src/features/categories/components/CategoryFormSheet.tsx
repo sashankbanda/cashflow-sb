@@ -122,7 +122,7 @@ function Form({ category, onClose }: { category?: CategoryFormValues; onClose: (
               className={cn(
                 "ease-out size-11 rounded-full transition-transform duration-150 active:scale-[0.9]",
                 paletteBg[palette],
-                gradient === palette && "ring-2 ring-white/80",
+                gradient === palette && "ring-2 ring-fg-on-grad-2",
               )}
             />
           ))}

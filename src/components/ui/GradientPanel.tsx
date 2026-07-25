@@ -21,7 +21,7 @@ export function GradientPanel({
   return (
     <div
       className={cn(
-        "rounded-lg border border-white/10 text-white",
+        "rounded-lg border border-line text-white",
         paletteBg[palette],
         glow && paletteGlow[palette],
         className,

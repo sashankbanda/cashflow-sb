@@ -30,7 +30,7 @@ export default async function ProfilePage() {
             <p className="truncate text-footnote text-fg-3">{user.email}</p>
           </div>
         </GlassCard>
-        <GlassCard elevation="inset" className="divide-y divide-white/6">
+        <GlassCard elevation="inset" className="divide-y divide-hairline">
           <Link
             href="/expenses"
             className="ease-out flex items-center gap-3 p-4 transition-colors duration-150 active:bg-glass"

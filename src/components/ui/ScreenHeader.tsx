@@ -78,7 +78,7 @@ export function ScreenHeader({
       <div
         aria-hidden={!collapsed}
         className={cn(
-          "fixed inset-x-0 top-0 z-30 border-b border-white/6 bg-canvas/95 pt-safe",
+          "fixed inset-x-0 top-0 z-30 border-b border-hairline bg-canvas/95 pt-safe",
           "transition-opacity duration-250",
           collapsed ? "opacity-100" : "pointer-events-none opacity-0",
         )}

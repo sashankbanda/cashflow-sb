@@ -31,5 +31,5 @@ export const toneTextClass: Record<BalanceTone, string> = {
 export const toneOnGradientClass: Record<BalanceTone, string> = {
   positive: "text-white",
   negative: "text-white",
-  settled: "text-white/70",
+  settled: "text-fg-on-grad",
 };

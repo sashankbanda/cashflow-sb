@@ -149,7 +149,7 @@ export function AreaTrend({
         <>
           <div
             aria-hidden
-            className="pointer-events-none absolute top-0 bottom-5 w-px bg-white/25"
+            className="pointer-events-none absolute top-0 bottom-5 w-px bg-tint"
             style={{ left: `${activePoint.xPct}%` }}
           />
           <div

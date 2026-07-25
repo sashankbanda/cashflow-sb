@@ -33,11 +33,11 @@ export default async function ExpensesPage() {
       <ScreenHeader title="Spending" eyebrow="Everything you spend" />
       <div className="space-y-5 px-5">
         <GradientPanel palette="ember" className="p-6">
-          <p className="text-caption text-white/70 uppercase">This month</p>
+          <p className="text-caption text-fg-on-grad uppercase">This month</p>
           <p className="mt-2 font-dot text-display font-black text-white tabular-nums">
             {formatMoney(monthTotal, { compact: monthTotal >= 10_000_00 })}
           </p>
-          <p className="mt-1 text-footnote text-white/70">
+          <p className="mt-1 text-footnote text-fg-on-grad">
             Personal spends plus your share of group expenses
           </p>
         </GradientPanel>

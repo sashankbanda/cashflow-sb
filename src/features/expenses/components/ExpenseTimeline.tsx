@@ -155,7 +155,7 @@ export function ExpenseTimeline({ items, group, categories, viewerUserId }: Expe
           <h3 className="sticky top-12 z-10 px-1 pb-2 text-caption text-fg-3 uppercase">
             {formatSectionLabel(parseISO(date))}
           </h3>
-          <GlassCard elevation="inset" className="divide-y divide-white/6">
+          <GlassCard elevation="inset" className="divide-y divide-hairline">
             {sectionItems.map((item) =>
               item.kind === "expense" ? (
                 <ExpenseRow key={item.id} expense={item} onOpen={() => setOpenId(item.id)} />

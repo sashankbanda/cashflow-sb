@@ -35,7 +35,7 @@ export function GroupCard({ group, subtitle, className }: GroupCardProps) {
           max={3}
         />
       </div>
-      <p className="mt-1 truncate text-footnote text-white/70">
+      <p className="mt-1 truncate text-footnote text-fg-on-grad">
         {subtitle ?? `${group.memberCount} member${group.memberCount === 1 ? "" : "s"}`}
       </p>
     </GlassCard>

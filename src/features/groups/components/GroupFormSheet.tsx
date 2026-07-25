@@ -145,7 +145,7 @@ function GroupForm({
                 "ease-out transition-transform duration-150 active:scale-[0.9]",
                 paletteBg[palette],
                 gradient === palette && paletteGlow[palette],
-                gradient === palette && "ring-2 ring-white/80",
+                gradient === palette && "ring-2 ring-fg-on-grad-2",
               )}
             >
               {gradient === palette ? <Check className="size-4 text-white" /> : null}

@@ -172,7 +172,7 @@ export function SearchScreen({ options }: { options: SearchOptions }) {
             {results.expenses.length > 0 ? (
               <section className="space-y-2">
                 <p className="text-caption text-fg-3 uppercase">Expenses</p>
-                <GlassCard elevation="inset" className="divide-y divide-white/6">
+                <GlassCard elevation="inset" className="divide-y divide-hairline">
                   {results.expenses.map((expense) => (
                     <div key={expense.id} className="flex items-center gap-3 p-4">
                       <CategoryBadge
@@ -198,7 +198,7 @@ export function SearchScreen({ options }: { options: SearchOptions }) {
             {results.groups.length > 0 ? (
               <section className="space-y-2">
                 <p className="text-caption text-fg-3 uppercase">Groups</p>
-                <GlassCard elevation="inset" className="divide-y divide-white/6">
+                <GlassCard elevation="inset" className="divide-y divide-hairline">
                   {results.groups.map((group) => (
                     <Link
                       key={group.id}
@@ -218,7 +218,7 @@ export function SearchScreen({ options }: { options: SearchOptions }) {
             {results.friends.length > 0 ? (
               <section className="space-y-2">
                 <p className="text-caption text-fg-3 uppercase">Friends</p>
-                <GlassCard elevation="inset" className="divide-y divide-white/6">
+                <GlassCard elevation="inset" className="divide-y divide-hairline">
                   {results.friends.map((friend) => (
                     <Link
                       key={friend.userId}

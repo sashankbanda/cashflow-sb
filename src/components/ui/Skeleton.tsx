@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 export function Skeleton({ className }: { className?: string }) {
   return (
     <div aria-hidden className={cn("relative overflow-hidden rounded-md bg-glass-soft", className)}>
-      <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/6 to-transparent" />
+      <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-hairline to-transparent" />
     </div>
   );
 }

@@ -39,7 +39,7 @@ function MemberTotals({ members }: { members: MemberBalance[] }) {
                 {formatMoney(member.spentMinor)}
               </span>
             </div>
-            <div className="h-1 overflow-hidden rounded-full bg-white/10">
+            <div className="h-1 overflow-hidden rounded-full bg-line">
               <div
                 className="h-full rounded-full bg-volt"
                 style={{ width: `${Math.round((member.spentMinor / max) * 100)}%` }}
@@ -85,12 +85,12 @@ export default async function GroupDetailPage({
       <div className="space-y-5 px-5">
         {allSettled ? (
           <GlassCard gradient="mint" glow className="flex items-center gap-3 p-5">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/15">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-line-2">
               <PartyPopper className="size-5 text-white" aria-hidden />
             </span>
             <div>
               <p className="text-headline text-white">All settled</p>
-              <p className="text-footnote text-white/70">Every balance in this group is at zero.</p>
+              <p className="text-footnote text-fg-on-grad">Every balance in this group is at zero.</p>
             </div>
           </GlassCard>
         ) : null}

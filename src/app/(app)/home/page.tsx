@@ -105,7 +105,7 @@ async function HomeWidgets({ userId }: { userId: string }) {
             </p>
           </GlassCard>
         ) : (
-          <GlassCard elevation="inset" className="divide-y divide-white/6">
+          <GlassCard elevation="inset" className="divide-y divide-hairline">
             {summary.activity.map((item) => (
               <ActivityRow
                 key={item.id}

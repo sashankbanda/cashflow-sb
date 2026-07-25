@@ -31,7 +31,7 @@ export default async function FriendsPage() {
             />
           </GlassCard>
         ) : (
-          <GlassCard elevation="inset" className="divide-y divide-white/6">
+          <GlassCard elevation="inset" className="divide-y divide-hairline">
             {friends.map((friend) => {
               const label = myBalanceLabel(friend.netMinor);
               return (

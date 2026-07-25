@@ -84,7 +84,7 @@ export function HeatmapCalendar({
               className={cn(
                 "ease-out relative aspect-square rounded-sm transition-transform duration-150 active:scale-90",
                 value > 0 ? "bg-current" : "bg-glass-soft",
-                isActive && "ring-2 ring-white/80",
+                isActive && "ring-2 ring-fg-on-grad-2",
               )}
               style={value > 0 ? { opacity: intensity } : undefined}
             >

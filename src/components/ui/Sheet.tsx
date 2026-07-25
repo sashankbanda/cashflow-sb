@@ -120,7 +120,7 @@ export function Sheet({
         <div className="fixed inset-0 z-50" onKeyDown={handleKeyDown}>
           <motion.div
             aria-hidden
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bg-scrim"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -154,7 +154,7 @@ export function Sheet({
               className="shrink-0 cursor-grab touch-none pt-2.5 pb-1 active:cursor-grabbing"
               onPointerDown={(event) => dragControls.start(event)}
             >
-              <div aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-white/20" />
+              <div aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-handle" />
               {!hideHeader ? (
                 <div className="flex items-center justify-between gap-3 px-5 pt-3 pb-2">
                   {title ? (

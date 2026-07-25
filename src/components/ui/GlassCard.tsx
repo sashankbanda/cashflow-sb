@@ -39,7 +39,7 @@ export function GlassCard({
         gradient
           ? cn(
               paletteBg[gradient],
-              "border border-white/10 text-white",
+              "border border-line text-white",
               glow && paletteGlow[gradient],
             )
           : elevationClasses[elevation],

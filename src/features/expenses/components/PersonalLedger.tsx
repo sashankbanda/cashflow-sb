@@ -82,7 +82,7 @@ export function PersonalLedger({ entries }: { entries: ReadonlyArray<LedgerEntry
           <h3 className="sticky top-12 z-10 px-1 pb-2 text-caption text-fg-3 uppercase">
             {formatSectionLabel(parseISO(date))}
           </h3>
-          <GlassCard elevation="inset" className="divide-y divide-white/6">
+          <GlassCard elevation="inset" className="divide-y divide-hairline">
             {items.map((entry) => {
               const row = (
                 <>

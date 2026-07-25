@@ -65,7 +65,7 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
           </p>
         ) : null}
         <h1 className="text-title-1 text-white">{invite.group.name}</h1>
-        <p className="mt-1 text-footnote text-white/70">
+        <p className="mt-1 text-footnote text-fg-on-grad">
           {invite.group.memberCount} member{invite.group.memberCount === 1 ? "" : "s"} · splitting
           on Cashflow
         </p>

@@ -63,7 +63,7 @@ export function RecurringManager({
         {upcoming.length > 0 ? (
           <section className="space-y-2">
             <h2 className="text-caption text-fg-3 uppercase">Upcoming</h2>
-            <GlassCard elevation="inset" className="divide-y divide-white/6">
+            <GlassCard elevation="inset" className="divide-y divide-hairline">
               {upcoming.map((item) => (
                 <div key={`${item.ruleId}-${item.date}`} className="flex items-center gap-3 p-4">
                   <CategoryBadge
@@ -102,7 +102,7 @@ export function RecurringManager({
               </p>
             </GlassCard>
           ) : (
-            <GlassCard elevation="inset" className="divide-y divide-white/6">
+            <GlassCard elevation="inset" className="divide-y divide-hairline">
               {rules.map((rule) => (
                 <button
                   key={rule.id}

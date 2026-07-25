@@ -350,7 +350,7 @@ function Flow({
               aria-hidden
               className={cn(
                 "size-1.5 rounded-full transition-colors duration-250",
-                dot === step ? "bg-volt" : "bg-white/20",
+                dot === step ? "bg-volt" : "bg-handle",
               )}
             />
           ))}

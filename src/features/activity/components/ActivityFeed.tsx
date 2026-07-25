@@ -123,7 +123,7 @@ export function ActivityFeed({
               <h3 className="sticky top-12 z-10 px-1 pb-2 text-caption text-fg-3 uppercase">
                 {formatSectionLabel(parseISO(day))}
               </h3>
-              <GlassCard elevation="inset" className="divide-y divide-white/6">
+              <GlassCard elevation="inset" className="divide-y divide-hairline">
                 {items.map((item) => (
                   <Row key={item.id} item={item} />
                 ))}

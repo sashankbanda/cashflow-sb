@@ -144,7 +144,7 @@ export function PushSettings({
 
       <section className="space-y-2">
         <h2 className="text-caption text-fg-3 uppercase">Notify me about</h2>
-        <GlassCard elevation="inset" className="divide-y divide-white/6">
+        <GlassCard elevation="inset" className="divide-y divide-hairline">
           {NOTIFICATION_TYPES.map((type) => (
             <div key={type} className="flex items-center gap-3 p-4">
               <p className="flex-1 text-body text-fg-1">{TYPE_LABEL[type]}</p>

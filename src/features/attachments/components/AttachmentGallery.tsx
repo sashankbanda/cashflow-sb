@@ -141,7 +141,7 @@ export function AttachmentGallery({ expenseId, groupId }: { expenseId: string; g
                 type="button"
                 aria-label="Delete receipt"
                 onClick={() => void remove.execute({ id: item.id, groupId })}
-                className="ease-out absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/60 text-white transition-transform duration-150 active:scale-90"
+                className="ease-out absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-scrim text-white transition-transform duration-150 active:scale-90"
               >
                 <Trash2 className="size-3.5" />
               </button>

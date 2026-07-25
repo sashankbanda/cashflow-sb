@@ -124,7 +124,7 @@ export default function KitPage() {
             <p className="text-footnote text-fg-3">Dock, sheets. Blur 40, stronger border.</p>
           </GlassCard>
           <GlassCard gradient="mint" glow className="p-5">
-            <p className="text-caption text-white/70 uppercase">Gradient card</p>
+            <p className="text-caption text-fg-on-grad uppercase">Gradient card</p>
             <p className="text-title-2">₹1,250 owed to you</p>
           </GlassCard>
         </div>
@@ -132,7 +132,7 @@ export default function KitPage() {
 
       <Section title="GradientPanel">
         <GradientPanel palette="iris" className="p-5">
-          <p className="text-caption text-white/70 uppercase">Savings</p>
+          <p className="text-caption text-fg-on-grad uppercase">Savings</p>
           <p className="text-title-2">₹18,400</p>
         </GradientPanel>
       </Section>

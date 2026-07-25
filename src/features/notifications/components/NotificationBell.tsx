@@ -72,7 +72,7 @@ export function NotificationBell({ unread }: { unread: number }) {
               <Spinner />
             </div>
           ) : items && items.length > 0 ? (
-            <ul className="divide-y divide-white/6">
+            <ul className="divide-y divide-hairline">
               {items.map((item) => (
                 <li key={item.id} className="flex items-start gap-3 py-3">
                   <span

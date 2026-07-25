@@ -108,7 +108,7 @@ export function CategoryManager({ data }: { data: CategoryManagerData }) {
               </p>
             </GlassCard>
           ) : (
-            <GlassCard elevation="inset" className="divide-y divide-white/6">
+            <GlassCard elevation="inset" className="divide-y divide-hairline">
               {customCategories.map((category) => (
                 <CategoryRow
                   key={category.id}
@@ -127,7 +127,7 @@ export function CategoryManager({ data }: { data: CategoryManagerData }) {
 
         <section className="space-y-2">
           <h2 className="text-caption text-fg-3 uppercase">Built in</h2>
-          <GlassCard elevation="inset" className="divide-y divide-white/6">
+          <GlassCard elevation="inset" className="divide-y divide-hairline">
             {data.system.map((category) => (
               <CategoryRow key={category.id} category={category} />
             ))}

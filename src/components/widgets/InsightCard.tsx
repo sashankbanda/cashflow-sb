@@ -14,7 +14,7 @@ export interface InsightCardProps {
 export function InsightCard({ text, palette = "iris", className }: InsightCardProps) {
   return (
     <GlassCard gradient={palette} glow className={cn("flex items-center gap-3 p-5", className)}>
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/15">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-line-2">
         <Sparkles className="size-4 text-white" />
       </span>
       <p className="text-body font-medium text-white">{text}</p>

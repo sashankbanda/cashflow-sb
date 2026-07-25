@@ -22,7 +22,7 @@ export function OwedWidget({ direction, amountMinor, context }: OwedWidgetProps)
       <p className="text-title-2 text-white">
         <NumberTicker value={formatMoney(amountMinor)} />
       </p>
-      <p className="mt-1 text-footnote text-white/70">{context}</p>
+      <p className="mt-1 text-footnote text-fg-on-grad">{context}</p>
     </Widget>
   );
 }
