@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChartPie, CircleUserRound, House, Plus, Users } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { IntentLink } from "@/components/ui/IntentLink";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useSheet } from "@/hooks/useSheet";
 import type { CategoryOption } from "@/features/categories/queries";
@@ -42,7 +42,7 @@ function TabLink({
 }) {
   const haptics = useHaptics();
   return (
-    <Link
+    <IntentLink
       href={href}
       aria-label={label}
       aria-current={active ? "page" : undefined}
@@ -54,7 +54,7 @@ function TabLink({
       )}
     >
       <Icon className="size-6" strokeWidth={active ? 2.2 : 1.8} />
-    </Link>
+    </IntentLink>
   );
 }
 
