@@ -1,31 +1,36 @@
 # Cashflow — Session Handoff
 
 > State snapshot for the next implementation session. Read this, then continue
-> from **Phase 34** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
+> from **Phase 35** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
 > (01–05) remain the source of truth; this file records what is already built.
 
-## Where to resume — Phase 34 (Performance & accessibility pass)
+## Where to resume — Phase 35 (Security hardening)
 
-P1–P33 are complete, committed, and pushed to `origin/main`
-(github.com/sashankbanda/cashflow-sb, latest `d2d9743`). Next up **P34 Perf &
-a11y**, then P35→P36. This is a cross-cutting polish phase (no new features): a
-bundle audit (dynamic-import heavy leaves — the charts/`d3`, the add-expense
-flow; dedupe deps), verify streaming/Suspense boundaries on all routes,
-image/font audit, an a11y sweep (focus order, labels, contrast on gradient
-panels, `aria-live` on live balances, 44px targets), and axe checks in
-Playwright. Targets: Lighthouse mobile Perf ≥ 90 / A11y ≥ 95 on
-Home/Group/Insights, Home first-load JS < 160KB gz, LCP < 2.0s. Add `axe-core`
-to the Playwright harness. Then P35 security hardening (CSP, authz suite), P36
-observability/E2E/launch + the final production audit.
+P1–P34 are complete, committed, and pushed to `origin/main`
+(github.com/sashankbanda/cashflow-sb, latest `0132e40`). Next up **P35 Security
+hardening**, then P36. Per roadmap P35: security headers + a strict CSP in
+`proxy.ts` (note: `proxy.ts` is the Next 16 middleware — nonce-based CSP is
+hard with RSC/Turbopack; a strict `script-src 'self'` + the standard header set
+[HSTS, X-Content-Type-Options, Referrer-Policy, X-Frame-Options/frame-ancestors,
+Permissions-Policy] is the pragmatic target — confirm zero console CSP
+violations); review rate limits on every mutation + invite/token endpoints (the
+`authedAction` wrapper already rate-limits via `mutationLimiter`; the upload
+route + cron are outside it); an **authz test suite** (`tests/authz/` — ≥1
+negative test per action: non-member/wrong-role must fail — the services already
+throw `forbidden`/`notFound`, so unit-test those guards); `pnpm audit`; session
+hardening review; document the invite-token brute-force math (128-bit, 7-day).
+Then P36 observability/E2E/launch + the final production audit.
 
-**Pending required secrets (both gated + code-complete):** `BLOB_READ_WRITE_TOKEN`
-(P30) and `VAPID_*` (P33). VAPID keys were **self-generated into local `.env`**
-(git-ignored) so push is verified locally — copy them into Vercel env for prod.
+**Gated secrets (both code-complete):** `BLOB_READ_WRITE_TOKEN` (P30, unset) and
+`VAPID_*` (P33, self-generated into local `.env` — copy to Vercel for prod).
 
-Reusable building blocks: `next.config.ts`, `next/dynamic` for heavy client
-leaves, existing Suspense on Home, axe-core in the Playwright scripts.
+Reusable building blocks: `proxy.ts` (add headers), `server/action-core.ts` +
+`server/ratelimit.ts`, the service `assert*`/`forbidden` guards, `vitest` for
+the authz suite, `pnpm audit`.
 
-## Session 4 additions (P26–P33, newest first)
+## Session 4 additions (P26–P34, newest first)
+
+- **P34 performance & accessibility** (`0132e40`): **a11y** — `--color-fg-3` 0.4 → **0.52** (tertiary captions now clear WCAG AA 4.5:1 on inset glass); `@axe-core/playwright` audit over Home/Insights/Expenses/Groups/Friends/Reports/Profile reports **0 violations** (was 12 contrast nodes on /insights); `aria-live="polite"` on the Home net-position hero. **Perf** — `TabBar` lazy-loads `AddExpenseFlow` via `next/dynamic` (`ssr:false`), mounted only after the volt button's first tap, so motion + keypad + split editors leave every authed page's initial JS (verified the flow still opens). Charts/`d3` already route-split to `/insights`; fonts self-hosted; Home streams behind Suspense. Dev deps: `@axe-core/playwright`, `axe-core`. Axe harness: `scratchpad/axe-check.js` (formalize into `tests/` at P36).
 
 - **P33 push notifications** (`d2d9743`): **VAPID keys are self-generated** (not a 3rd-party secret — generated into local `.env`, git-ignored; copy to Vercel for prod) so push is real + tested. Migration `0004` adds `users.notification_prefs jsonb` (per-type toggles). `env.ts` gained `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT`. `server/push.ts` (`web-push` send; checks `notification_prefs[type] !== false`; prunes 404/410 subscriptions; `isPushConfigured`/`pushPublicKey`). `features/notifications/push-service.ts` (`subscribePush` upsert on `push_subscriptions.endpoint`, `unsubscribePush`, `updateNotificationPrefs` sanitized to known types, `remindSettlement` → notification row + push), `push-schemas.ts` (`NOTIFICATION_TYPES`; **`updatePrefsSchema` uses `z.record(z.string(), z.boolean())` — `z.record(z.enum,…)` in Zod v4 requires ALL keys**), `actions.ts` (+subscribe/unsubscribe/updatePrefs/remind). `public/sw.js` gained `push` + `notificationclick` (deep-link focus/open). `PushSettings` (soft-ask enable via `PushManager.subscribe` + per-type `Toggle`s) at `/settings/notifications`; Profile "Notifications" link; `RemindButton` on Friends for people who owe you. `createExpenseAction` fans a best-effort web push to participants (excludes actor). Deps: `web-push` (+types). Verified live: settings configured, pref persists across reload, sw push/click handlers, reminder fires, 0 errors.
 
