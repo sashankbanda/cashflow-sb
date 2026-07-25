@@ -3,16 +3,22 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
-import { listQueued, removeQueued } from "@/lib/outbox";
+import { OUTBOX_CHANGED, listQueued, removeQueued } from "@/lib/outbox";
 import { createPersonalExpenseAction } from "../actions";
 
-/** Headless: replays queued offline expenses on mount and on reconnect. */
+/**
+ * Headless: drains the expense outbox to the server. It is the single flush
+ * path for both online and offline adds — the add flow always queues, and this
+ * flushes immediately on the queue-changed event (online) or on reconnect
+ * (offline). `silent` suppresses the "synced offline" toast for the immediate
+ * online flush, where the optimistic row already gave feedback.
+ */
 export function OutboxSync() {
   const router = useRouter();
 
   useEffect(() => {
     let running = false;
-    const flush = async () => {
+    const flush = async (silent: boolean) => {
       if (running || typeof navigator === "undefined" || !navigator.onLine) return;
       running = true;
       try {
@@ -37,7 +43,9 @@ export function OutboxSync() {
           }
         }
         if (synced > 0) {
-          toast.success(`Synced ${synced} offline ${synced === 1 ? "expense" : "expenses"}`);
+          if (!silent) {
+            toast.success(`Synced ${synced} offline ${synced === 1 ? "expense" : "expenses"}`);
+          }
           router.refresh();
         }
       } finally {
@@ -45,9 +53,16 @@ export function OutboxSync() {
       }
     };
 
-    void flush();
-    window.addEventListener("online", flush);
-    return () => window.removeEventListener("online", flush);
+    const onChanged = () => void flush(true); // immediate online add — row already shown
+    const onReconnect = () => void flush(false); // deferred offline adds — announce the sync
+
+    void flush(false);
+    window.addEventListener("online", onReconnect);
+    window.addEventListener(OUTBOX_CHANGED, onChanged);
+    return () => {
+      window.removeEventListener("online", onReconnect);
+      window.removeEventListener(OUTBOX_CHANGED, onChanged);
+    };
   }, [router]);
 
   return null;

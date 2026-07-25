@@ -194,7 +194,7 @@ function Flow({
     }));
   };
 
-  const submitPersonal = () => {
+  const submitPersonal = async () => {
     if (recurrence.enabled) {
       void createRecurring.execute({
         template: {
@@ -210,29 +210,33 @@ function Flow({
       });
       return;
     }
-    // Offline: queue for background sync (idempotency key dedupes the replay).
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      const category = categories.find((option) => option.id === draft.categoryId);
-      void enqueueExpense({
-        id: idempotencyKey,
-        attempts: 0,
-        payload: {
-          description: draft.description,
-          amountMinor,
-          categoryId: draft.categoryId,
-          expenseDate: formatISODate(draft.date),
-          tagIds: draft.tagIds,
-          categoryName: category?.name ?? "Other",
-          categoryIcon: category?.icon ?? "shapes",
-          categoryGradient: category?.gradient ?? "ocean",
-        },
-      }).then(() => {
-        toast.success("Saved offline — will sync when you reconnect");
-        onClose();
-        router.refresh();
-      });
+    // One code path online and offline: queue to the outbox. It renders an
+    // instant optimistic row (PendingExpenses) and OutboxSync flushes it to the
+    // server — immediately when online, on reconnect when offline. The
+    // idempotency key dedupes any replay, so this can never double-charge.
+    const category = categories.find((option) => option.id === draft.categoryId);
+    const offline = typeof navigator !== "undefined" && !navigator.onLine;
+    const queued = await enqueueExpense({
+      id: idempotencyKey,
+      attempts: 0,
+      payload: {
+        description: draft.description,
+        amountMinor,
+        categoryId: draft.categoryId,
+        expenseDate: formatISODate(draft.date),
+        tagIds: draft.tagIds,
+        categoryName: category?.name ?? "Other",
+        categoryIcon: category?.icon ?? "shapes",
+        categoryGradient: category?.gradient ?? "ocean",
+      },
+    });
+    if (queued) {
+      toast.success(offline ? "Saved offline — will sync when you reconnect" : "Expense added");
+      onClose();
       return;
     }
+    // No IndexedDB (private mode / unsupported) — no optimistic queue possible,
+    // so write straight to the server; its onSuccess closes and refreshes.
     void createPersonal.execute({
       description: draft.description,
       amountMinor,
@@ -450,7 +454,10 @@ function Flow({
                   className="mt-3"
                   loading={isPersonal && pending}
                   disabled={!step1Valid}
-                  onClick={() => (isPersonal ? submitPersonal() : goTo(2))}
+                  onClick={() => {
+                    if (isPersonal) void submitPersonal();
+                    else goTo(2);
+                  }}
                 >
                   {isPersonal ? `Add expense · ${formatMoney(amountMinor)}` : "Next"}
                 </Button>

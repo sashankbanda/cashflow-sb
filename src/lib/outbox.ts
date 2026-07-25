@@ -35,11 +35,17 @@ function announce(): void {
 
 export const OUTBOX_CHANGED = OUTBOX_EVENT;
 
-export async function enqueueExpense(item: Omit<OutboxExpense, "createdAt">): Promise<void> {
-  if (!available()) return;
+/**
+ * Queue an expense for the outbox. Returns true when it was actually queued;
+ * false when IndexedDB is unavailable, so the caller can fall back to a direct
+ * server write instead of silently dropping the expense.
+ */
+export async function enqueueExpense(item: Omit<OutboxExpense, "createdAt">): Promise<boolean> {
+  if (!available()) return false;
   // Stamp the time here (outside React render) so callers stay pure.
   await (await db()).put(STORE, { ...item, createdAt: Date.now() });
   announce();
+  return true;
 }
 
 export async function listQueued(): Promise<OutboxExpense[]> {
