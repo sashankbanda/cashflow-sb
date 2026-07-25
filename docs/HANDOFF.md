@@ -1,34 +1,33 @@
 # Cashflow — Session Handoff
 
 > State snapshot for the next implementation session. Read this, then continue
-> from **Phase 33** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
+> from **Phase 34** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
 > (01–05) remain the source of truth; this file records what is already built.
 
-## Where to resume — Phase 33 (Push notifications)
+## Where to resume — Phase 34 (Performance & accessibility pass)
 
-P1–P32 are complete, committed, and pushed to `origin/main`
-(github.com/sashankbanda/cashflow-sb, latest `24c7040`). Next up **P33 Push
-notifications**, then P34→P36 in order. Per roadmap P33: Web Push (VAPID) —
-`push_subscriptions` wiring (table exists), a soft-ask permission sheet (only
-after a meaningful moment), SW push + notification-click deep links, server
-fan-out on the P28 notification events, per-type preference toggles in settings,
-and a settlement-reminder nudge. **P33 needs VAPID keys** (`VAPID_PUBLIC_KEY`,
-`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`) — a real-world secret like P30's blob
-token; build it behind an env gate (adapter + soft-ask UI + subscribe/unsubscribe
-routes + `web-push` send) and if the keys are absent surface a "push not
-configured" state, note the required secret, and continue. Extend `public/sw.js`
-with `push` + `notificationclick` handlers. Then P34 perf/a11y, P35 security,
-P36 observability/E2E/launch.
+P1–P33 are complete, committed, and pushed to `origin/main`
+(github.com/sashankbanda/cashflow-sb, latest `d2d9743`). Next up **P34 Perf &
+a11y**, then P35→P36. This is a cross-cutting polish phase (no new features): a
+bundle audit (dynamic-import heavy leaves — the charts/`d3`, the add-expense
+flow; dedupe deps), verify streaming/Suspense boundaries on all routes,
+image/font audit, an a11y sweep (focus order, labels, contrast on gradient
+panels, `aria-live` on live balances, 44px targets), and axe checks in
+Playwright. Targets: Lighthouse mobile Perf ≥ 90 / A11y ≥ 95 on
+Home/Group/Insights, Home first-load JS < 160KB gz, LCP < 2.0s. Add `axe-core`
+to the Playwright harness. Then P35 security hardening (CSP, authz suite), P36
+observability/E2E/launch + the final production audit.
 
-**Pending required secrets:** `BLOB_READ_WRITE_TOKEN` (P30 attachments) and
-`VAPID_*` (P33 push) — both gated, code-complete paths; set them in Vercel to
-activate. All other features run without secrets.
+**Pending required secrets (both gated + code-complete):** `BLOB_READ_WRITE_TOKEN`
+(P30) and `VAPID_*` (P33). VAPID keys were **self-generated into local `.env`**
+(git-ignored) so push is verified locally — copy them into Vercel env for prod.
 
-Reusable building blocks: `features/notifications/*` (P28), `notifications`/
-`push_subscriptions` schema, `public/sw.js` (add push handlers), `env.ts`,
-`authedAction`, the settings surface in `Profile`.
+Reusable building blocks: `next.config.ts`, `next/dynamic` for heavy client
+leaves, existing Suspense on Home, axe-core in the Playwright scripts.
 
-## Session 4 additions (P26–P32, newest first)
+## Session 4 additions (P26–P33, newest first)
+
+- **P33 push notifications** (`d2d9743`): **VAPID keys are self-generated** (not a 3rd-party secret — generated into local `.env`, git-ignored; copy to Vercel for prod) so push is real + tested. Migration `0004` adds `users.notification_prefs jsonb` (per-type toggles). `env.ts` gained `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT`. `server/push.ts` (`web-push` send; checks `notification_prefs[type] !== false`; prunes 404/410 subscriptions; `isPushConfigured`/`pushPublicKey`). `features/notifications/push-service.ts` (`subscribePush` upsert on `push_subscriptions.endpoint`, `unsubscribePush`, `updateNotificationPrefs` sanitized to known types, `remindSettlement` → notification row + push), `push-schemas.ts` (`NOTIFICATION_TYPES`; **`updatePrefsSchema` uses `z.record(z.string(), z.boolean())` — `z.record(z.enum,…)` in Zod v4 requires ALL keys**), `actions.ts` (+subscribe/unsubscribe/updatePrefs/remind). `public/sw.js` gained `push` + `notificationclick` (deep-link focus/open). `PushSettings` (soft-ask enable via `PushManager.subscribe` + per-type `Toggle`s) at `/settings/notifications`; Profile "Notifications" link; `RemindButton` on Friends for people who owe you. `createExpenseAction` fans a best-effort web push to participants (excludes actor). Deps: `web-push` (+types). Verified live: settings configured, pref persists across reload, sw push/click handlers, reminder fires, 0 errors.
 
 - **P32 PWA & offline** (`24c7040`): `app/manifest.ts` (standalone, `#050506`, maskable) + dynamic `app/manifest-icon/route.tsx` (`next/og`, 192/512). **Hand-written `public/sw.js`** (NOT Serwist — Next 16 Turbopack build doesn't run the webpack plugin): precache `/offline`, network-first navigations → cache/offline fallback, SWR for `/_next/static` + icons + manifest, data/auth pass through; `ServiceWorkerRegistrar` registers it in production only. `app/offline/page.tsx` fallback. Offline outbox: `lib/outbox-model.ts` (PURE, idempotency-key dedupe/order; `outbox-model.test.ts`) + `lib/outbox.ts` (IndexedDB via `idb`; `enqueueExpense` stamps `createdAt` internally so callers stay render-pure; `OUTBOX_CHANGED` event). `OutboxSync` (headless, in `(app)/layout`) replays queued expenses on mount + `online` (idempotent via the create action's idempotency key; drops VALIDATION-failed items, keeps transient). `PendingExpenses` shows queued rows atop `/expenses`. `AddExpenseFlow` personal submit enqueues when `!navigator.onLine`. `hooks/useOnline` + `OfflineBanner`; `InstallPrompt` (native `beforeinstallprompt` after 2nd session via localStorage counter + iOS hint). Deps: `idb`. Verified live: manifest (3 icons/standalone), icon PNG, `sw.js` fetch handler, `/offline` renders, 0 page errors. **Lint learned:** `Date.now()` in a component body trips `react-hooks/purity` — stamp time in a lib fn instead.
 
@@ -57,7 +56,7 @@ Reusable building blocks: `features/notifications/*` (P28), `notifications`/
 
 New load-bearing conventions this session: (a) `revalidateTag(tag, "max")` — Next 16 requires the cache-profile arg; (b) bump the `unstable_cache` key version (`group-money-v2`) whenever a cached shape changes — stale entries outlive deploys and surfaced as a `formatMoney(NaN)` crash; (c) `/settings/:path*` added to `proxy.ts`; (d) fast-check properties ≥10k runs need an explicit `{ timeout: 60_000 }` on the `it`.
 
-Test count: **155 unit tests** (P32 added `lib/outbox-model.test.ts`; P31 `lib/csv.test.ts`; P30 `lib/attachments.test.ts`; P29 `search/schemas.test.ts`; P28 `activity/describe.test.ts`; P27 `analytics/insights.test.ts`; P26 `trend.test.ts`; P24 `recurrence.test.ts`; P23 `lib/dates.test.ts` + `budgets/pace.test.ts`). P25 charts + P26–P31 UI verified via Playwright. All green; typecheck/lint/build clean at HEAD. Migrations `0000`–`0003` applied. Required secret not yet set: `BLOB_READ_WRITE_TOKEN` (P30 attachments).
+Test count: **155 unit tests** (P32 added `lib/outbox-model.test.ts`; P31 `lib/csv.test.ts`; P30 `lib/attachments.test.ts`; P29 `search/schemas.test.ts`; P28 `activity/describe.test.ts`; P27 `analytics/insights.test.ts`; P26 `trend.test.ts`; P24 `recurrence.test.ts`; P23 `lib/dates.test.ts` + `budgets/pace.test.ts`). P25 charts + P26–P31 UI verified via Playwright. All green; typecheck/lint/build clean at HEAD. Migrations `0000`–`0004` applied. Gated secrets: `BLOB_READ_WRITE_TOKEN` (P30, unset) and `VAPID_*` (P33, set in local `.env` — copy to Vercel for prod).
 
 ---
 
