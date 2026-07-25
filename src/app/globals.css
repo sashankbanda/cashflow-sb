@@ -183,3 +183,26 @@
     }
   }
 }
+
+/* ---------- Route-transition skeletons ---------- */
+@layer components {
+  /* Stay invisible for the first 200ms so a fast navigation never flashes a
+     skeleton — a flashed-then-gone skeleton reads as slower than none
+     (Doherty threshold). Above ~200ms it fades in. */
+  .route-skeleton {
+    animation: route-skeleton-in 250ms var(--ease-standard) 200ms both;
+  }
+  @keyframes route-skeleton-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .route-skeleton {
+      animation-duration: 1ms;
+    }
+  }
+}

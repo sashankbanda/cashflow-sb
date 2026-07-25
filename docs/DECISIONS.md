@@ -50,3 +50,8 @@ decision · reasoning · rejected alternatives. Newest at the bottom of each pha
 - **Decision:** `experimental.staleTimes = { dynamic: 30, static: 180 }` in `next.config.ts`.
 - **Reasoning:** keeps the client Router Cache warm so bottom-tab switches and back/forward reuse the rendered screen (instant, scroll preserved) instead of re-running the route's server component. Mutations still bust it via `revalidateTag`, so data cannot go stale past a real write.
 - **Rejected:** `dynamic: 0` (the default — forces a refetch on every tab switch, the exact "feels like a website" symptom); a very long TTL (risks showing pre-mutation data if a revalidate is missed).
+
+### D1.6 — Route skeletons that stay invisible for 200ms
+- **Decision:** a `loading.tsx` for every previously-blocking route renders a shared `RouteSkeleton`, wrapped in a `.route-skeleton` class that is `opacity:0` for the first 200ms (CSS `animation-delay` + `both`) then fades in.
+- **Reasoning:** the brief's Doherty rule — skeletons only above ~400ms, nothing below 200ms. A skeleton flashed and gone reads as slower than none. The delay means quick navigations (which now dominate thanks to `staleTimes`) never show a skeleton, while genuinely slow loads still get one.
+- **Rejected:** a JS timer to mount the skeleton after 200ms (more code, hydration cost, same effect); showing the skeleton instantly (flash on fast loads); no skeleton (blank freeze — the current behavior for every non-Home route).
