@@ -27,6 +27,10 @@ const serverSchema = z.object({
   VAPID_PUBLIC_KEY: z.string().min(1).optional(),
   VAPID_PRIVATE_KEY: z.string().min(1).optional(),
   VAPID_SUBJECT: z.string().min(1).default("mailto:support@cashflow.app"),
+  /** Error-tracking DSN (Sentry-compatible). Observability is a no-op without it. */
+  SENTRY_DSN: z.string().url().optional(),
+  /** Release identifier for logs/observability (commit SHA in CI). */
+  APP_VERSION: z.string().min(1).default("dev"),
 });
 
 const clientSchema = z.object({});
@@ -65,6 +69,8 @@ export const env = new Proxy(
         VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY,
         VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
         VAPID_SUBJECT: process.env.VAPID_SUBJECT,
+        SENTRY_DSN: process.env.SENTRY_DSN,
+        APP_VERSION: process.env.APP_VERSION ?? process.env.VERCEL_GIT_COMMIT_SHA,
       })
     : {}) as z.infer<typeof serverSchema>,
   {

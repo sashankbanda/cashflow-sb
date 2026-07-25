@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: typecheck · lint · unit · build
+    runs-on: ubuntu-latest
+    env:
+      # Dummy build-time env (real values come from Vercel for deploys). The app
+      # validates env lazily; build only needs these to be present + shaped.
+      DATABASE_URL: postgres://user:pass@localhost:5432/db
+      BETTER_AUTH_SECRET: ci-placeholder-secret-at-least-32-chars-long
+      GOOGLE_CLIENT_ID: ci-google-client-id
+      GOOGLE_CLIENT_SECRET: ci-google-client-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Audit (production deps)
+        run: pnpm audit --prod || true
+
+  # E2E runs against a deployed preview seeded with the e2e users. It needs
+  # secrets (preview URL), so it's opt-in rather than blocking every PR.
+  e2e:
+    name: e2e (preview)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Run critical journeys
+        env:
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
+        run: pnpm e2e
