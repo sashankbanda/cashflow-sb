@@ -47,7 +47,7 @@ export function NotificationBell({ unread }: { unread: number }) {
         {localUnread > 0 ? (
           <span
             aria-label={`${localUnread} unread`}
-            className="absolute -top-0.5 -right-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-volt px-1 text-[0.625rem] font-semibold text-on-volt tabular-nums"
+            className="absolute -top-0.5 -right-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-volt px-1 text-micro font-semibold text-on-volt tabular-nums"
           >
             {localUnread > 9 ? "9+" : localUnread}
           </span>

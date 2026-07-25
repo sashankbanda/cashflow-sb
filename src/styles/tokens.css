@@ -94,6 +94,9 @@
   --text-caption--line-height: 0.875rem;
   --text-caption--font-weight: 500;
   --text-caption--letter-spacing: 0.04em;
+  --text-micro: 0.625rem; /* 10/14 · badge counts, chart axis labels */
+  --text-micro--line-height: 0.875rem;
+  --text-micro--font-weight: 500;
 
   /* ---------- Radius ---------- */
   --radius-*: initial;
@@ -204,6 +207,72 @@
   --surface-floating: #232733;
   --surface-overlay: rgba(28, 31, 39, 0.74);
   --shadow-glow-volt: 0 12px 60px -12px rgba(142, 155, 255, 0.35);
+}
+
+/* Light editorial: warm paper, ink primary, hairline depth, mono numerals. */
+[data-theme="statement"] {
+  color-scheme: light;
+  --color-canvas: #f4f3ef;
+  --color-fg-1: #1a1b1e;
+  --color-fg-2: #4a4c52;
+  --color-fg-3: #606169;
+  --color-glass: rgba(0, 0, 0, 0.05);
+  --color-glass-soft: rgba(0, 0, 0, 0.03);
+  --color-glass-border: rgba(0, 0, 0, 0.1);
+  --color-glass-highlight: rgba(0, 0, 0, 0.05);
+  --color-volt: #1a1b1e;
+  --color-on-volt: #f7f6f2;
+  --color-positive: #0b7a4b;
+  --color-negative: #b23b2e;
+  --color-warning: #8a5a00;
+  --surface-inset: #eeece6;
+  --surface-raised: #ffffff;
+  --surface-floating: #ffffff;
+  --surface-overlay: rgba(255, 255, 255, 0.82);
+  --color-hairline: rgba(0, 0, 0, 0.06);
+  --color-line: rgba(0, 0, 0, 0.1);
+  --color-line-2: rgba(0, 0, 0, 0.14);
+  --color-handle: rgba(0, 0, 0, 0.2);
+  --color-tint: rgba(0, 0, 0, 0.06);
+  --color-scrim: rgba(0, 0, 0, 0.4);
+  --color-scrim-strong: rgba(0, 0, 0, 0.85);
+  --color-frame: rgba(0, 0, 0, 0.12);
+  --shadow-ambient: 0 8px 24px rgba(20, 20, 25, 0.08);
+  --shadow-ambient-lg: 0 16px 40px rgba(20, 20, 25, 0.12);
+  --shadow-glow-volt: 0 12px 40px -12px rgba(20, 20, 25, 0.18);
+}
+
+/* Near-monochrome, one cobalt accent, crisp cool greys. */
+[data-theme="grid"] {
+  color-scheme: light;
+  --color-canvas: #fafafa;
+  --color-fg-1: #111214;
+  --color-fg-2: #45474e;
+  --color-fg-3: #5c5e67;
+  --color-glass: rgba(0, 0, 0, 0.05);
+  --color-glass-soft: rgba(0, 0, 0, 0.03);
+  --color-glass-border: rgba(0, 0, 0, 0.1);
+  --color-glass-highlight: rgba(0, 0, 0, 0.05);
+  --color-volt: #2743f0;
+  --color-on-volt: #ffffff;
+  --color-positive: #0b7a4b;
+  --color-negative: #c0392b;
+  --color-warning: #8a5a00;
+  --surface-inset: #f1f1f4;
+  --surface-raised: #ffffff;
+  --surface-floating: #ffffff;
+  --surface-overlay: rgba(255, 255, 255, 0.85);
+  --color-hairline: rgba(0, 0, 0, 0.06);
+  --color-line: rgba(0, 0, 0, 0.1);
+  --color-line-2: rgba(0, 0, 0, 0.14);
+  --color-handle: rgba(0, 0, 0, 0.2);
+  --color-tint: rgba(0, 0, 0, 0.06);
+  --color-scrim: rgba(0, 0, 0, 0.4);
+  --color-scrim-strong: rgba(0, 0, 0, 0.85);
+  --color-frame: rgba(0, 0, 0, 0.12);
+  --shadow-ambient: 0 8px 24px rgba(17, 18, 20, 0.08);
+  --shadow-ambient-lg: 0 16px 40px rgba(17, 18, 20, 0.12);
+  --shadow-glow-volt: 0 12px 40px -12px rgba(39, 67, 240, 0.25);
 }
 
 /* ---------- Gradient panel utilities ---------- */

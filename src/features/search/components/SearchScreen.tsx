@@ -124,7 +124,7 @@ export function SearchScreen({ options }: { options: SearchOptions }) {
         >
           <SlidersHorizontal />
           {filterCount > 0 ? (
-            <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-volt text-[0.625rem] font-semibold text-on-volt">
+            <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-volt text-micro font-semibold text-on-volt">
               {filterCount}
             </span>
           ) : null}

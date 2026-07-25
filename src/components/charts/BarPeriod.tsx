@@ -50,7 +50,7 @@ export function BarPeriod({
             >
               <span
                 className={cn(
-                  "text-center text-[0.625rem] tabular-nums transition-opacity duration-150",
+                  "text-center text-micro tabular-nums transition-opacity duration-150",
                   isActive ? "text-fg-1 opacity-100" : "text-fg-3 opacity-0",
                 )}
               >
@@ -74,7 +74,7 @@ export function BarPeriod({
         {data.map((point, index) => (
           <span
             key={`${point.label}-${index}`}
-            className="flex-1 truncate text-center text-[0.625rem] text-fg-3"
+            className="flex-1 truncate text-center text-micro text-fg-3"
           >
             {point.label}
           </span>

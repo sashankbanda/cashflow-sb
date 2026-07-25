@@ -58,7 +58,7 @@ export function HeatmapCalendar({
 
       <div className="mt-2 grid grid-cols-7 gap-1" aria-hidden>
         {WEEKDAY_LABELS.map((label, index) => (
-          <span key={index} className="text-center text-[0.625rem] text-fg-3">
+          <span key={index} className="text-center text-micro text-fg-3">
             {label}
           </span>
         ))}

@@ -168,14 +168,14 @@ export function AreaTrend({
             <p className="text-caption font-semibold text-fg-1 tabular-nums">
               {formatValue(activePoint.value)}
             </p>
-            <p className="text-[0.625rem] text-fg-3">{activePoint.label}</p>
+            <p className="text-micro text-fg-3">{activePoint.label}</p>
           </div>
         </>
       ) : null}
 
       <div className="mt-1 flex justify-between px-1" aria-hidden>
         {tickIndices.map((index) => (
-          <span key={index} className="text-[0.625rem] text-fg-3">
+          <span key={index} className="text-micro text-fg-3">
             {data[index]?.label}
           </span>
         ))}

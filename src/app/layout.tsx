@@ -38,7 +38,7 @@ export const metadata: Metadata = {
  * Applies the saved / `?theme=` theme to <html> before first paint (no flash).
  * `?theme=base` clears it. Only vetted themes are applied.
  */
-const THEME_INIT = `(function(){try{var A={dusk:1};var k='cashflow:theme';var p=new URLSearchParams(location.search).get('theme');if(p==='base'){localStorage.removeItem(k);document.documentElement.removeAttribute('data-theme');return;}var t=p||localStorage.getItem(k);if(t&&A[t]){document.documentElement.setAttribute('data-theme',t);localStorage.setItem(k,t);}}catch(e){}})();`;
+const THEME_INIT = `(function(){try{var A={dusk:1,statement:1,grid:1};var k='cashflow:theme';var p=new URLSearchParams(location.search).get('theme');if(p==='base'){localStorage.removeItem(k);document.documentElement.removeAttribute('data-theme');return;}var t=p||localStorage.getItem(k);if(t&&A[t]){document.documentElement.setAttribute('data-theme',t);localStorage.setItem(k,t);}}catch(e){}})();`;
 
 export const viewport: Viewport = {
   themeColor: "#050506",
