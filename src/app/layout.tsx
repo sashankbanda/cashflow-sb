@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Doto, Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { AuroraBackground } from "@/components/ui/AuroraBackground";
 import { Toaster } from "@/components/ui/Toast";
 import { WebVitals } from "@/components/pwa/WebVitals";
@@ -11,8 +11,13 @@ const inter = Inter({
   display: "swap",
 });
 
-/** Dot-matrix display font, reserved for hero numerals. */
-const doto = Doto({
+/**
+ * Tabular monospace for hero numerals — genuine tabular figures that align at a
+ * glance and read instantly, replacing the dot-matrix display face (whose
+ * glyphs, e.g. the colon, were ambiguous). The CSS var name is kept so the
+ * `--font-dot` / `font-dot` token continues to resolve without churn.
+ */
+const numerals = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-doto",
   display: "swap",
@@ -43,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${doto.variable} h-full`}>
+    <html lang="en" className={`${inter.variable} ${numerals.variable} h-full`}>
       <body className="min-h-full">
         <AuroraBackground />
         <div className="flex min-h-dvh flex-col">{children}</div>
