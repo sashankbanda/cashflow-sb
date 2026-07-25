@@ -3,6 +3,7 @@ import { getSession } from "@/features/auth/session";
 import { addAttachment } from "@/features/attachments/service";
 import { AppError } from "@/server/errors";
 import { logger } from "@/server/logger";
+import { uploadLimiter } from "@/server/ratelimit";
 import { MAX_ATTACHMENT_BYTES } from "@/lib/attachments";
 
 export const runtime = "nodejs";
@@ -11,6 +12,11 @@ export const runtime = "nodejs";
 export async function POST(request: Request): Promise<Response> {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { success } = await uploadLimiter.limit(`upload:${session.user.id}`);
+  if (!success) {
+    return NextResponse.json({ error: "Too many uploads — slow down." }, { status: 429 });
+  }
 
   const form = await request.formData();
   const file = form.get("file");

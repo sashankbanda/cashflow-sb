@@ -2,3 +2,10 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
+
+# Force patched transitive deps (advisories only reachable via build/dev
+# tooling; upstream Next bundles the vulnerable versions until a future release).
+overrides:
+  postcss@<8.5.18: ">=8.5.18"
+  sharp@<0.35.0: ">=0.35.0"
+  esbuild@<0.25.0: ">=0.25.0"

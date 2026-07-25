@@ -33,3 +33,6 @@ export const mutationLimiter = createRateLimiter("mutation", 60, 60);
 
 /** Public token lookups (invite links): 10/min per IP. */
 export const inviteLookupLimiter = createRateLimiter("invite-lookup", 10, 60);
+
+/** Receipt uploads: 30/min per user (route handler, outside authedAction). */
+export const uploadLimiter = createRateLimiter("upload", 30, 60);

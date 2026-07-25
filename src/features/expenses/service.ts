@@ -19,6 +19,7 @@ import { forbidden, notFound, validationError } from "@/server/errors";
 import type { ActionUser } from "@/server/action-core";
 import { assertMember } from "@/features/groups/service";
 import { notifyUsers } from "@/features/notifications/service";
+import { canModifyExpense } from "./authz";
 import type { CreateExpenseInput, CreatePersonalExpenseInput, UpdateExpenseInput } from "./schemas";
 
 interface PreparedExpense {
@@ -226,10 +227,12 @@ async function assertCanModify(
   if (!expense || expense.deletedAt || expense.groupId !== groupId) throw notFound("Expense");
 
   const member = await assertMember(tx, user.id, groupId);
-  const isCreator = expense.createdBy === user.id;
-  const isPayer = expense.payers.some((payer) => payer.userId === user.id);
-  const isOwner = member.role === "owner";
-  if (!isCreator && !isPayer && !isOwner) {
+  const allowed = canModifyExpense({
+    isCreator: expense.createdBy === user.id,
+    isPayer: expense.payers.some((payer) => payer.userId === user.id),
+    isOwner: member.role === "owner",
+  });
+  if (!allowed) {
     throw forbidden("Only the person who added or paid this expense can change it.");
   }
 }
