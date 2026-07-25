@@ -6,11 +6,21 @@
 
 ## Status — P1–P36 COMPLETE
 
-All phases complete, committed, and pushed to `origin/main`
-(github.com/sashankbanda/cashflow-sb, latest `cc78904`). **157 unit tests** +
-**5 Playwright critical journeys** green; typecheck/lint/build clean; `pnpm
-audit` clean; **0 axe a11y violations**; migrations `0000`–`0004` applied to
-Neon.
+All phases complete + a whole-repo production audit done, committed, and pushed
+to `origin/main` (github.com/sashankbanda/cashflow-sb, latest `263d989`). **157
+unit tests** + **5 Playwright critical journeys** green; typecheck/lint/build
+clean; `pnpm audit` clean; **0 axe a11y violations**; migrations `0000`–`0005`
+applied to Neon.
+
+**Production audit** (`263d989`): migration `0005` adds performance indexes
+(`expense_payers`/`expense_splits` plain `expense_id`; `expenses (created_by,
+category_id) WHERE deleted_at IS NULL`; `push_subscriptions (user_id)`;
+`notifications (user_id, created_at DESC)`); bounded the group-timeline
+activity-trail fetch; parallelized `getFriendBalances` graph fetches; removed
+dead code (unused `BudgetRingWidget`, ~10 dead exports, `d3-array` dep);
+documented all env vars in `.env.example`. Non-blocking follow-ups noted in the
+final report: a generic `assertOwned` helper to dedupe 5 ownership checks; the
+mixed-audience activity feed OR could use a fanout table at very large scale.
 
 **P36 observability/E2E/launch** (`cc78904`): native observability (chose NOT to
 add `@sentry/nextjs` — its `withSentryConfig` webpack plugin doesn't run under
