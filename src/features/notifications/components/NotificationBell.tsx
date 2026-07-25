@@ -22,9 +22,12 @@ export function NotificationBell({ unread }: { unread: number }) {
   const [localUnread, setLocalUnread] = useState(unread);
 
   const list = useAction(listNotificationsAction, {
+    optimistic: false, // read, not a mutation
     onSuccess: (result) => setItems(result),
   });
   const markAll = useAction(markAllNotificationsReadAction, {
+    // List is lazily loaded and nullable; onSuccess marks rows read immediately.
+    optimistic: false,
     onSuccess: () => {
       setItems((current) => current?.map((item) => ({ ...item, read: true })) ?? current);
       setLocalUnread(0);

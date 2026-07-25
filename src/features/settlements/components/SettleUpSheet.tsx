@@ -63,13 +63,13 @@ export function SettleUpSheet({
 
   const record = useAction(recordSettlementAction, {
     successMessage: "Payment recorded",
-    onSuccess: () => {
-      setSelected(null);
-      setAmount("");
-      setNote("");
-      onClose();
-      router.refresh();
-    },
+    // Non-blocking: the sheet closes on tap (below) and records in the
+    // background — nothing waits on the round-trip. A local balance overlay
+    // isn't used because the group balance is a server-derived aggregate owned
+    // by the group screen; it reconciles on revalidate, and a genuine failure
+    // surfaces a non-blocking error toast (never a silent success).
+    optimistic: false,
+    onSuccess: () => router.refresh(),
   });
 
   const nameFor = (memberId: string): string => {
@@ -85,14 +85,20 @@ export function SettleUpSheet({
 
   const submit = () => {
     if (!selected) return;
-    void record.execute({
+    const payload = {
       groupId,
       fromMemberId: selected.fromMemberId,
       toMemberId: selected.toMemberId,
       amountMinor: amountToMinor(amount),
       method,
       note: note.trim() === "" ? undefined : note.trim(),
-    });
+    };
+    // Close instantly, record in the background.
+    setSelected(null);
+    setAmount("");
+    setNote("");
+    onClose();
+    void record.execute(payload);
   };
 
   return (

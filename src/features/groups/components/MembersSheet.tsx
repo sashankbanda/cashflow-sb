@@ -39,8 +39,9 @@ export function MembersSheet({ open, onClose, group }: MembersSheetProps) {
   const router = useRouter();
   const [ghostName, setGhostName] = useState("");
 
-  const invite = useAction(createInviteAction);
+  const invite = useAction(createInviteAction, { optimistic: false }); // generates a link
   const addGhost = useAction(addGhostAction, {
+    optimistic: false, // member list re-renders from the server (router.refresh)
     onSuccess: () => {
       setGhostName("");
       router.refresh();
@@ -48,6 +49,7 @@ export function MembersSheet({ open, onClose, group }: MembersSheetProps) {
     successMessage: "Member added",
   });
   const leave = useAction(leaveGroupAction, {
+    optimistic: false, // navigates away from the group
     onSuccess: () => {
       onClose();
       router.push("/groups");

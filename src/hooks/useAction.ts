@@ -19,13 +19,16 @@ export interface UseActionOptions<TInput, TOutput, TState = unknown> {
   /** Show an error toast for non-validation failures (default true). */
   errorToast?: boolean;
   /**
-   * Opt in to optimistic UI. `state` is overlaid with `apply(state, input)` the
-   * instant `execute` is called and automatically reverts to `state` if the
-   * action fails — or hands off seamlessly when the server revalidation supplies
-   * matching fresh state. This is the ONE optimistic path: call sites pass their
-   * base state + reducer; the hook owns apply → await → reconcile/revert.
+   * REQUIRED decision — mutations are optimistic by default here, so every call
+   * site must choose. Pass an optimistic overlay `{ state, apply }`, or `false`
+   * (with a one-line reason) for the cases that genuinely must wait for the
+   * server: reads, navigations, and mutations whose state a different component
+   * owns. `state` is overlaid with `apply(state, input)` the instant `execute`
+   * runs, and auto-reverts if the action fails — or hands off seamlessly when
+   * the server revalidation supplies matching fresh state. This is the ONE
+   * optimistic path: no call site hand-rolls it.
    */
-  optimistic?: OptimisticConfig<TInput, TState>;
+  optimistic: OptimisticConfig<TInput, TState> | false;
 }
 
 export interface UseActionState<TInput, TOutput, TState = unknown> {
@@ -45,14 +48,14 @@ export interface UseActionState<TInput, TOutput, TState = unknown> {
  */
 export function useAction<TInput, TOutput, TState = unknown>(
   action: (input: TInput) => Promise<ActionResult<TOutput>>,
-  options: UseActionOptions<TInput, TOutput, TState> = {},
+  options: UseActionOptions<TInput, TOutput, TState>,
 ): UseActionState<TInput, TOutput, TState> {
   const [pending, setPending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [isTransitionPending, startTransition] = useTransition();
 
   const [optimisticState, addOptimistic] = useOptimistic<TState, TInput>(
-    options.optimistic?.state as TState,
+    (options.optimistic ? options.optimistic.state : undefined) as TState,
     (current, input) => (options.optimistic ? options.optimistic.apply(current, input) : current),
   );
 

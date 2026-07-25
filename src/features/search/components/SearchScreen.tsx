@@ -44,7 +44,10 @@ export function SearchScreen({ options }: { options: SearchOptions }) {
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mounted = useMounted();
 
-  const run = useAction(searchAction, { onSuccess: (data) => setResults(data) });
+  const run = useAction(searchAction, {
+    optimistic: false, // read, not a mutation
+    onSuccess: (data) => setResults(data),
+  });
 
   const rememberTerm = (term: string) => {
     const trimmed = term.trim();

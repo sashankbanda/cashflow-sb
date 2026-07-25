@@ -121,6 +121,7 @@ export function InsightsScreen({
   const [shown, setShown] = useState<InsightsPayload>(initial);
 
   const fetchPeriod = useAction(fetchInsightsAction, {
+    optimistic: false, // read, not a mutation
     onSuccess: (payload) => {
       setCache((current) => ({ ...current, [payload.period]: payload }));
       setShown(payload);

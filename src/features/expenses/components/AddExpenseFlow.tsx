@@ -141,6 +141,7 @@ function Flow({
 
   const create = useAction(createExpenseAction, {
     successMessage: "Expense added",
+    optimistic: false, // group-timeline overlay deferred (DECISIONS D1.3)
     onSuccess: () => {
       onClose();
       router.refresh();
@@ -148,6 +149,7 @@ function Flow({
   });
   const createPersonal = useAction(createPersonalExpenseAction, {
     successMessage: "Expense added",
+    optimistic: false, // personal add is optimistic via the outbox; this is the no-IndexedDB fallback
     onSuccess: () => {
       onClose();
       router.refresh();
@@ -155,6 +157,7 @@ function Flow({
   });
   const update = useAction(updateExpenseAction, {
     successMessage: "Expense updated",
+    optimistic: false, // edit; group-timeline overlay deferred (DECISIONS D1.3)
     onSuccess: () => {
       onClose();
       router.refresh();
@@ -162,6 +165,7 @@ function Flow({
   });
   const createRecurring = useAction(createRecurringRuleAction, {
     successMessage: "Recurring expense added",
+    optimistic: false, // creates a rule shown on another screen
     onSuccess: () => {
       onClose();
       router.refresh();

@@ -150,6 +150,7 @@ export function ExpenseDetailSheet({
 
   const remove = useAction(deleteExpenseAction, {
     successMessage: "Expense deleted",
+    optimistic: false, // group timeline is owned by the parent screen (DECISIONS D1.3)
     onSuccess: () => {
       setConfirmingDelete(false);
       onClose();

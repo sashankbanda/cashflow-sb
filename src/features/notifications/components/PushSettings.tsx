@@ -38,10 +38,12 @@ export function PushSettings({
   const [busy, setBusy] = useState(false);
   const [prefs, setPrefs] = useState<NotificationPrefs>(initialPrefs);
 
-  const subscribe = useAction(subscribePushAction);
-  const unsubscribe = useAction(unsubscribePushAction);
+  // Gated on the real browser PushManager result — can't be assumed to succeed.
+  const subscribe = useAction(subscribePushAction, { optimistic: false });
+  const unsubscribe = useAction(unsubscribePushAction, { optimistic: false });
   const savePrefs = useAction(updateNotificationPrefsAction, {
     successMessage: "Preferences saved",
+    optimistic: false, // toggles flip local state instantly; this persists in the background
   });
 
   useEffect(() => {

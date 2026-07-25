@@ -63,9 +63,11 @@ export function ActivityFeed({
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
 
   const switchLoad = useAction(loadActivityAction, {
+    optimistic: false, // read, not a mutation
     onSuccess: (result) => setFeed(result),
   });
   const moreLoad = useAction(loadActivityAction, {
+    optimistic: false, // read, not a mutation
     onSuccess: (result) =>
       setFeed((current) => ({
         items: [...current.items, ...result.items],

@@ -21,6 +21,7 @@ export function AttachmentGallery({ expenseId, groupId }: { expenseId: string; g
   const [viewer, setViewer] = useState<AttachmentView | null>(null);
 
   const list = useAction(listAttachmentsAction, {
+    optimistic: false, // read, not a mutation
     onSuccess: (data) => {
       setItems(data.items);
       setConfigured(data.configured);
@@ -28,8 +29,15 @@ export function AttachmentGallery({ expenseId, groupId }: { expenseId: string; g
   });
   const remove = useAction(deleteAttachmentAction, {
     successMessage: "Receipt deleted",
+    optimistic: {
+      state: items,
+      apply: (current, input: { id: string; groupId?: string }) =>
+        current.filter((item) => item.id !== input.id),
+    },
     onSuccess: (result) => setItems((current) => current.filter((item) => item.id !== result.id)),
   });
+  // Render from the optimistic overlay so a deleted receipt vanishes on tap.
+  const visibleItems = remove.optimisticState;
 
   useEffect(() => {
     void list.execute({ expenseId });
@@ -72,13 +80,13 @@ export function AttachmentGallery({ expenseId, groupId }: { expenseId: string; g
     );
   }
 
-  const atLimit = items.length >= MAX_ATTACHMENTS_PER_EXPENSE;
+  const atLimit = visibleItems.length >= MAX_ATTACHMENTS_PER_EXPENSE;
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-caption text-fg-3 uppercase">Receipts</p>
-        {items.length > 0 && !atLimit ? (
+        {visibleItems.length > 0 && !atLimit ? (
           <Button
             variant="ghost"
             size="sm"
@@ -99,7 +107,7 @@ export function AttachmentGallery({ expenseId, groupId }: { expenseId: string; g
         onChange={(event) => void onFile(event.target.files?.[0])}
       />
 
-      {items.length === 0 ? (
+      {visibleItems.length === 0 ? (
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -114,7 +122,7 @@ export function AttachmentGallery({ expenseId, groupId }: { expenseId: string; g
         </button>
       ) : (
         <div className="grid grid-cols-3 gap-2">
-          {items.map((item) => (
+          {visibleItems.map((item) => (
             <div key={item.id} className="relative aspect-square">
               <button
                 type="button"

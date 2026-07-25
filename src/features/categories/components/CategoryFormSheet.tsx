@@ -33,6 +33,7 @@ function Form({ category, onClose }: { category?: CategoryFormValues; onClose: (
 
   const create = useAction(createCategoryAction, {
     successMessage: "Category created",
+    optimistic: false, // form closes; parent list re-renders from the server
     onSuccess: () => {
       onClose();
       router.refresh();
@@ -40,6 +41,7 @@ function Form({ category, onClose }: { category?: CategoryFormValues; onClose: (
   });
   const update = useAction(updateCategoryAction, {
     successMessage: "Category updated",
+    optimistic: false, // form closes; parent list re-renders from the server
     onSuccess: () => {
       onClose();
       router.refresh();

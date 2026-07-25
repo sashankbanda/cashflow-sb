@@ -58,8 +58,15 @@ export function CategoryManager({ data }: { data: CategoryManagerData }) {
 
   const archive = useAction(archiveCategoryAction, {
     successMessage: "Category archived",
+    optimistic: {
+      state: data.custom,
+      apply: (current, input: { categoryId: string }) =>
+        current.filter((category) => category.id !== input.categoryId),
+    },
     onSuccess: () => router.refresh(),
   });
+  // Render the custom list from the overlay so an archived row leaves on tap.
+  const customCategories = archive.optimisticState;
 
   const openCreate = () => {
     setEditing(undefined);
@@ -94,7 +101,7 @@ export function CategoryManager({ data }: { data: CategoryManagerData }) {
       <div className="space-y-5 px-5">
         <section className="space-y-2">
           <h2 className="text-caption text-fg-3 uppercase">Your categories</h2>
-          {data.custom.length === 0 ? (
+          {customCategories.length === 0 ? (
             <GlassCard elevation="inset" className="p-5">
               <p className="text-footnote text-fg-3">
                 No custom categories yet. Create one to tailor your spending.
@@ -102,7 +109,7 @@ export function CategoryManager({ data }: { data: CategoryManagerData }) {
             </GlassCard>
           ) : (
             <GlassCard elevation="inset" className="divide-y divide-white/6">
-              {data.custom.map((category) => (
+              {customCategories.map((category) => (
                 <CategoryRow
                   key={category.id}
                   category={category}

@@ -21,6 +21,7 @@ export function TagPicker({ available, selected, onChange }: TagPickerProps) {
   const [draft, setDraft] = useState("");
 
   const create = useAction(createTagAction, {
+    optimistic: false, // needs the server-generated tag id for selection state
     onSuccess: (tag) => {
       setOptions((current) =>
         current.some((option) => option.id === tag.tagId)

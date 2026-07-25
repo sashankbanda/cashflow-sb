@@ -62,6 +62,7 @@ function GroupForm({
 
   const create = useAction(createGroupAction, {
     successMessage: "Group created",
+    optimistic: false, // navigates to the new group
     onSuccess: (data) => {
       onClose();
       router.refresh();
@@ -70,6 +71,7 @@ function GroupForm({
   });
   const update = useAction(updateGroupAction, {
     successMessage: "Group updated",
+    optimistic: false, // form closes; parent re-renders from the server
     onSuccess: (data) => {
       onClose();
       router.refresh();

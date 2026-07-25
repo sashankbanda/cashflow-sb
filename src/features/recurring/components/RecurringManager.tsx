@@ -33,14 +33,18 @@ export function RecurringManager({
   const router = useRouter();
   const [active, setActive] = useState<RecurringRuleView | null>(null);
 
-  const refresh = () => {
-    setActive(null);
-    router.refresh();
-  };
-  const update = useAction(updateRecurringRuleAction, { onSuccess: refresh });
+  // Non-blocking: the sheet closes on tap and the write runs in the background.
+  // A local overlay isn't used because pause/resume/end/delete all mutate one
+  // server-owned rules list — sharing a single overlay across four actions would
+  // mean hand-rolling it at the call site; the list reconciles on revalidate.
+  const update = useAction(updateRecurringRuleAction, {
+    optimistic: false,
+    onSuccess: () => router.refresh(),
+  });
   const remove = useAction(deleteRecurringRuleAction, {
     successMessage: "Recurring expense deleted",
-    onSuccess: refresh,
+    optimistic: false,
+    onSuccess: () => router.refresh(),
   });
   const pending = update.pending || remove.pending;
 
@@ -144,7 +148,11 @@ export function RecurringManager({
                   variant="glass"
                   block
                   loading={pending}
-                  onClick={() => void update.execute({ ruleId: active.id, action: "resume" })}
+                  onClick={() => {
+                    const ruleId = active.id;
+                    setActive(null);
+                    void update.execute({ ruleId, action: "resume" });
+                  }}
                 >
                   <Play className="size-4" /> Resume
                 </Button>
@@ -153,7 +161,11 @@ export function RecurringManager({
                   variant="glass"
                   block
                   loading={pending}
-                  onClick={() => void update.execute({ ruleId: active.id, action: "pause" })}
+                  onClick={() => {
+                    const ruleId = active.id;
+                    setActive(null);
+                    void update.execute({ ruleId, action: "pause" });
+                  }}
                 >
                   <Pause className="size-4" /> Pause
                 </Button>
@@ -165,7 +177,11 @@ export function RecurringManager({
                 variant="glass"
                 block
                 loading={pending}
-                onClick={() => void update.execute({ ruleId: active.id, action: "end" })}
+                onClick={() => {
+                const ruleId = active.id;
+                setActive(null);
+                void update.execute({ ruleId, action: "end" });
+              }}
               >
                 <Square className="size-4" /> End (keep history)
               </Button>
@@ -179,7 +195,11 @@ export function RecurringManager({
               variant="destructive"
               block
               loading={remove.pending}
-              onClick={() => void remove.execute({ ruleId: active.id })}
+              onClick={() => {
+                const ruleId = active.id;
+                setActive(null);
+                void remove.execute({ ruleId });
+              }}
             >
               <Trash2 className="size-4" /> Delete rule
             </Button>

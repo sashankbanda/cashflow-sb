@@ -70,24 +70,25 @@ function Form({
   );
   const [draft, setDraft] = useState(editing ? minorToAmount(target.amountMinor) : "");
 
+  // Non-blocking: the sheet closes on tap and the write runs in the background;
+  // the budget list is a server-derived aggregate on the parent screen, so it
+  // reconciles on revalidate and a genuine failure surfaces a non-blocking toast.
   const save = useAction(setBudgetAction, {
     successMessage: "Budget saved",
-    onSuccess: () => {
-      onClose();
-      router.refresh();
-    },
+    optimistic: false,
+    onSuccess: () => router.refresh(),
   });
   const remove = useAction(deleteBudgetAction, {
     successMessage: "Budget removed",
-    onSuccess: () => {
-      onClose();
-      router.refresh();
-    },
+    optimistic: false,
+    onSuccess: () => router.refresh(),
   });
 
   const submit = () => {
     if (!picked || !isValidAmount(draft)) return;
-    void save.execute({ categoryId: picked.categoryId, amountMinor: amountToMinor(draft) });
+    const payload = { categoryId: picked.categoryId, amountMinor: amountToMinor(draft) };
+    onClose();
+    void save.execute(payload);
   };
 
   return (
@@ -160,7 +161,11 @@ function Form({
           variant="ghost"
           block
           loading={remove.pending}
-          onClick={() => void remove.execute({ budgetId: target.budgetId })}
+          onClick={() => {
+            const budgetId = target.budgetId;
+            onClose();
+            void remove.execute({ budgetId });
+          }}
         >
           Remove budget
         </Button>

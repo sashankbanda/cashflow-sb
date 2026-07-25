@@ -26,6 +26,7 @@ export function JoinGroupView({ invite, viewerName }: JoinGroupViewProps) {
 
   const join = useAction(joinInviteAction, {
     successMessage: `Welcome to ${invite.group.name}!`,
+    optimistic: false, // navigates into the group
     onSuccess: ({ groupId }) => {
       router.push(`/groups/${groupId}`);
       router.refresh();
@@ -33,6 +34,7 @@ export function JoinGroupView({ invite, viewerName }: JoinGroupViewProps) {
   });
   const claim = useAction(claimGhostAction, {
     successMessage: "That's you now — history attached.",
+    optimistic: false, // navigates into the group
     onSuccess: ({ groupId }) => {
       router.push(`/groups/${groupId}`);
       router.refresh();

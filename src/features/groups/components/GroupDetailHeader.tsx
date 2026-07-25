@@ -38,6 +38,7 @@ export function GroupDetailHeader({
 
   const archive = useAction(archiveGroupAction, {
     successMessage: "Group archived",
+    optimistic: false, // navigates away from the group
     onSuccess: () => {
       archiveSheet.close();
       router.push("/groups");
