@@ -21,22 +21,20 @@ function isProtected(pathname: string): boolean {
   return PROTECTED.some((base) => pathname === base || pathname.startsWith(`${base}/`));
 }
 
-function makeNonce(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary);
-}
-
 /**
- * Content-Security-Policy with a per-request nonce (Next applies it to its own
- * scripts) plus `strict-dynamic`. Styles stay `unsafe-inline` (framework +
- * Tailwind inject inline styles; nonce-ing them isn't practical). Dev adds the
- * eval/ws exceptions HMR needs.
+ * Content-Security-Policy compatible with both statically prerendered and
+ * dynamically rendered routes. A per-request nonce + `strict-dynamic` cannot
+ * work here: static pages are served from build-time HTML whose script tags
+ * carry no request nonce, and `strict-dynamic` disables `'self'`, so every
+ * script (framework chunks and the inline RSC data scripts alike) would be
+ * blocked. `'self' 'unsafe-inline'` covers Next's own scripts on every route;
+ * the remaining directives keep the meaningful protections (no framing, no
+ * plugins, locked base-uri/form-action, HTTPS upgrade). Dev adds the eval/ws
+ * exceptions HMR needs.
  */
-function buildCsp(nonce: string): string {
+function buildCsp(): string {
   const dev = process.env.NODE_ENV !== "production";
-  const scriptSrc = ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", dev ? "'unsafe-eval'" : ""]
+  const scriptSrc = ["'self'", "'unsafe-inline'", dev ? "'unsafe-eval'" : ""]
     .filter(Boolean)
     .join(" ");
   const connectSrc = ["'self'", dev ? "ws:" : ""].filter(Boolean).join(" ");
@@ -71,21 +69,14 @@ function applySecurityHeaders(headers: Headers, csp: string): void {
 }
 
 export default function proxy(request: NextRequest): NextResponse {
-  const nonce = makeNonce();
-  const csp = buildCsp(nonce);
-
   if (isProtected(request.nextUrl.pathname) && !getSessionCookie(request)) {
     const signIn = new URL("/sign-in", request.url);
     signIn.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(signIn);
   }
 
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
-  requestHeaders.set("Content-Security-Policy", csp);
-
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
-  applySecurityHeaders(response.headers, csp);
+  const response = NextResponse.next();
+  applySecurityHeaders(response.headers, buildCsp());
   return response;
 }
 

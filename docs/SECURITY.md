@@ -6,13 +6,17 @@ Living record of the app's security posture. Updated during P35 (hardening).
 
 Applied to every non-asset response:
 
-- **Content-Security-Policy** — nonce-based. `script-src 'self' 'nonce-…'
-'strict-dynamic'` (Next stamps the per-request nonce onto its own scripts);
-  `style-src 'self' 'unsafe-inline'` (framework + Tailwind inject inline styles;
-  nonce-ing them isn't practical); `img-src` allows `data:`/`blob:` + the Google
-  avatar and Vercel Blob hosts; `connect-src 'self'`; `object-src 'none'`;
-  `frame-ancestors 'none'`; `base-uri 'self'`; `form-action 'self'`;
-  `upgrade-insecure-requests`. Dev adds `'unsafe-eval'` + `ws:` for HMR only.
+- **Content-Security-Policy** — `script-src 'self' 'unsafe-inline'`. A
+  per-request nonce + `strict-dynamic` was tried but is incompatible with Next's
+  statically prerendered routes: their build-time HTML carries no request nonce
+  and `strict-dynamic` disables `'self'`, so every framework chunk and inline RSC
+  data script gets blocked (blank page). `'self' 'unsafe-inline'` covers Next's
+  own scripts on static and dynamic routes alike. `style-src 'self'
+  'unsafe-inline'` (framework + Tailwind inject inline styles); `img-src` allows
+  `data:`/`blob:` + the Google avatar and Vercel Blob hosts; `connect-src 'self'`;
+  `object-src 'none'`; `frame-ancestors 'none'`; `base-uri 'self'`;
+  `form-action 'self'`; `upgrade-insecure-requests` keep the meaningful
+  protections. Dev adds `'unsafe-eval'` + `ws:` for HMR only.
 - **Strict-Transport-Security** `max-age=63072000; includeSubDomains; preload`
 - **X-Content-Type-Options** `nosniff`
 - **Referrer-Policy** `strict-origin-when-cross-origin`
