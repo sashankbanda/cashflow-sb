@@ -17,13 +17,15 @@ export const easeStandard: Transition = { duration: 0.25, ease: [0.32, 0.72, 0, 
 /** Hovers, toggles, icon tints. */
 export const easeMicro: Transition = { duration: 0.15, ease: "easeOut" };
 
-export const STAGGER_INTERVAL_S = 0.04;
-export const STAGGER_MAX_ITEMS = 8;
+// Stagger sparingly: a long cascade makes a list feel slow even at 60fps. Cap
+// at 3 steps of 20ms, then everything lands together.
+export const STAGGER_INTERVAL_S = 0.02;
+export const STAGGER_MAX_ITEMS = 3;
 
-/** Entrance variants shared by staggered lists and widget grids. */
+/** Entrance variants shared by staggered lists and widget grids — fast in. */
 export const entranceVariants: Variants = {
-  hidden: { opacity: 0, y: 16, scale: 0.98 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: springSmooth },
+  hidden: { opacity: 0, y: 8 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.18, ease: [0.25, 1, 0.5, 1] } },
 };
 
 export const entranceVariantsReduced: Variants = {

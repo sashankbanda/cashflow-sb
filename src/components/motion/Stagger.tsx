@@ -13,8 +13,9 @@ export interface StaggerProps {
 }
 
 /**
- * Entrance choreography for lists and widget grids: children rise in with a
- * 40ms cascade (capped at 8 steps). Wrap the group; each direct child animates.
+ * Entrance choreography for lists and widget grids: children fade up with a
+ * short 20ms cascade (capped at 3 steps) so the list never feels like it's
+ * crawling in. Wrap the group; each direct child animates.
  */
 export function Stagger({ children, className, delay = 0 }: StaggerProps) {
   const reducedMotion = useReducedMotion();
