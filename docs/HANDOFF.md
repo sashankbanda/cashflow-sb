@@ -1,31 +1,34 @@
 # Cashflow — Session Handoff
 
-> State snapshot for the next implementation session. Read this, then continue
-> from **Phase 36** in [05-ROADMAP.md](05-ROADMAP.md). The design docs
-> (01–05) remain the source of truth; this file records what is already built.
+> **All 36 roadmap phases are complete.** The build passes; final production
+> audit follows. The design docs (01–05) remain the source of truth; this file
+> records what is built.
 
-## Where to resume — Phase 36 (Observability, E2E & launch) — FINAL
+## Status — P1–P36 COMPLETE
 
-P1–P35 are complete, committed, and pushed to `origin/main`
-(github.com/sashankbanda/cashflow-sb, latest `513b52b`). Last roadmap phase:
-**P36 Observability/E2E/launch**, then the **final production audit** the user
-requested. Per roadmap P36: Sentry (client+server, release tagging, Web Vitals —
-**gate on a `SENTRY_DSN` secret**, no-op without it) + pino drain + an
-`/api/health` route (DB ping); a Playwright **E2E suite** (390×844) for the 5
-critical journeys — formalize the many verified `scratchpad/*-check.js` scripts
-into committed `tests/e2e/`; a CI pipeline (`.github/workflows/ci.yml`:
-typecheck → lint → unit → build; E2E against a preview needs DB/secrets, wire as
-optional); a production env checklist + `docs/RUNBOOK.md` (deploy → health check
-→ rollback). After P36, run the whole-repo Principal-Engineer audit (dead code,
-dup, a11y, perf, indexes, error/empty/loading states, test gaps) and fix what's
-reasonable, then the final production-readiness report.
+All phases complete, committed, and pushed to `origin/main`
+(github.com/sashankbanda/cashflow-sb, latest `cc78904`). **157 unit tests** +
+**5 Playwright critical journeys** green; typecheck/lint/build clean; `pnpm
+audit` clean; **0 axe a11y violations**; migrations `0000`–`0004` applied to
+Neon.
 
-**Gated secrets (all code-complete):** `BLOB_READ_WRITE_TOKEN` (P30, unset),
-`VAPID_*` (P33, local `.env`), and P36's `SENTRY_DSN` (optional).
+**P36 observability/E2E/launch** (`cc78904`): native observability (chose NOT to
+add `@sentry/nextjs` — its `withSentryConfig` webpack plugin doesn't run under
+Next 16 Turbopack builds; wired a documented Sentry DSN drop-in in
+`src/instrumentation.ts` instead) — `onRequestError` → structured pino log
+drain, `GET /api/health` (DB ping, 503 when down), Web Vitals `WebVitals` client
+→ `POST /api/vitals` → pino; `env` gained optional `SENTRY_DSN` + `APP_VERSION`.
+`playwright.config.ts` + `tests/e2e/critical.spec.ts` (5 journeys, `pnpm e2e`);
+`.github/workflows/ci.yml` (typecheck→lint→unit→build→audit + opt-in preview
+E2E); `docs/RUNBOOK.md` (env checklist, deploy, health, rollback, on-call).
+
+**Gated secrets (all code-complete, activate in Vercel):** `BLOB_READ_WRITE_TOKEN`
+(P30 attachments), `VAPID_*` (P33 push — self-generated in local `.env`),
+`SENTRY_DSN` (P36 error tracking). Everything else runs without secrets.
 
 **Build note:** on memory-constrained machines `next build` static generation
-can OOM-crash workers — `next.config.ts` caps `experimental.cpus: 2`. Migrations
-`0000`–`0004`. `pnpm audit` clean (overrides in `pnpm-workspace.yaml`).
+can OOM-crash workers — `next.config.ts` caps `experimental.cpus: 2` (raise in
+CI/prod). `pnpm audit` clean via `overrides` in `pnpm-workspace.yaml`.
 
 ## Session 4 additions (P26–P35, newest first)
 
