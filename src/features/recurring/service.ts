@@ -38,6 +38,7 @@ async function materializeOccurrence(
       expenseDate: date,
       idempotencyKey,
       tagIds: template.tagIds,
+      isIncome: false, // recurring rules are always spends
     };
     const { expenseId } = await createPersonalExpense(user, input, { recurringRuleId: rule.id });
     return { expenseId, userIds: [user.id] };

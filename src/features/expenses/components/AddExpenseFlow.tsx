@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { DateChip } from "@/components/ui/DateChip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconButton } from "@/components/ui/IconButton";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Select } from "@/components/ui/Select";
 import { Sheet } from "@/components/ui/Sheet";
 import { TextField } from "@/components/ui/TextField";
@@ -114,6 +115,8 @@ function Flow({
     enabled: false,
     frequency: "monthly",
   });
+  // Personal entries can be a spend or income (money in). Groups are spends.
+  const [entryType, setEntryType] = useState<"expense" | "income">("expense");
 
   const initialGroup = groups.find((group) => group.id === defaultGroupId) ?? groups[0] ?? null;
   // From within a group → that group; from the global dock → Personal;
@@ -137,6 +140,7 @@ function Flow({
   }));
 
   const isPersonal = draft.groupId === PERSONAL;
+  const isIncomeEntry = isPersonal && entryType === "income";
   const group = groups.find((candidate) => candidate.id === draft.groupId) ?? null;
 
   const create = useAction(createExpenseAction, {
@@ -220,6 +224,7 @@ function Flow({
     // idempotency key dedupes any replay, so this can never double-charge.
     const category = categories.find((option) => option.id === draft.categoryId);
     const offline = typeof navigator !== "undefined" && !navigator.onLine;
+    const income = entryType === "income";
     const queued = await enqueueExpense({
       id: idempotencyKey,
       attempts: 0,
@@ -229,13 +234,20 @@ function Flow({
         categoryId: draft.categoryId,
         expenseDate: formatISODate(draft.date),
         tagIds: draft.tagIds,
+        isIncome: income,
         categoryName: category?.name ?? "Other",
         categoryIcon: category?.icon ?? "shapes",
         categoryGradient: category?.gradient ?? "ocean",
       },
     });
     if (queued) {
-      toast.success(offline ? "Saved offline — will sync when you reconnect" : "Expense added");
+      toast.success(
+        offline
+          ? "Saved offline — will sync when you reconnect"
+          : income
+            ? "Income added"
+            : "Expense added",
+      );
       onClose();
       return;
     }
@@ -248,6 +260,7 @@ function Flow({
       expenseDate: formatISODate(draft.date),
       idempotencyKey,
       tagIds: draft.tagIds,
+      isIncome: income,
     });
   };
 
@@ -391,10 +404,22 @@ function Flow({
                 </p>
               )}
 
+              {isPersonal && !editing ? (
+                <SegmentedControl
+                  aria-label="Entry type"
+                  value={entryType}
+                  onChange={setEntryType}
+                  options={[
+                    { value: "expense", label: "Expense" },
+                    { value: "income", label: "Income" },
+                  ]}
+                />
+              ) : null}
+
               <AmountDisplay value={draft.amount} className="py-2" />
 
               <TextField
-                placeholder="What was it for?"
+                placeholder={isIncomeEntry ? "What's it from?" : "What was it for?"}
                 value={draft.description}
                 onChange={(event) =>
                   setDraft((current) => ({ ...current, description: event.target.value }))
@@ -444,7 +469,9 @@ function Flow({
                 />
               ) : null}
 
-              {!editing ? <RecurrencePicker value={recurrence} onChange={setRecurrence} /> : null}
+              {!editing && !isIncomeEntry ? (
+                <RecurrencePicker value={recurrence} onChange={setRecurrence} />
+              ) : null}
 
               <div className="mt-auto">
                 <AmountKeypad
@@ -463,7 +490,9 @@ function Flow({
                     else goTo(2);
                   }}
                 >
-                  {isPersonal ? `Add expense · ${formatMoney(amountMinor)}` : "Next"}
+                  {isPersonal
+                    ? `Add ${isIncomeEntry ? "income" : "expense"} · ${formatMoney(amountMinor)}`
+                    : "Next"}
                 </Button>
               </div>
             </div>

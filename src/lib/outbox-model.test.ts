@@ -11,6 +11,7 @@ const make = (id: string, createdAt: number): OutboxExpense => ({
     categoryId: "c",
     expenseDate: "2026-07-25",
     tagIds: [],
+    isIncome: false,
     categoryName: "Other",
     categoryIcon: "shapes",
     categoryGradient: "ocean",

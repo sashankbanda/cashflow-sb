@@ -11,7 +11,11 @@ import { formatMoney } from "@/lib/format";
 import { requireUser } from "@/features/auth/session";
 import { PendingExpenses } from "@/features/expenses/components/PendingExpenses";
 import { PersonalLedger } from "@/features/expenses/components/PersonalLedger";
-import { getPersonalLedger, getPersonalSpendTotal } from "@/features/expenses/personal-queries";
+import {
+  getPersonalIncomeTotal,
+  getPersonalLedger,
+  getPersonalSpendTotal,
+} from "@/features/expenses/personal-queries";
 import { getUpcomingOccurrences } from "@/features/recurring/queries";
 
 export const metadata: Metadata = { title: "Spending" };
@@ -22,24 +26,33 @@ export default async function ExpensesPage() {
   const monthStart = formatISO(startOfMonth(now), { representation: "date" });
   const today = formatISO(now, { representation: "date" });
 
-  const [entries, monthTotal, upcoming] = await Promise.all([
+  const [entries, monthTotal, monthIncome, upcoming] = await Promise.all([
     getPersonalLedger(user.id),
     getPersonalSpendTotal(user.id, { from: monthStart, to: today }),
+    getPersonalIncomeTotal(user.id, { from: monthStart, to: today }),
     getUpcomingOccurrences(user.id, 3),
   ]);
+  const net = monthIncome - monthTotal;
 
   return (
     <div className="flex flex-col gap-6">
-      <ScreenHeader title="Spending" eyebrow="Everything you spend" />
+      <ScreenHeader title="Money" eyebrow="This month's cashflow" />
       <div className="space-y-5 px-5">
-        <GradientPanel palette="ember" className="p-6">
-          <p className="text-caption text-fg-on-grad uppercase">This month</p>
+        <GradientPanel palette="aurora" className="p-6">
+          <p className="text-caption text-fg-on-grad uppercase">Net this month</p>
           <p className="mt-2 font-dot text-display font-black text-white tabular-nums">
-            {formatMoney(monthTotal, { compact: monthTotal >= 10_000_00 })}
+            {formatMoney(net, { sign: "always", compact: Math.abs(net) >= 10_000_00 })}
           </p>
-          <p className="mt-1 text-footnote text-fg-on-grad">
-            Personal spends plus your share of group expenses
-          </p>
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-footnote text-fg-on-grad">
+            <span>
+              <span aria-hidden>↑ </span>Income{" "}
+              {formatMoney(monthIncome, { compact: monthIncome >= 10_000_00 })}
+            </span>
+            <span>
+              <span aria-hidden>↓ </span>Spent{" "}
+              {formatMoney(monthTotal, { compact: monthTotal >= 10_000_00 })}
+            </span>
+          </div>
         </GradientPanel>
 
         <PendingExpenses />
@@ -79,7 +92,7 @@ export default async function ExpensesPage() {
               icon={<Wallet />}
               palette="ember"
               title="Nothing tracked yet"
-              description="Add a personal expense with the volt button, or add one to a group — your share lands here automatically."
+              description="Tap the + button to add a spend or income, or add an expense to a group — your share lands here automatically."
             />
           </GlassCard>
         ) : (

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 import { OUTBOX_CHANGED, listQueued } from "@/lib/outbox";
 import type { OutboxExpense } from "@/lib/outbox-model";
@@ -37,11 +38,16 @@ export function PendingExpenses() {
           <div className="min-w-0 flex-1">
             <p className="truncate text-body text-fg-1">{item.payload.description}</p>
             <p className="truncate text-footnote text-fg-3">
-              {item.payload.categoryName} · pending sync
+              {item.payload.isIncome ? "Income" : item.payload.categoryName} · pending sync
             </p>
           </div>
-          <p className="shrink-0 text-body font-semibold text-fg-2 tabular-nums">
-            {formatMoney(item.payload.amountMinor)}
+          <p
+            className={cn(
+              "shrink-0 text-body font-semibold tabular-nums",
+              item.payload.isIncome ? "text-positive" : "text-fg-2",
+            )}
+          >
+            {formatMoney(item.payload.amountMinor, item.payload.isIncome ? { sign: "always" } : {})}
           </p>
         </div>
       ))}

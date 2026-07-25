@@ -16,6 +16,8 @@ export interface OutboxExpense {
     categoryId: string;
     expenseDate: string;
     tagIds: string[];
+    /** Money in, not out. */
+    isIncome: boolean;
     /** Denormalized for optimistic "pending" rendering while offline. */
     categoryName: string;
     categoryIcon: string;

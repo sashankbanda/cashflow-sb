@@ -32,6 +32,7 @@ export function OutboxSync() {
             expenseDate: item.payload.expenseDate,
             idempotencyKey: item.id,
             tagIds: item.payload.tagIds,
+            isIncome: item.payload.isIncome,
           });
           if (result.ok) {
             await removeQueued(item.id);

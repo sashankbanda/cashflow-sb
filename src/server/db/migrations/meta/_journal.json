@@ -43,6 +43,13 @@
       "when": 1784958906530,
       "tag": "0005_unique_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785005123997,
+      "tag": "0006_soft_midnight",
+      "breakpoints": true
     }
   ]
 }

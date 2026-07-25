@@ -61,6 +61,8 @@ export const createPersonalExpenseSchema = z.object({
   expenseDate: expenseDateSchema,
   idempotencyKey: z.string().uuid(),
   tagIds: tagIdsSchema,
+  /** True records money coming in (income) instead of a spend. */
+  isIncome: z.boolean().optional().default(false),
 });
 
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;

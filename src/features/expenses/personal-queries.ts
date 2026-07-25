@@ -23,6 +23,8 @@ export interface LedgerEntry {
   isPersonal: boolean;
   /** True when this expense was materialized from a recurring rule. */
   isRecurring: boolean;
+  /** True when this row is income (money in), not a spend. */
+  isIncome: boolean;
   tags: LedgerTag[];
 }
 
@@ -45,6 +47,7 @@ export async function getPersonalLedger(
       expenseDate: expenses.expenseDate,
       groupId: expenses.groupId,
       recurringRuleId: expenses.recurringRuleId,
+      isIncome: expenses.isIncome,
       categoryId: expenses.categoryId,
       categoryName: sql<string | null>`cat.name`,
       categoryIcon: sql<string | null>`cat.icon`,
@@ -104,6 +107,7 @@ export async function getPersonalLedger(
     source: row.groupId ? (row.groupName ?? "Group") : null,
     isPersonal: row.groupId === null,
     isRecurring: row.recurringRuleId !== null,
+    isIncome: row.isIncome,
     tags: tagsByExpense.get(row.expenseId) ?? [],
   }));
 }
@@ -120,6 +124,28 @@ export async function getPersonalSpendTotal(
     .where(
       and(
         eq(expenseSplits.userId, userId),
+        eq(expenses.isIncome, false),
+        isNull(expenses.deletedAt),
+        gte(expenses.expenseDate, range.from),
+        lte(expenses.expenseDate, range.to),
+      ),
+    );
+  return Number(row?.total ?? 0);
+}
+
+/** Total personal income recorded across a range. */
+export async function getPersonalIncomeTotal(
+  userId: string,
+  range: { from: string; to: string },
+): Promise<number> {
+  const [row] = await db
+    .select({ total: sql<string>`coalesce(sum(${expenseSplits.amountMinor}), 0)` })
+    .from(expenseSplits)
+    .innerJoin(expenses, eq(expenseSplits.expenseId, expenses.id))
+    .where(
+      and(
+        eq(expenseSplits.userId, userId),
+        eq(expenses.isIncome, true),
         isNull(expenses.deletedAt),
         gte(expenses.expenseDate, range.from),
         lte(expenses.expenseDate, range.to),
@@ -144,6 +170,7 @@ export async function getDailySpend(
       and(
         eq(expenseSplits.userId, userId),
         isNotNull(expenseSplits.userId),
+        eq(expenses.isIncome, false),
         isNull(expenses.deletedAt),
         gte(expenses.expenseDate, range.from),
         lte(expenses.expenseDate, range.to),

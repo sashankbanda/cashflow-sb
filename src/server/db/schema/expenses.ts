@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  boolean,
   char,
   check,
   date,
@@ -28,6 +29,8 @@ export const expenses = pgTable(
     description: text().notNull(),
     amountMinor: bigint({ mode: "number" }).notNull(),
     currency: char({ length: 3 }).notNull().default("INR"),
+    /** Money in, not out. Personal-only; excluded from all spend totals. */
+    isIncome: boolean().notNull().default(false),
     categoryId: text().references(() => categories.id),
     splitType: splitTypeEnum().notNull(),
     expenseDate: date({ mode: "string" }).notNull(),

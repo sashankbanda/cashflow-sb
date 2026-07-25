@@ -98,7 +98,7 @@ export function PersonalLedger({ entries }: { entries: ReadonlyArray<LedgerEntry
                       ) : null}
                     </p>
                     <p className="truncate text-footnote text-fg-3">
-                      {entry.category?.name ?? "Other"}
+                      {entry.isIncome ? "Income" : (entry.category?.name ?? "Other")}
                       {entry.source ? (
                         <>
                           {" · "}
@@ -110,8 +110,13 @@ export function PersonalLedger({ entries }: { entries: ReadonlyArray<LedgerEntry
                         : ""}
                     </p>
                   </div>
-                  <p className="shrink-0 text-body font-semibold text-fg-1 tabular-nums">
-                    {formatMoney(entry.amountMinor)}
+                  <p
+                    className={cn(
+                      "shrink-0 text-body font-semibold tabular-nums",
+                      entry.isIncome ? "text-positive" : "text-fg-1",
+                    )}
+                  >
+                    {formatMoney(entry.amountMinor, entry.isIncome ? { sign: "always" } : {})}
                   </p>
                 </>
               );

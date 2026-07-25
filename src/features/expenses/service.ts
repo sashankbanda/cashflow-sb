@@ -261,6 +261,7 @@ export async function createPersonalExpense(
         description: input.description,
         amountMinor: input.amountMinor,
         currency: "INR",
+        isIncome: input.isIncome ?? false,
         categoryId: input.categoryId,
         splitType: "equal",
         expenseDate: input.expenseDate,
