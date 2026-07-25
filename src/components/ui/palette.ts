@@ -30,16 +30,6 @@ export const paletteGlow: Record<Palette, string> = {
   aurora: "shadow-ambient-lg",
 };
 
-/** Flat accent color per palette, for icon tints and chart strokes. */
-export const paletteAccentText: Record<Palette, string> = {
-  ember: "text-ember-1",
-  ocean: "text-ocean-1",
-  mint: "text-mint-2",
-  iris: "text-iris-1",
-  solar: "text-solar-1",
-  aurora: "text-fg-1",
-};
-
 /** Raw gradient stops per palette — for contexts without CSS (OG images). */
 export const PALETTE_HEX: Record<Palette, [string, string, string]> = {
   ember: ["#ff5c39", "#f02d65", "#58122e"],

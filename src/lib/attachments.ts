@@ -8,8 +8,6 @@ export type AttachmentMime = (typeof ALLOWED_ATTACHMENT_MIME)[number];
 
 /** Hard ceiling on the *uploaded* (already client-compressed) file. */
 export const MAX_ATTACHMENT_BYTES = 2 * 1024 * 1024; // 2 MB
-/** Target the client compresses toward before upload. */
-export const COMPRESS_TARGET_BYTES = 500 * 1024; // ~500 KB
 export const MAX_ATTACHMENTS_PER_EXPENSE = 5;
 
 export interface AttachmentCandidate {

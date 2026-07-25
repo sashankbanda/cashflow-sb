@@ -35,20 +35,6 @@ export async function notifyUsers(
   );
 }
 
-/** Mark one notification read (owner only; silently ignores others). */
-export async function markNotificationRead(user: ActionUser, id: string): Promise<void> {
-  await db
-    .update(notifications)
-    .set({ readAt: new Date() })
-    .where(
-      and(
-        eq(notifications.id, id),
-        eq(notifications.userId, user.id),
-        isNull(notifications.readAt),
-      ),
-    );
-}
-
 /** Mark every unread notification read for the user. */
 export async function markAllNotificationsRead(user: ActionUser): Promise<void> {
   await db

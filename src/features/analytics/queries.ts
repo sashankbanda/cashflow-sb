@@ -1,6 +1,6 @@
 import "server-only";
 import { endOfMonth, formatISO, startOfMonth, subDays, subMonths } from "date-fns";
-import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
 import { db } from "@/server/db";
 import { activityLogs, groupMembers } from "@/server/db/schema";
 import { describeActivity, type ActivityPayload } from "@/features/activity/describe";
@@ -99,16 +99,3 @@ export async function getHomeSummary(userId: string): Promise<HomeSummary> {
     activity,
   };
 }
-
-export type SpendTotals = { total: number };
-
-/** Total spend query reused by widgets. */
-export async function getMonthSpend(userId: string): Promise<number> {
-  const now = new Date();
-  return getPersonalSpendTotal(userId, {
-    from: iso(startOfMonth(now)),
-    to: iso(now),
-  });
-}
-
-void sql;

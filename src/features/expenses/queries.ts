@@ -1,6 +1,6 @@
 import "server-only";
 import { formatISO } from "date-fns";
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import type { SplitType } from "@/lib/split";
 import { db } from "@/server/db";
 import { activityLogs, expenses, settlements } from "@/server/db/schema";
@@ -116,12 +116,22 @@ export async function getGroupTimeline(userId: string, groupId: string): Promise
     involvesViewer: row.fromMember?.id === myMember.id || row.toMember?.id === myMember.id,
   }));
 
-  const trailRows = await db.query.activityLogs.findMany({
-    where: and(eq(activityLogs.groupId, groupId), eq(activityLogs.objectType, "expense")),
-    orderBy: [asc(activityLogs.id)],
-    columns: { objectId: true, verb: true, createdAt: true },
-    with: { actor: { columns: { name: true } } },
-  });
+  // Only the trail for the expenses we actually show (unbounded group history
+  // would grow without limit).
+  const shownExpenseIds = rows.map((row) => row.id);
+  const trailRows =
+    shownExpenseIds.length > 0
+      ? await db.query.activityLogs.findMany({
+          where: and(
+            eq(activityLogs.groupId, groupId),
+            eq(activityLogs.objectType, "expense"),
+            inArray(activityLogs.objectId, shownExpenseIds),
+          ),
+          orderBy: [asc(activityLogs.id)],
+          columns: { objectId: true, verb: true, createdAt: true },
+          with: { actor: { columns: { name: true } } },
+        })
+      : [];
   const trailByExpense = new Map<string, ExpenseTrailEntry[]>();
   for (const row of trailRows) {
     if (

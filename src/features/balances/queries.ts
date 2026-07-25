@@ -199,8 +199,16 @@ export async function getFriendBalances(userId: string): Promise<FriendBalance[]
 
   const friends = new Map<string, FriendBalance>();
 
-  for (const membership of memberships) {
-    const graph = await cachedGroupMoneyGraph(membership.groupId);
+  // Fetch each group's money graph in parallel (cold cache would otherwise
+  // serialize N heavy aggregations); accumulate after.
+  const graphs = await Promise.all(
+    memberships.map(async (membership) => ({
+      membership,
+      graph: await cachedGroupMoneyGraph(membership.groupId),
+    })),
+  );
+
+  for (const { membership, graph } of graphs) {
     const ledger = new Map(graph.ledger);
     for (const other of graph.members) {
       if (!other.userId || other.userId === userId) continue;

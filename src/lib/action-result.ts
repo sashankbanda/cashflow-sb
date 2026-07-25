@@ -20,9 +20,3 @@ export interface ActionError {
 }
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: ActionError };
-
-export function isActionError<T>(
-  result: ActionResult<T>,
-): result is { ok: false; error: ActionError } {
-  return !result.ok;
-}

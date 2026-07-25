@@ -52,6 +52,10 @@ export const expenses = pgTable(
       .on(table.createdBy, table.expenseDate.desc())
       .where(sql`group_id is null and deleted_at is null`),
     index("expenses_category_idx").on(table.categoryId),
+    // Category usage ranking counts a user's own expenses per category.
+    index("expenses_creator_category_idx")
+      .on(table.createdBy, table.categoryId)
+      .where(sql`deleted_at is null`),
     check("expenses_amount_positive", sql`amount_minor > 0`),
   ],
 );
@@ -73,6 +77,9 @@ export const expensePayers = pgTable(
     uniqueIndex("expense_payers_expense_member_uq")
       .on(table.expenseId, table.memberId)
       .where(sql`member_id is not null`),
+    // Plain expense_id lookup (the partial unique above can't serve it, since
+    // it only applies WHERE member_id IS NOT NULL).
+    index("expense_payers_expense_idx").on(table.expenseId),
     index("expense_payers_member_idx").on(table.memberId),
     index("expense_payers_user_idx").on(table.userId),
     check("expense_payers_amount_positive", sql`amount_minor > 0`),
@@ -98,6 +105,7 @@ export const expenseSplits = pgTable(
     uniqueIndex("expense_splits_expense_member_uq")
       .on(table.expenseId, table.memberId)
       .where(sql`member_id is not null`),
+    index("expense_splits_expense_idx").on(table.expenseId),
     index("expense_splits_member_idx").on(table.memberId),
     index("expense_splits_user_expense_idx").on(table.userId, table.expenseId),
     check("expense_splits_amount_non_negative", sql`amount_minor >= 0`),

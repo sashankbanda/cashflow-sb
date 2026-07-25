@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { monthWindow } from "@/lib/dates";
 import { newId } from "@/lib/ids";
 import { db } from "@/server/db";
@@ -63,13 +63,4 @@ export async function deleteBudget(user: ActionUser, budgetId: string): Promise<
   if (!budget) throw notFound("Budget");
   if (budget.userId !== user.id) throw forbidden("That isn't your budget.");
   await db.delete(budgets).where(eq(budgets.id, budgetId));
-}
-
-/** Remove the overall (uncategorized) monthly budget, if any. */
-export async function clearOverallBudget(user: ActionUser): Promise<void> {
-  await db
-    .delete(budgets)
-    .where(
-      and(eq(budgets.userId, user.id), isNull(budgets.categoryId), eq(budgets.period, "monthly")),
-    );
 }

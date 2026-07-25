@@ -53,8 +53,3 @@ export async function removeQueued(id: string): Promise<void> {
   await (await db()).delete(STORE, id);
   announce();
 }
-
-export async function countQueued(): Promise<number> {
-  if (!available()) return 0;
-  return (await db()).count(STORE);
-}

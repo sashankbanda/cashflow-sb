@@ -16,22 +16,12 @@ import {
   updateNotificationPrefs,
 } from "./push-service";
 import { getNotifications } from "./queries";
-import { markAllNotificationsRead, markNotificationRead } from "./service";
+import { markAllNotificationsRead } from "./service";
 
 export const listNotificationsAction = authedAction({
   name: "notifications.list",
   schema: z.object({}),
   handler: async ({ ctx }) => getNotifications(ctx.user.id),
-});
-
-export const markNotificationReadAction = authedAction({
-  name: "notifications.markRead",
-  schema: z.object({ id: z.string().min(1) }),
-  handler: async ({ input, ctx }) => {
-    await markNotificationRead(ctx.user, input.id);
-    revalidatePath("/home");
-    return { id: input.id };
-  },
 });
 
 export const markAllNotificationsReadAction = authedAction({

@@ -11,14 +11,6 @@ export const FREQUENCY_LABEL: Record<Frequency, string> = {
   yearly: "Yearly",
 };
 
-/** Adverb form for sentences: "Repeats monthly". */
-export const FREQUENCY_ADVERB: Record<Frequency, string> = {
-  daily: "daily",
-  weekly: "weekly",
-  monthly: "monthly",
-  yearly: "yearly",
-};
-
 function daysInMonth(year: number, monthIndex: number): number {
   return new Date(year, monthIndex + 1, 0).getDate();
 }

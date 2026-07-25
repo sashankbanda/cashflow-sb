@@ -30,5 +30,3 @@ export const SYSTEM_CATEGORIES: ReadonlyArray<SystemCategory> = [
   { id: "sys-subscriptions", name: "Subscriptions", icon: "repeat", gradient: "ocean", sort: 8 },
   { id: "sys-other", name: "Other", icon: "shapes", gradient: "ocean", sort: 9 },
 ];
-
-export const DEFAULT_CATEGORY_ID = "sys-other";
