@@ -1,3 +1,4 @@
+import { EdgeSwipeBack } from "@/components/motion/EdgeSwipeBack";
 import { PullToRefresh } from "@/components/motion/PullToRefresh";
 import { TabBar } from "@/components/ui/TabBar";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
@@ -28,7 +29,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <>
       <OfflineBanner />
       <PullToRefresh>
-        <div className="mx-auto w-full max-w-md flex-1 pb-dock">{children}</div>
+        <EdgeSwipeBack>
+          <div className="mx-auto w-full max-w-md flex-1 pb-dock">{children}</div>
+        </EdgeSwipeBack>
       </PullToRefresh>
       <TabBar
         groups={groups}
