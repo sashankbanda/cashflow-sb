@@ -91,7 +91,10 @@ async function HomeWidgets({ userId }: { userId: string }) {
       <section className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
           <h2 className="text-caption text-fg-3 uppercase">Recent activity</h2>
-          <Link href="/activity" className="text-footnote text-fg-3 hover:text-fg-2">
+          <Link
+            href="/activity"
+            className="ease-out -mr-2 rounded-full px-2 py-1 text-footnote text-fg-3 transition-colors duration-150 hover:text-fg-2 active:bg-glass active:text-fg-1"
+          >
             See all
           </Link>
         </div>

@@ -1,16 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  Bell,
-  ChevronRight,
-  Download,
-  Palette,
-  PiggyBank,
-  Repeat,
-  Tags,
-  UsersRound,
-  Wallet,
-} from "lucide-react";
+import { Bell, ChevronRight, Download, PiggyBank, Repeat, Tags, UsersRound, Wallet } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
@@ -25,8 +15,6 @@ const linkRows = [
   { icon: Bell, label: "Notifications", href: "/settings/notifications" },
   { icon: Download, label: "Reports & export", href: "/reports" },
 ] as const;
-
-const settingsRows = [{ icon: Palette, label: "Appearance" }] as const;
 
 export default async function ProfilePage() {
   const user = await requireUser();
@@ -77,13 +65,6 @@ export default async function ProfilePage() {
               <p className="flex-1 text-body">{row.label}</p>
               <ChevronRight className="size-4 text-fg-3" />
             </Link>
-          ))}
-          {settingsRows.map((row) => (
-            <div key={row.label} className="flex items-center gap-3 p-4">
-              <row.icon className="size-5 text-fg-2" />
-              <p className="flex-1 text-body">{row.label}</p>
-              <ChevronRight className="size-4 text-fg-3" />
-            </div>
           ))}
         </GlassCard>
         <SignOutButton />

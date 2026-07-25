@@ -9,7 +9,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Chip } from "@/components/ui/Chip";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { IconButton } from "@/components/ui/IconButton";
-import { Spinner } from "@/components/ui/Spinner";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { formatDayLabel } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { useSheet } from "@/hooks/useSheet";
@@ -138,8 +138,10 @@ export function SearchScreen({ options }: { options: SearchOptions }) {
 
       <div className="min-h-40 space-y-6 px-5">
         {run.pending ? (
-          <div className="flex justify-center py-10">
-            <Spinner />
+          <div className="space-y-2" role="status" aria-label="Searching">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-16 rounded-lg" />
+            ))}
           </div>
         ) : !criteria ? (
           mounted && recent.length > 0 ? (
