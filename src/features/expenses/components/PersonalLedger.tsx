@@ -33,28 +33,33 @@ export function PersonalLedger({ entries }: { entries: ReadonlyArray<LedgerEntry
   const [pendingDelete, setPendingDelete] = useState<LedgerEntry | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
 
+  const remove = useAction(deletePersonalExpenseAction, {
+    successMessage: "Expense deleted",
+    optimistic: {
+      state: entries,
+      apply: (current, input: { expenseId: string }) =>
+        current.filter((entry) => entry.expenseId !== input.expenseId),
+    },
+    onSuccess: () => router.refresh(),
+  });
+  // Render from the optimistic overlay: a deleted row vanishes on tap and
+  // comes back if the server rejects it.
+  const liveEntries = remove.optimisticState;
+
   const allTags = useMemo(() => {
     const byId = new Map<string, string>();
-    for (const entry of entries) {
+    for (const entry of liveEntries) {
       for (const tag of entry.tags) byId.set(tag.id, tag.name);
     }
     return [...byId.entries()]
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [entries]);
+  }, [liveEntries]);
 
   const visible = tagFilter
-    ? entries.filter((entry) => entry.tags.some((tag) => tag.id === tagFilter))
-    : entries;
+    ? liveEntries.filter((entry) => entry.tags.some((tag) => tag.id === tagFilter))
+    : liveEntries;
   const sections = groupByDay(visible);
-
-  const remove = useAction(deletePersonalExpenseAction, {
-    successMessage: "Expense deleted",
-    onSuccess: () => {
-      setPendingDelete(null);
-      router.refresh();
-    },
-  });
 
   return (
     <div className="space-y-5">
@@ -154,7 +159,11 @@ export function PersonalLedger({ entries }: { entries: ReadonlyArray<LedgerEntry
               block
               size="lg"
               loading={remove.pending}
-              onClick={() => void remove.execute({ expenseId: pendingDelete.expenseId })}
+              onClick={() => {
+                const expenseId = pendingDelete.expenseId;
+                setPendingDelete(null);
+                void remove.execute({ expenseId });
+              }}
             >
               <Trash2 className="size-4" /> Delete expense
             </Button>
