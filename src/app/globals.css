@@ -118,27 +118,27 @@
   }
 
   .aurora-blob-1 {
-    top: -20%;
+    top: -22%;
     left: -25%;
-    width: 80vmax;
-    height: 80vmax;
-    background: radial-gradient(closest-side, rgba(240, 45, 101, 0.14), transparent 70%);
+    width: 82vmax;
+    height: 82vmax;
+    background: radial-gradient(closest-side, rgba(240, 45, 101, 0.24), transparent 70%);
   }
 
   .aurora-blob-2 {
-    top: 10%;
+    top: 6%;
     right: -30%;
-    width: 70vmax;
-    height: 70vmax;
-    background: radial-gradient(closest-side, rgba(124, 58, 237, 0.12), transparent 70%);
+    width: 74vmax;
+    height: 74vmax;
+    background: radial-gradient(closest-side, rgba(157, 123, 255, 0.26), transparent 70%);
   }
 
   .aurora-blob-3 {
     bottom: -30%;
-    left: 5%;
-    width: 75vmax;
-    height: 75vmax;
-    background: radial-gradient(closest-side, rgba(46, 99, 240, 0.1), transparent 70%);
+    left: 2%;
+    width: 78vmax;
+    height: 78vmax;
+    background: radial-gradient(closest-side, rgba(46, 120, 240, 0.22), transparent 70%);
   }
 }
 

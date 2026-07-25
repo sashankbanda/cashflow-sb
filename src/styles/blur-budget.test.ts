@@ -3,29 +3,41 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Pins the Phase-2 blur budget so it can't regress: exactly one live
- * `backdrop-filter` in the whole app — the modal sheet (`glass-overlay`) — and
- * no component reintroduces a `backdrop-blur` utility. Each blur is a full GPU
- * pass over a live snapshot; this keeps it at one, modal, one-at-a-time.
+ * Glassmorphism gate. The look depends on frosted surfaces, so every glass
+ * utility must actually apply a `backdrop-filter` blur (a regression that
+ * flattens them to solid fills would kill the aesthetic), each must keep a solid
+ * fallback for no-backdrop-filter / reduced transparency, and components must go
+ * through those utilities rather than hand-rolling a `backdrop-blur`.
  */
 const tokens = readFileSync(join(process.cwd(), "src/styles/tokens.css"), "utf8");
 
-describe("blur budget", () => {
-  it("has exactly one live backdrop-filter, on glass-overlay", () => {
-    const live = tokens.match(/backdrop-filter:\s*blur\(40px\)/g) ?? [];
-    expect(live.length).toBe(1);
-    expect(tokens).toMatch(/@utility glass-overlay[\s\S]*?backdrop-filter:\s*blur\(40px\)/);
-  });
+function utilBody(name: string): string {
+  const start = tokens.indexOf(`@utility ${name} {`);
+  expect(start, `@utility ${name} not found`).toBeGreaterThanOrEqual(0);
+  const next = tokens.indexOf("@utility ", start + 1);
+  return tokens.slice(start, next === -1 ? undefined : next);
+}
 
-  it("card/dock surfaces are solid (no backdrop-filter)", () => {
-    for (const util of ["glass", "glass-soft", "glass-floating"]) {
-      const block = new RegExp(`@utility ${util}\\s*\\{([\\s\\S]*?)\\n\\}`).exec(tokens);
-      expect(block, `@utility ${util} not found`).not.toBeNull();
-      expect(block![1]).not.toMatch(/backdrop-filter/);
+const FROSTED = ["glass", "glass-soft", "glass-floating", "glass-overlay"];
+
+describe("glassmorphism", () => {
+  it("every frosted surface applies a backdrop blur", () => {
+    for (const util of FROSTED) {
+      expect(utilBody(util), `${util} should be frosted glass`).toMatch(/backdrop-filter:\s*blur\(/);
     }
   });
 
-  it("no component uses a backdrop-blur utility", () => {
+  it("each frosted surface has a solid fallback", () => {
+    for (const util of FROSTED) {
+      const body = utilBody(util);
+      expect(body, `${util} needs an @supports fallback`).toMatch(/@supports not \(backdrop-filter/);
+      expect(body, `${util} needs a reduced-transparency fallback`).toMatch(
+        /prefers-reduced-transparency: reduce/,
+      );
+    }
+  });
+
+  it("no component hand-rolls a backdrop-blur (use the glass utilities)", () => {
     const offenders: string[] = [];
     const walk = (dir: string) => {
       for (const name of readdirSync(dir)) {

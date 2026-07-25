@@ -14,20 +14,23 @@
   --color-black: #000000;
   --color-transparent: transparent;
 
-  --color-canvas: #050506;
+  --color-canvas: #070811;
 
-  --color-fg-1: rgba(255, 255, 255, 0.96);
-  --color-fg-2: rgba(255, 255, 255, 0.64);
+  --color-fg-1: rgba(255, 255, 255, 0.97);
+  --color-fg-2: rgba(255, 255, 255, 0.67);
   /* 0.52 (not 0.4) so tertiary captions clear WCAG AA 4.5:1 on inset glass. */
   --color-fg-3: rgba(255, 255, 255, 0.52);
 
-  --color-glass: rgba(255, 255, 255, 0.08);
-  --color-glass-soft: rgba(255, 255, 255, 0.04);
-  --color-glass-border: rgba(255, 255, 255, 0.12);
-  --color-glass-highlight: rgba(255, 255, 255, 0.22);
+  /* Frosted-glass fills: translucent, blurred, with a bright specular top edge.
+     Slightly richer than a flat tint so the aurora reads through the glass. */
+  --color-glass: rgba(255, 255, 255, 0.07);
+  --color-glass-soft: rgba(255, 255, 255, 0.045);
+  --color-glass-border: rgba(255, 255, 255, 0.14);
+  --color-glass-highlight: rgba(255, 255, 255, 0.32);
 
-  --color-volt: #d4f82a;
-  --color-on-volt: #0a0a0a;
+  /* Accent — luminous violet, premium on frosted dark glass. */
+  --color-volt: #9d7bff;
+  --color-on-volt: #140a2e;
 
   --color-ember-1: #ff5c39;
   --color-ember-2: #f02d65;
@@ -69,18 +72,18 @@
   --font-dot: var(--font-doto), ui-monospace, monospace;
 
   --text-*: initial;
-  --text-display: 2.75rem; /* 44/48 · hero amounts */
-  --text-display--line-height: 3rem;
+  --text-display: 3.25rem; /* 52/56 · hero amounts — big and confident */
+  --text-display--line-height: 3.5rem;
   --text-display--font-weight: 700;
-  --text-display--letter-spacing: -0.02em;
-  --text-title-1: 1.75rem; /* 28/34 · screen titles */
-  --text-title-1--line-height: 2.125rem;
+  --text-display--letter-spacing: -0.03em;
+  --text-title-1: 2rem; /* 32/40 · screen titles */
+  --text-title-1--line-height: 2.5rem;
   --text-title-1--font-weight: 700;
-  --text-title-1--letter-spacing: -0.015em;
-  --text-title-2: 1.375rem; /* 22/28 · widget heroes, section heads */
-  --text-title-2--line-height: 1.75rem;
+  --text-title-1--letter-spacing: -0.02em;
+  --text-title-2: 1.4375rem; /* 23/30 · widget heroes, section heads */
+  --text-title-2--line-height: 1.875rem;
   --text-title-2--font-weight: 600;
-  --text-title-2--letter-spacing: -0.01em;
+  --text-title-2--letter-spacing: -0.015em;
   --text-headline: 1.0625rem; /* 17/22 · card titles, buttons */
   --text-headline--line-height: 1.375rem;
   --text-headline--font-weight: 600;
@@ -116,9 +119,9 @@
 
   /* ---------- Elevation / shadow ---------- */
   --shadow-*: initial;
-  --shadow-ambient: 0 8px 32px rgba(0, 0, 0, 0.45);
-  --shadow-ambient-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
-  --shadow-glow-volt: 0 12px 60px -12px rgba(212, 248, 42, 0.35);
+  --shadow-ambient: 0 10px 34px rgba(0, 0, 0, 0.5);
+  --shadow-ambient-lg: 0 24px 60px rgba(0, 0, 0, 0.6);
+  --shadow-glow-volt: 0 16px 50px -12px rgba(157, 123, 255, 0.45);
   --shadow-glow-ember: 0 12px 60px -12px rgba(240, 45, 101, 0.35);
   --shadow-glow-ocean: 0 12px 60px -12px rgba(46, 99, 240, 0.35);
   --shadow-glow-mint: 0 12px 60px -12px rgba(46, 212, 134, 0.35);
@@ -174,22 +177,23 @@
     var(--color-solar-3) 100%
   );
   --gradient-aurora:
-    radial-gradient(120% 90% at 15% 0%, rgba(240, 45, 101, 0.5) 0%, transparent 60%),
-    radial-gradient(120% 110% at 90% 15%, rgba(124, 58, 237, 0.55) 0%, transparent 65%),
-    radial-gradient(140% 120% at 50% 110%, rgba(46, 99, 240, 0.5) 0%, transparent 70%),
-    linear-gradient(180deg, #101014 0%, #050506 100%);
+    radial-gradient(120% 90% at 15% 0%, rgba(240, 45, 101, 0.55) 0%, transparent 60%),
+    radial-gradient(120% 110% at 90% 15%, rgba(124, 58, 237, 0.6) 0%, transparent 65%),
+    radial-gradient(140% 120% at 50% 110%, rgba(46, 99, 240, 0.55) 0%, transparent 70%),
+    linear-gradient(180deg, #12132a 0%, #070811 100%);
 
   --duration-micro: 150ms;
   --duration-standard: 250ms;
 
   --dock-height: 5.5rem; /* floating dock + breathing room, used for content padding */
 
-  /* Solid surface fills (the blur-budget surfaces). Themeable — an alternate
-     theme overrides these to re-tone every card/row/dock/sheet at once. */
-  --surface-inset: #101014;
-  --surface-raised: #16161a;
-  --surface-floating: #1b1b20;
-  --surface-overlay: rgba(24, 24, 30, 0.72);
+  /* Solid surface fills — the fallback under `@supports not (backdrop-filter)`
+     and reduced-transparency, and the base a theme re-tones. Faintly indigo so
+     the frosted glass reads warm-cool over the aurora. */
+  --surface-inset: #0f1119;
+  --surface-raised: #151826;
+  --surface-floating: #1b1f31;
+  --surface-overlay: rgba(18, 20, 34, 0.6);
 }
 
 /* ---------- Alternate themes (opt in via ?theme=…, persisted) ----------
@@ -296,40 +300,51 @@
 }
 
 /* ---------- Surfaces ----------
-   Blur is a budget, not a texture. Depth is expressed with solid tonal fills, a
-   lit top edge, and one shadow — not a live backdrop-filter per card. Over the
-   near-black canvas these read the same as the old frosted glass in a
-   screenshot, at a fraction of the GPU cost (each backdrop-filter was a full
-   render pass over a live snapshot of everything behind it). The ONE live
-   backdrop-filter left in the app is the modal sheet (`glass-overlay`), which
-   is modal and one-at-a-time. */
+   Frosted glass: a translucent fill blurs + saturates the aurora behind it, a
+   bright specular top edge catches the light, and a soft inner highlight gives
+   the pane depth. Elevation = more blur + a stronger border + a bigger shadow.
+   Solid fallbacks kick in where backdrop-filter is unsupported or the user has
+   reduced transparency on. */
 @utility glass {
-  background-color: var(--surface-raised);
+  background-color: var(--color-glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--color-glass-border);
   border-top-color: var(--color-glass-highlight);
-  box-shadow: var(--shadow-ambient);
+  box-shadow: var(--shadow-ambient), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+
+  @supports not (backdrop-filter: blur(1px)) {
+    background-color: var(--surface-raised);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: var(--surface-raised);
+    backdrop-filter: none;
+  }
 }
 
 @utility glass-soft {
-  background-color: var(--surface-inset);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background-color: var(--color-glass-soft);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid var(--color-hairline);
+
+  @supports not (backdrop-filter: blur(1px)) {
+    background-color: var(--surface-inset);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: var(--surface-inset);
+    backdrop-filter: none;
+  }
 }
 
-/* Floating chrome: dock, toasts, sticky CTAs. Always on screen, so solid. */
+/* Floating chrome: dock, toasts, sticky CTAs — the most blurred, brightest edge. */
 @utility glass-floating {
-  background-color: var(--surface-floating);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background-color: var(--color-glass);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-top-color: var(--color-glass-highlight);
-  box-shadow: var(--shadow-ambient-lg);
-}
-
-/* The single live backdrop-filter in the app: the modal bottom sheet. */
-@utility glass-overlay {
-  background-color: var(--surface-overlay);
-  backdrop-filter: blur(40px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-top-color: var(--color-glass-highlight);
-  box-shadow: var(--shadow-ambient-lg);
+  box-shadow: var(--shadow-ambient-lg), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
 
   @supports not (backdrop-filter: blur(1px)) {
     background-color: var(--surface-floating);
@@ -340,9 +355,27 @@
   }
 }
 
-/* Volt icon glow for active navigation states. */
+/* Modal bottom sheet: the deepest frost over the scrim. */
+@utility glass-overlay {
+  background-color: var(--surface-overlay);
+  backdrop-filter: blur(36px) saturate(180%);
+  -webkit-backdrop-filter: blur(36px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--color-glass-highlight);
+  box-shadow: var(--shadow-ambient-lg), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+
+  @supports not (backdrop-filter: blur(1px)) {
+    background-color: var(--surface-floating);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: var(--surface-floating);
+    backdrop-filter: none;
+  }
+}
+
+/* Accent icon glow for active navigation states. */
 @utility glow-volt-icon {
-  filter: drop-shadow(0 0 10px rgba(212, 248, 42, 0.45));
+  filter: drop-shadow(0 0 12px rgba(157, 123, 255, 0.55));
 }
 
 /* Horizontal chip rows scroll without a visible bar. */
