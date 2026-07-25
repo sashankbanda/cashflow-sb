@@ -17,6 +17,8 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Kill the legacy 300ms tap delay and double-tap-zoom; pinch-zoom stays. */
+    touch-action: manipulation;
   }
 
   ::selection {
@@ -138,6 +140,17 @@
     height: 75vmax;
     background: radial-gradient(closest-side, rgba(46, 99, 240, 0.1), transparent 70%);
   }
+}
+
+/* ---------- Native inputs never zoom on iOS ----------
+   Unlayered (not inside @layer), so it beats every Tailwind `text-*` utility a
+   component might put on an input: iOS zooms on focus for any control under
+   16px, so this makes that structurally impossible regardless of markup. Real
+   text sizing is still done with tokens; only the raw control font is pinned. */
+input,
+textarea,
+select {
+  font-size: 16px;
 }
 
 /* ---------- Route-transition skeletons ---------- */

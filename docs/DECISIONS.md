@@ -90,3 +90,12 @@ decision · reasoning · rejected alternatives. Newest at the bottom of each pha
 - **Decision:** not applying `contain: paint` to cards in this pass; logged for later.
 - **Reasoning:** `contain: paint` clips a card's own ambient/glow `box-shadow` (painted outside the border box), which would visibly break the design. `content-visibility: auto` on long lists needs a correct `contain-intrinsic-size` or it causes scroll-height jank. Both are micro-optimisations next to the blur/aurora wins and carry visual risk, so they need on-device verification before adopting.
 - **Rejected:** blindly adding `contain: paint` (would clip shadows).
+
+---
+
+## Phase 3 — native feel (PWA)
+
+### D3.1 — 16px inputs enforced structurally (unlayered CSS); global `touch-action`
+- **Decision:** an **unlayered** `input, textarea, select { font-size: 16px }` rule in `globals.css`, plus `touch-action: manipulation` on `body`.
+- **Reasoning:** iOS zooms on focus for any control under 16px, and inputs were 15px (13px in TagPicker). Unlayered CSS beats every Tailwind `text-*` utility by cascade-layer precedence, so no component can reintroduce a sub-16px input — the "token-level, structurally impossible" fix the brief asked for, without editing each input. `touch-action: manipulation` removes the legacy 300ms tap delay and double-tap-zoom while preserving pinch-zoom (accessibility).
+- **Rejected:** bumping `--text-body` to 16px (changes all body copy, not just inputs); a `@layer base` rule (loses to utilities); per-input class edits (not structural — the next new input would regress).
