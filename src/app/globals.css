@@ -55,33 +55,7 @@
   }
 }
 
-/* ---------- Sheet depth: the app shell recedes behind open sheets ---------- */
 @layer components {
-  .sheet-scale-target {
-    transform-origin: 50% 0;
-    transition:
-      transform 400ms var(--ease-standard),
-      filter 400ms var(--ease-standard),
-      border-radius 400ms var(--ease-standard);
-  }
-
-  html[data-sheet-open="true"] .sheet-scale-target {
-    transform: scale(0.94) translateY(6px);
-    filter: brightness(0.55);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .sheet-scale-target {
-      transition: none;
-    }
-    html[data-sheet-open="true"] .sheet-scale-target {
-      transform: none;
-      border-radius: 0;
-    }
-  }
-
   /* Custom range input (Slider component). */
   .cf-slider {
     appearance: none;

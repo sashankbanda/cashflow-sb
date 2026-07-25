@@ -134,7 +134,7 @@ export function Sheet({
             aria-labelledby={title && !hideHeader ? titleId : undefined}
             tabIndex={-1}
             className={cn(
-              "absolute inset-x-0 bottom-0 flex flex-col rounded-t-2xl glass-floating outline-none",
+              "absolute inset-x-0 bottom-0 flex flex-col rounded-t-2xl glass-overlay outline-none",
               detent === "full" ? "h-[calc(100dvh-2.5rem)]" : "max-h-[85dvh]",
             )}
             initial={{ y: "100%" }}

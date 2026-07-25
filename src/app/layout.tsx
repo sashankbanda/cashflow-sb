@@ -46,7 +46,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${doto.variable} h-full`}>
       <body className="min-h-full">
         <AuroraBackground />
-        <div className="sheet-scale-target flex min-h-dvh flex-col">{children}</div>
+        <div className="flex min-h-dvh flex-col">{children}</div>
         <Toaster />
         <WebVitals />
       </body>

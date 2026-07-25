@@ -61,3 +61,17 @@ decision · reasoning · rejected alternatives. Newest at the bottom of each pha
 - **Reasoning:** honors "add useOptimistic inside the existing hook, one path, no per-call-site hand-rolling." `PersonalLedger` owns both the list and the delete action, so it is the clean case. `deletePersonalExpenseAction` already `revalidatePath`s, and we keep `router.refresh()`, so correctness is guaranteed regardless of Server-Action revalidation timing — the worst case is a brief cosmetic re-appearance, never a permanently-reappearing deleted row.
 - **Rejected:** `RemindButton` as the exemplar (fire-and-forget: `useOptimistic` reverts to base once the action settles, so it can only flash "sent" — misleading); dropping `router.refresh()` to avoid a possible flicker (would risk a deleted row reappearing for good if imperative revalidation didn't apply — a correctness bug beats a cosmetic one); a hand-rolled `deletedIds` set (the brief forbids call-site optimism).
 - **Deferred:** group-timeline delete/settle/budget/toggle adopt the same config in Phase 5, where those list components are already being edited and the hand-off can be verified on device.
+
+---
+
+## Phase 2 — GPU / jank
+
+### D2.1 — Blur is a budget: one live backdrop-filter, everything else solid
+- **Decision:** `glass` and `glass-soft` (every card/row/widget) and `glass-floating` (dock, toasts, sticky CTAs) are now **solid tonal fills** — no `backdrop-filter`. A new `glass-overlay` (blur 40) is the single live backdrop-filter, used only by the modal `Sheet`. Also dropped blur from the collapsed `ScreenHeader` bar, `OfflineBanner`, and the fullscreen `AttachmentViewer` (all were near-opaque anyway).
+- **Reasoning:** each `backdrop-filter` is a full render pass over a live snapshot of everything behind it — the single most expensive thing on a mobile GPU, and the app stacked dozens (every card) plus the always-on dock and the collapsed header. Over the near-black canvas a solid `#16161a`-family fill with the same lit top-edge + shadow is visually indistinguishable in a screenshot but night-and-day in the hand. Sheets are modal and one-at-a-time, so keeping their blur honors the "one live blur, sheet or dock never both" budget.
+- **Rejected:** keeping blur on cards but fewer of them (still stacks during scroll); dropping blur everywhere including the sheet (loses the one place the frosted look reads as premium, for negligible cost since it is modal + momentary).
+
+### D2.2 — App-shell scale-on-sheet-open removed entirely
+- **Decision:** deleted `.sheet-scale-target` (scaled the whole shell to 0.94 + `brightness(0.55)` behind open sheets) and the class on the shell div. The sheet's existing black scrim provides the "background recedes" cue.
+- **Reasoning:** it was the worst offender — a `transform` + `filter` on an ancestor of every blurred card re-rasterized every blur in the subtree on every animation frame. Even after the blur-budget change it was redundant: a full `bg-black/60` scrim already covers the shell, so the scale was invisible anyway.
+- **Rejected:** keeping a cheap scale now that cards are solid (still hidden behind the full scrim → pointless); an iOS card-stack look without a full scrim (larger redesign, deferred to Phase 6).

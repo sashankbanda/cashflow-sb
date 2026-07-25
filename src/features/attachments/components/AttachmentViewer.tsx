@@ -34,7 +34,7 @@ export function AttachmentViewer({
       role="dialog"
       aria-modal="true"
       aria-label={alt}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
       onClick={onClose}
     >
       <div className="absolute top-0 right-0 z-10 flex gap-2 p-4 pt-safe">

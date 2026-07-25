@@ -188,45 +188,47 @@
   background-image: var(--gradient-aurora);
 }
 
-/* ---------- The one glass recipe ---------- */
+/* ---------- Surfaces ----------
+   Blur is a budget, not a texture. Depth is expressed with solid tonal fills, a
+   lit top edge, and one shadow — not a live backdrop-filter per card. Over the
+   near-black canvas these read the same as the old frosted glass in a
+   screenshot, at a fraction of the GPU cost (each backdrop-filter was a full
+   render pass over a live snapshot of everything behind it). The ONE live
+   backdrop-filter left in the app is the modal sheet (`glass-overlay`), which
+   is modal and one-at-a-time. */
 @utility glass {
-  background-color: var(--color-glass);
-  backdrop-filter: blur(24px) saturate(160%);
+  background-color: #16161a;
   border: 1px solid var(--color-glass-border);
   border-top-color: var(--color-glass-highlight);
   box-shadow: var(--shadow-ambient);
-
-  @supports not (backdrop-filter: blur(1px)) {
-    background-color: #141416;
-  }
-  @media (prefers-reduced-transparency: reduce) {
-    background-color: #141416;
-    backdrop-filter: none;
-  }
 }
 
 @utility glass-soft {
-  background-color: var(--color-glass-soft);
+  background-color: #101014;
   border: 1px solid rgba(255, 255, 255, 0.06);
-
-  @media (prefers-reduced-transparency: reduce) {
-    background-color: #101012;
-  }
 }
 
-/* E3 floating surfaces: dock, sheets, sticky CTAs. */
+/* Floating chrome: dock, toasts, sticky CTAs. Always on screen, so solid. */
 @utility glass-floating {
-  background-color: var(--color-glass);
-  backdrop-filter: blur(40px) saturate(160%);
+  background-color: #1b1b20;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-top-color: var(--color-glass-highlight);
+  box-shadow: var(--shadow-ambient-lg);
+}
+
+/* The single live backdrop-filter in the app: the modal bottom sheet. */
+@utility glass-overlay {
+  background-color: rgba(24, 24, 30, 0.72);
+  backdrop-filter: blur(40px) saturate(140%);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-top-color: var(--color-glass-highlight);
   box-shadow: var(--shadow-ambient-lg);
 
   @supports not (backdrop-filter: blur(1px)) {
-    background-color: #17171a;
+    background-color: #1b1b20;
   }
   @media (prefers-reduced-transparency: reduce) {
-    background-color: #17171a;
+    background-color: #1b1b20;
     backdrop-filter: none;
   }
 }
