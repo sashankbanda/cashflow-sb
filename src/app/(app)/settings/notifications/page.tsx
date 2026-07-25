@@ -17,7 +17,7 @@ export default async function NotificationSettingsPage() {
     <div className="flex flex-col gap-6">
       <ScreenHeader
         title="Notifications"
-        trailing={
+        leading={
           <Link
             href="/profile"
             aria-label="Back"

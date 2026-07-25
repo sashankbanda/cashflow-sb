@@ -79,15 +79,15 @@ export function CategoryManager({ data }: { data: CategoryManagerData }) {
     <div className="flex flex-col gap-6">
       <ScreenHeader
         title="Categories"
+        leading={
+          <IconButton aria-label="Back" size="sm" onClick={() => router.push("/profile")}>
+            <ArrowLeft />
+          </IconButton>
+        }
         trailing={
-          <>
-            <IconButton aria-label="Back" size="sm" onClick={() => router.push("/profile")}>
-              <ArrowLeft />
-            </IconButton>
-            <IconButton aria-label="New category" size="sm" variant="volt" onClick={openCreate}>
-              <Plus />
-            </IconButton>
-          </>
+          <IconButton aria-label="New category" size="sm" variant="volt" onClick={openCreate}>
+            <Plus />
+          </IconButton>
         }
       />
 

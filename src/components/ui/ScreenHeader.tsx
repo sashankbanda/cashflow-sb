@@ -8,6 +8,8 @@ export interface ScreenHeaderProps {
   title: string;
   /** Small line above the title (e.g. greeting). */
   eyebrow?: string;
+  /** Leading action above the title — the iOS-standard top-left Back slot. */
+  leading?: ReactNode;
   /** Trailing header actions (IconButtons). */
   trailing?: ReactNode;
   /** Renders a chevron next to the title and makes it tappable (context switch). */
@@ -56,6 +58,7 @@ function useCollapsed(sentinel: React.RefObject<HTMLDivElement | null>): boolean
 export function ScreenHeader({
   title,
   eyebrow,
+  leading,
   trailing,
   onTitlePress,
   className,
@@ -85,22 +88,27 @@ export function ScreenHeader({
         </div>
       </div>
 
-      <header className={cn("flex items-end justify-between gap-3 px-5 pt-safe", className)}>
-        <div className="pt-4">
-          {eyebrow ? <p className="text-footnote text-fg-3">{eyebrow}</p> : null}
-          {onTitlePress ? (
-            <button
-              type="button"
-              onClick={onTitlePress}
-              className="text-title-1 transition-opacity duration-150 active:opacity-70"
-            >
-              {titleContent}
-            </button>
-          ) : (
-            <h1 className="text-title-1">{titleContent}</h1>
-          )}
+      <header className={cn("flex flex-col px-5 pt-safe", className)}>
+        {leading ? <div className="flex items-center pt-2">{leading}</div> : null}
+        <div className="flex items-end justify-between gap-3">
+          <div className="pt-4">
+            {eyebrow ? <p className="text-footnote text-fg-3">{eyebrow}</p> : null}
+            {onTitlePress ? (
+              <button
+                type="button"
+                onClick={onTitlePress}
+                className="text-title-1 transition-opacity duration-150 active:opacity-70"
+              >
+                {titleContent}
+              </button>
+            ) : (
+              <h1 className="text-title-1">{titleContent}</h1>
+            )}
+          </div>
+          {trailing ? (
+            <div className="flex shrink-0 items-center gap-2 pt-4">{trailing}</div>
+          ) : null}
         </div>
-        {trailing ? <div className="flex shrink-0 items-center gap-2 pt-4">{trailing}</div> : null}
       </header>
       <div ref={sentinelRef} aria-hidden className="h-px w-full" />
     </>

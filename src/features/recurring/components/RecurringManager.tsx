@@ -48,7 +48,7 @@ export function RecurringManager({
     <div className="flex flex-col gap-6">
       <ScreenHeader
         title="Recurring"
-        trailing={
+        leading={
           <IconButton aria-label="Back" size="sm" onClick={() => router.push("/profile")}>
             <ArrowLeft />
           </IconButton>

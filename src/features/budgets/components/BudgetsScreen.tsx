@@ -108,21 +108,21 @@ export function BudgetsScreen({ overview }: { overview: BudgetOverview }) {
       <ScreenHeader
         title="Budgets"
         eyebrow={overview.monthLabel}
+        leading={
+          <IconButton aria-label="Back" size="sm" onClick={() => router.push("/profile")}>
+            <ArrowLeft />
+          </IconButton>
+        }
         trailing={
-          <>
-            <IconButton aria-label="Back" size="sm" onClick={() => router.push("/profile")}>
-              <ArrowLeft />
-            </IconButton>
-            <IconButton
-              aria-label="New budget"
-              size="sm"
-              variant="volt"
-              disabled={!canAdd}
-              onClick={openCreate}
-            >
-              <Plus />
-            </IconButton>
-          </>
+          <IconButton
+            aria-label="New budget"
+            size="sm"
+            variant="volt"
+            disabled={!canAdd}
+            onClick={openCreate}
+          >
+            <Plus />
+          </IconButton>
         }
       />
 
