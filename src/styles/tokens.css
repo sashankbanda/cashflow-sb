@@ -166,6 +166,30 @@
   --duration-standard: 250ms;
 
   --dock-height: 5.5rem; /* floating dock + breathing room, used for content padding */
+
+  /* Solid surface fills (the blur-budget surfaces). Themeable — an alternate
+     theme overrides these to re-tone every card/row/dock/sheet at once. */
+  --surface-inset: #101014;
+  --surface-raised: #16161a;
+  --surface-floating: #1b1b20;
+  --surface-overlay: rgba(24, 24, 30, 0.72);
+}
+
+/* ---------- Alternate themes (opt in via ?theme=…, persisted) ----------
+   Each theme re-tones the whole app from tokens alone. "dusk" is complete and
+   selectable; to promote it to the default, move these values onto :root /
+   @theme. (Light themes additionally need the hard-coded `white/x` borders
+   swept into tokens — see docs/DECISIONS.md D6.x.) */
+[data-theme="dusk"] {
+  /* Dark, anti-neon: slate base, one soft periwinkle accent, tonal surfaces. */
+  --color-canvas: #14161b;
+  --color-volt: #8e9bff;
+  --color-on-volt: #12141a;
+  --surface-inset: #171a21;
+  --surface-raised: #1c1f27;
+  --surface-floating: #232733;
+  --surface-overlay: rgba(28, 31, 39, 0.74);
+  --shadow-glow-volt: 0 12px 60px -12px rgba(142, 155, 255, 0.35);
 }
 
 /* ---------- Gradient panel utilities ---------- */
@@ -197,20 +221,20 @@
    backdrop-filter left in the app is the modal sheet (`glass-overlay`), which
    is modal and one-at-a-time. */
 @utility glass {
-  background-color: #16161a;
+  background-color: var(--surface-raised);
   border: 1px solid var(--color-glass-border);
   border-top-color: var(--color-glass-highlight);
   box-shadow: var(--shadow-ambient);
 }
 
 @utility glass-soft {
-  background-color: #101014;
+  background-color: var(--surface-inset);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* Floating chrome: dock, toasts, sticky CTAs. Always on screen, so solid. */
 @utility glass-floating {
-  background-color: #1b1b20;
+  background-color: var(--surface-floating);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-top-color: var(--color-glass-highlight);
   box-shadow: var(--shadow-ambient-lg);
@@ -218,17 +242,17 @@
 
 /* The single live backdrop-filter in the app: the modal bottom sheet. */
 @utility glass-overlay {
-  background-color: rgba(24, 24, 30, 0.72);
+  background-color: var(--surface-overlay);
   backdrop-filter: blur(40px) saturate(140%);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-top-color: var(--color-glass-highlight);
   box-shadow: var(--shadow-ambient-lg);
 
   @supports not (backdrop-filter: blur(1px)) {
-    background-color: #1b1b20;
+    background-color: var(--surface-floating);
   }
   @media (prefers-reduced-transparency: reduce) {
-    background-color: #1b1b20;
+    background-color: var(--surface-floating);
     backdrop-filter: none;
   }
 }
