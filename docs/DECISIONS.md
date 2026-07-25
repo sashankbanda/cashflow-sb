@@ -75,3 +75,18 @@ decision · reasoning · rejected alternatives. Newest at the bottom of each pha
 - **Decision:** deleted `.sheet-scale-target` (scaled the whole shell to 0.94 + `brightness(0.55)` behind open sheets) and the class on the shell div. The sheet's existing black scrim provides the "background recedes" cue.
 - **Reasoning:** it was the worst offender — a `transform` + `filter` on an ancestor of every blurred card re-rasterized every blur in the subtree on every animation frame. Even after the blur-budget change it was redundant: a full `bg-black/60` scrim already covers the shell, so the scale was invisible anyway.
 - **Rejected:** keeping a cheap scale now that cards are solid (still hidden behind the full scrim → pointless); an iOS card-stack look without a full scrim (larger redesign, deferred to Phase 6).
+
+### D2.3 — Aurora is static
+- **Decision:** removed the `aurora-drift` keyframes, `will-change`, and per-blob animation timing. The three radial washes now paint once, statically.
+- **Reasoning:** a 60–90 s ambient loop is a never-ending full-viewport paint competing with every interaction; the colour reads the same standing still. Static = painted once and composited cheaply.
+- **Rejected:** a single pre-rendered image (extra asset + a network/decode cost for no visual gain over three static CSS gradients).
+
+### D2.4 — Count-up numerals deleted (not just disabled)
+- **Decision:** `DotMatrixAmount` is now a pure static component — removed the `useOptimistic`-era mount animation (`AnimatedDigits`, `animate`, the `countUp` prop, and `"use client"`).
+- **Reasoning:** motion rule 4 — never animate a number the user is trying to read. No caller passed `countUp`, so the whole path was dead once the default flipped; deleting beats disabling (net −40 lines, and the component can now render on the server). `NumberTicker` stays for values that change while being watched.
+- **Rejected:** keeping `countUp` as an opt-in nobody uses (YAGNI).
+
+### D2.5 — `contain: paint` / `content-visibility` deferred
+- **Decision:** not applying `contain: paint` to cards in this pass; logged for later.
+- **Reasoning:** `contain: paint` clips a card's own ambient/glow `box-shadow` (painted outside the border box), which would visibly break the design. `content-visibility: auto` on long lists needs a correct `contain-intrinsic-size` or it causes scroll-height jank. Both are micro-optimisations next to the blur/aurora wins and carry visual risk, so they need on-device verification before adopting.
+- **Rejected:** blindly adding `contain: paint` (would clip shadows).

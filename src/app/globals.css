@@ -105,13 +105,14 @@
   }
 }
 
-/* ---------- Aurora canvas backdrop ---------- */
+/* ---------- Aurora canvas backdrop ----------
+   Static, pre-composited radial washes painted once. No animation loop: an
+   ambient loop is a never-ending full-viewport paint competing with every
+   interaction, and the colour reads the same standing still. */
 @layer components {
   .aurora-blob {
     position: absolute;
     border-radius: 9999px;
-    will-change: transform;
-    animation: aurora-drift 60s var(--ease-standard) infinite alternate;
   }
 
   .aurora-blob-1 {
@@ -128,8 +129,6 @@
     width: 70vmax;
     height: 70vmax;
     background: radial-gradient(closest-side, rgba(124, 58, 237, 0.12), transparent 70%);
-    animation-delay: -20s;
-    animation-duration: 75s;
   }
 
   .aurora-blob-3 {
@@ -138,23 +137,6 @@
     width: 75vmax;
     height: 75vmax;
     background: radial-gradient(closest-side, rgba(46, 99, 240, 0.1), transparent 70%);
-    animation-delay: -40s;
-    animation-duration: 90s;
-  }
-
-  @keyframes aurora-drift {
-    from {
-      transform: translate3d(0, 0, 0) scale(1);
-    }
-    to {
-      transform: translate3d(6%, 4%, 0) scale(1.08);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .aurora-blob {
-      animation: none;
-    }
   }
 }
 
