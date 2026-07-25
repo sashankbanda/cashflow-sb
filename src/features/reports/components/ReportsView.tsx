@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Download, Share2 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GradientPanel } from "@/components/ui/GradientPanel";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
@@ -7,6 +7,7 @@ import { asPalette, paletteBg } from "@/components/ui/palette";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 import type { MonthlyReport } from "../queries";
+import { ReportActions } from "./ReportActions";
 
 const navClass =
   "ease-out flex size-9 items-center justify-center rounded-full glass text-fg-2 transition-transform duration-150 hover:text-fg-1 active:scale-[0.97] [&_svg]:size-4";
@@ -79,23 +80,7 @@ export function ReportsView({
           )}
         </section>
 
-        <div className="space-y-2">
-          <a
-            href={csvHref}
-            download
-            className="ease-out flex h-12 items-center justify-center gap-2 rounded-full glass text-body text-fg-1 transition-transform duration-150 active:scale-[0.98]"
-          >
-            <Download className="size-4" /> Download CSV
-          </a>
-          <a
-            href={cardHref}
-            target="_blank"
-            rel="noreferrer"
-            className="ease-out flex h-12 items-center justify-center gap-2 rounded-full glass-soft text-body text-fg-2 transition-transform duration-150 active:scale-[0.98]"
-          >
-            <Share2 className="size-4" /> Share summary card
-          </a>
-        </div>
+        <ReportActions csvHref={csvHref} cardHref={cardHref} monthLabel={report.monthLabel} />
       </div>
     </div>
   );
