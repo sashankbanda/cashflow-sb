@@ -19,10 +19,12 @@ export function NetBalanceWidget({ netMinor, context }: NetBalanceWidgetProps) {
 
   return (
     <Widget size="lg" gradient="aurora" glow label="Net position">
-      <DotMatrixAmount amountMinor={netMinor} options={{ sign: "always" }} />
-      <p className="mt-2 text-footnote text-white/70">
-        {summary} · {context}
-      </p>
+      <div aria-live="polite" aria-atomic="true">
+        <DotMatrixAmount amountMinor={netMinor} options={{ sign: "always" }} />
+        <p className="mt-2 text-footnote text-white/70">
+          {summary} · {context}
+        </p>
+      </div>
     </Widget>
   );
 }

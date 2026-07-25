@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChartPie, CircleUserRound, House, Plus, Users } from "lucide-react";
@@ -9,7 +11,13 @@ import { useSheet } from "@/hooks/useSheet";
 import type { CategoryOption } from "@/features/categories/queries";
 import type { TagOption } from "@/features/categories/tags-service";
 import type { GroupSummary } from "@/features/groups/queries";
-import { AddExpenseFlow } from "@/features/expenses/components/AddExpenseFlow";
+
+// Lazy: the add-expense flow (motion, keypad, split editors) is a large leaf and
+// only needed once the volt button is tapped — keep it out of every page's JS.
+const AddExpenseFlow = dynamic(
+  () => import("@/features/expenses/components/AddExpenseFlow").then((mod) => mod.AddExpenseFlow),
+  { ssr: false },
+);
 
 const LEFT_TABS = [
   { href: "/home", icon: House, label: "Home" },
@@ -65,6 +73,8 @@ export function TabBar({ groups, categories, tags, viewerUserId }: TabBarProps) 
   const pathname = usePathname();
   const addSheet = useSheet();
   const haptics = useHaptics();
+  // Mount the flow only after the first open so its chunk loads on demand.
+  const [everOpened, setEverOpened] = useState(false);
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const groupIdInView = /^\/groups\/([^/]+)/.exec(pathname)?.[1];
@@ -84,6 +94,7 @@ export function TabBar({ groups, categories, tags, viewerUserId }: TabBarProps) 
             aria-label="Add expense"
             onClick={() => {
               haptics.tap();
+              setEverOpened(true);
               addSheet.open();
             }}
             className={cn(
@@ -99,16 +110,18 @@ export function TabBar({ groups, categories, tags, viewerUserId }: TabBarProps) 
         </div>
       </nav>
 
-      <AddExpenseFlow
-        open={addSheet.isOpen}
-        onClose={addSheet.close}
-        groups={groups}
-        categories={categories}
-        defaultGroupId={groupIdInView}
-        viewerUserId={viewerUserId}
-        availableTags={tags}
-        allowPersonal
-      />
+      {everOpened ? (
+        <AddExpenseFlow
+          open={addSheet.isOpen}
+          onClose={addSheet.close}
+          groups={groups}
+          categories={categories}
+          defaultGroupId={groupIdInView}
+          viewerUserId={viewerUserId}
+          availableTags={tags}
+          allowPersonal
+        />
+      ) : null}
     </>
   );
 }

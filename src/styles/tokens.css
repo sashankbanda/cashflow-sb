@@ -18,7 +18,8 @@
 
   --color-fg-1: rgba(255, 255, 255, 0.96);
   --color-fg-2: rgba(255, 255, 255, 0.64);
-  --color-fg-3: rgba(255, 255, 255, 0.4);
+  /* 0.52 (not 0.4) so tertiary captions clear WCAG AA 4.5:1 on inset glass. */
+  --color-fg-3: rgba(255, 255, 255, 0.52);
 
   --color-glass: rgba(255, 255, 255, 0.08);
   --color-glass-soft: rgba(255, 255, 255, 0.04);
