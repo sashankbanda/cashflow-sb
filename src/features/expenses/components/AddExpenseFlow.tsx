@@ -77,7 +77,8 @@ export interface AddExpenseFlowProps {
 /** Sentinel groupId for the personal (no-group) context. */
 const PERSONAL = "__personal__";
 
-type Step = 1 | 2 | 3;
+/** 1 = amount · 2 = details · 3 = who paid (group) · 4 = split (group). */
+type Step = 1 | 2 | 3 | 4;
 
 interface Draft {
   groupId: string;
@@ -90,9 +91,10 @@ interface Draft {
   tagIds: string[];
 }
 
-function stepTitle(step: Step, editing: boolean): string {
-  if (step === 1) return editing ? "Edit expense" : "Add expense";
-  return step === 2 ? "Who paid?" : "Split it";
+function stepTitle(step: Step, editing: boolean, income: boolean): string {
+  if (step === 1) return editing ? "Edit expense" : income ? "Add income" : "Add expense";
+  if (step === 2) return "Details";
+  return step === 3 ? "Who paid?" : "Split it";
 }
 
 function Flow({
@@ -300,11 +302,10 @@ function Flow({
     }
   };
 
-  const step1Valid =
-    (isPersonal || Boolean(group)) &&
-    isValidAmount(draft.amount) &&
-    draft.description.trim().length > 0 &&
-    draft.categoryId !== "";
+  // One decision per screen: step 1 needs only a valid amount; step 2 the details.
+  const amountValid = (isPersonal || Boolean(group)) && isValidAmount(draft.amount);
+  const detailsValid = draft.description.trim().length > 0 && draft.categoryId !== "";
+  const steps: Step[] = isPersonal ? [1, 2] : [1, 2, 3, 4];
 
   if (groups.length === 0 && !allowPersonal) {
     return (
@@ -352,12 +353,12 @@ function Flow({
             <X />
           </IconButton>
         )}
-        <h2 className="text-headline">{stepTitle(step, editing)}</h2>
+        <h2 className="text-headline">{stepTitle(step, editing, isIncomeEntry)}</h2>
         <div
           className="flex w-9 items-center justify-center gap-1"
-          aria-label={`Step ${step} of 3`}
+          aria-label={`Step ${step} of ${steps.length}`}
         >
-          {[1, 2, 3].map((dot) => (
+          {steps.map((dot) => (
             <span
               key={dot}
               aria-hidden
@@ -382,6 +383,7 @@ function Flow({
           className="min-h-0 flex-1"
         >
           {step === 1 ? (
+            /* Step 1 — just the amount. One decision, nothing else on screen. */
             <div className="flex h-full flex-col gap-4">
               {!editing && (groups.length > 1 || allowPersonal) ? (
                 <Select
@@ -416,62 +418,12 @@ function Flow({
                 />
               ) : null}
 
-              <AmountDisplay value={draft.amount} className="py-2" />
-
-              <TextField
-                placeholder={isIncomeEntry ? "What's it from?" : "What was it for?"}
-                value={draft.description}
-                onChange={(event) =>
-                  setDraft((current) => ({ ...current, description: event.target.value }))
-                }
-                error={fieldError("description")}
-                maxLength={80}
-              />
-
-              <div className="-mx-5 scrollbar-none flex gap-2 overflow-x-auto px-5">
-                {categories.map((category) => {
-                  const selected = category.id === draft.categoryId;
-                  return (
-                    <button
-                      key={category.id}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() =>
-                        setDraft((current) => ({ ...current, categoryId: category.id }))
-                      }
-                      className={cn(
-                        "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-footnote",
-                        "ease-out transition-[transform,background-color] duration-150 active:scale-[0.97]",
-                        selected
-                          ? cn("text-white", paletteBg[asPalette(category.gradient)])
-                          : "glass-soft text-fg-2",
-                      )}
-                    >
-                      <CategoryGlyph icon={category.icon} className="size-4" />
-                      {category.name}
-                    </button>
-                  );
-                })}
+              <div className="flex flex-1 flex-col items-center justify-center gap-1.5">
+                <p className="text-caption text-fg-3 uppercase">
+                  {isIncomeEntry ? "How much came in?" : "How much was it?"}
+                </p>
+                <AmountDisplay value={draft.amount} />
               </div>
-
-              <div className="flex justify-center">
-                <DateChip
-                  value={draft.date}
-                  onChange={(date) => setDraft((current) => ({ ...current, date }))}
-                />
-              </div>
-
-              {!editing ? (
-                <TagPicker
-                  available={availableTags}
-                  selected={draft.tagIds}
-                  onChange={(tagIds) => setDraft((current) => ({ ...current, tagIds }))}
-                />
-              ) : null}
-
-              {!editing && !isIncomeEntry ? (
-                <RecurrencePicker value={recurrence} onChange={setRecurrence} />
-              ) : null}
 
               <div className="mt-auto">
                 <AmountKeypad
@@ -483,11 +435,91 @@ function Flow({
                   block
                   size="lg"
                   className="mt-3"
+                  disabled={!amountValid}
+                  onClick={() => goTo(2)}
+                >
+                  Next · {formatMoney(amountMinor)}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {step === 2 ? (
+            /* Step 2 — the details, clearly labelled, everything visible. */
+            <div className="flex h-full flex-col">
+              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pb-4">
+                <TextField
+                  label={isIncomeEntry ? "What's it from?" : "What was it for?"}
+                  placeholder={isIncomeEntry ? "e.g. Salary" : "e.g. Lunch"}
+                  value={draft.description}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, description: event.target.value }))
+                  }
+                  error={fieldError("description")}
+                  autoFocus={draft.description === ""}
+                  maxLength={80}
+                />
+
+                <div className="space-y-2">
+                  <p className="text-caption text-fg-3 uppercase">Category</p>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((category) => {
+                      const selected = category.id === draft.categoryId;
+                      return (
+                        <button
+                          key={category.id}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() =>
+                            setDraft((current) => ({ ...current, categoryId: category.id }))
+                          }
+                          className={cn(
+                            "inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-footnote",
+                            "ease-out transition-[transform,background-color] duration-150 active:scale-[0.97]",
+                            selected
+                              ? cn("text-white", paletteBg[asPalette(category.gradient)])
+                              : "glass-soft text-fg-2",
+                          )}
+                        >
+                          <CategoryGlyph icon={category.icon} className="size-4" />
+                          {category.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-caption text-fg-3 uppercase">Date</p>
+                  <DateChip
+                    value={draft.date}
+                    onChange={(date) => setDraft((current) => ({ ...current, date }))}
+                  />
+                </div>
+
+                {!editing ? (
+                  <TagPicker
+                    available={availableTags}
+                    selected={draft.tagIds}
+                    onChange={(tagIds) => setDraft((current) => ({ ...current, tagIds }))}
+                  />
+                ) : null}
+
+                {!editing && !isIncomeEntry ? (
+                  <RecurrencePicker value={recurrence} onChange={setRecurrence} />
+                ) : null}
+              </div>
+
+              <div className="pt-3">
+                <Button
+                  variant="volt"
+                  block
+                  size="lg"
                   loading={isPersonal && pending}
-                  disabled={!step1Valid}
+                  disabled={!detailsValid}
                   onClick={() => {
                     if (isPersonal) void submitPersonal();
-                    else goTo(2);
+                    else goTo(3);
                   }}
                 >
                   {isPersonal
@@ -498,7 +530,7 @@ function Flow({
             </div>
           ) : null}
 
-          {step === 2 && group ? (
+          {step === 3 && group ? (
             <div className="flex h-full flex-col">
               <PayerEditor
                 members={group.members}
@@ -513,7 +545,7 @@ function Flow({
                   block
                   size="lg"
                   disabled={!payerResult.ok}
-                  onClick={() => goTo(3)}
+                  onClick={() => goTo(4)}
                 >
                   Next
                 </Button>
@@ -521,7 +553,7 @@ function Flow({
             </div>
           ) : null}
 
-          {step === 3 && group ? (
+          {step === 4 && group ? (
             <div className="flex h-full flex-col">
               <SplitEditor
                 members={group.members}
