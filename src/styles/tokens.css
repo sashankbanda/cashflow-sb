@@ -14,23 +14,23 @@
   --color-black: #000000;
   --color-transparent: transparent;
 
-  /* Simple, light, calm. White cards on a soft grey canvas, dark readable
-     text, ONE clear blue accent. No aurora, no blur, no gradient noise. */
-  --color-canvas: #f5f6f8;
+  /* Warm, confident, unmistakably a money app: cream canvas, warm-ink text,
+     white cards, an ink-black hero card, and ONE emerald accent. */
+  --color-canvas: #faf7f2;
 
-  --color-fg-1: #16181d;
-  --color-fg-2: #414651;
+  --color-fg-1: #1c1917;
+  --color-fg-2: #57534e;
   /* Dark enough to clear WCAG AA 4.5:1 even on the inset surface. */
-  --color-fg-3: #595f6a;
+  --color-fg-3: #625d54;
 
-  /* Subtle dark tints for pressed states and quiet fills. */
-  --color-glass: rgba(15, 23, 42, 0.06);
-  --color-glass-soft: rgba(15, 23, 42, 0.04);
-  --color-glass-border: rgba(15, 23, 42, 0.12);
-  --color-glass-highlight: rgba(15, 23, 42, 0.12);
+  /* Subtle warm-ink tints for pressed states and quiet fills. */
+  --color-glass: rgba(28, 25, 23, 0.06);
+  --color-glass-soft: rgba(28, 25, 23, 0.04);
+  --color-glass-border: rgba(28, 25, 23, 0.12);
+  --color-glass-highlight: rgba(28, 25, 23, 0.12);
 
-  /* Accent — one clear, familiar blue. */
-  --color-volt: #2563eb;
+  /* Accent — emerald. Money is green. */
+  --color-volt: #0e8a4e;
   --color-on-volt: #ffffff;
 
   --color-ember-1: #ff5c39;
@@ -56,11 +56,11 @@
 
   /* Overlay lines, scrims, and on-panel text — themeable. No component uses a
      raw white/x or black/x utility; they all resolve through these. */
-  --color-hairline: rgba(15, 23, 42, 0.08);
-  --color-line: rgba(15, 23, 42, 0.12);
-  --color-line-2: rgba(15, 23, 42, 0.16);
-  --color-handle: rgba(15, 23, 42, 0.25);
-  --color-tint: rgba(15, 23, 42, 0.06);
+  --color-hairline: rgba(28, 25, 23, 0.08);
+  --color-line: rgba(28, 25, 23, 0.12);
+  --color-line-2: rgba(28, 25, 23, 0.16);
+  --color-handle: rgba(28, 25, 23, 0.25);
+  --color-tint: rgba(28, 25, 23, 0.06);
   --color-fg-on-grad: rgba(255, 255, 255, 0.85);
   --color-fg-on-grad-2: rgba(255, 255, 255, 0.95);
   --color-scrim: rgba(0, 0, 0, 0.45);
@@ -68,23 +68,24 @@
   --color-frame: rgba(15, 23, 42, 0.1);
 
   /* ---------- Typography ---------- */
-  --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), system-ui, sans-serif;
-  /* One typeface everywhere — hero numbers use the same face as the UI. */
-  --font-dot: var(--font-sans);
+  /* The custom faces come FIRST — with -apple-system leading, iPhones always
+     rendered SF and the brand typography never showed. */
+  --font-sans: var(--font-ui), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  /* Display face for money amounts + screen titles (Space Grotesk). */
+  --font-dot: var(--font-display), var(--font-ui), system-ui, sans-serif;
 
   --text-*: initial;
-  --text-display: 2.25rem; /* 36/44 · hero amounts — big but never clipped at 390px */
-  --text-display--line-height: 2.75rem;
+  --text-display: 2.75rem; /* 44/52 · hero amounts — confident; compact fmt guards 390px */
+  --text-display--line-height: 3.25rem;
   --text-display--font-weight: 700;
   --text-display--letter-spacing: -0.02em;
-  --text-title-1: 1.5rem; /* 24/32 · screen titles */
-  --text-title-1--line-height: 2rem;
+  --text-title-1: 1.625rem; /* 26/34 · screen titles */
+  --text-title-1--line-height: 2.125rem;
   --text-title-1--font-weight: 700;
   --text-title-1--letter-spacing: -0.01em;
-  --text-title-2: 1.1875rem; /* 19/26 · widget heroes, section heads */
-  --text-title-2--line-height: 1.625rem;
-  --text-title-2--font-weight: 600;
+  --text-title-2: 1.25rem; /* 20/28 · widget heroes, section heads */
+  --text-title-2--line-height: 1.75rem;
+  --text-title-2--font-weight: 700;
   --text-title-2--letter-spacing: -0.01em;
   --text-headline: 1.0625rem; /* 17/22 · card titles, buttons */
   --text-headline--line-height: 1.375rem;
@@ -103,13 +104,13 @@
   --text-micro--line-height: 0.875rem;
   --text-micro--font-weight: 500;
 
-  /* ---------- Radius (calm, familiar) ---------- */
+  /* ---------- Radius (soft, friendly) ---------- */
   --radius-*: initial;
-  --radius-sm: 0.625rem; /* 10 · chips, inputs */
-  --radius-md: 0.75rem; /* 12 · rows, small tiles */
-  --radius-lg: 1rem; /* 16 · standard cards */
-  --radius-xl: 1.25rem; /* 20 · large cards */
-  --radius-2xl: 1.5rem; /* 24 · sheets */
+  --radius-sm: 0.75rem; /* 12 · chips, inputs */
+  --radius-md: 1rem; /* 16 · rows, small tiles */
+  --radius-lg: 1.25rem; /* 20 · standard cards */
+  --radius-xl: 1.5rem; /* 24 · large cards */
+  --radius-2xl: 1.75rem; /* 28 · sheets */
   --radius-full: 9999px;
 
   /* ---------- Blur (unused by surfaces; kept for image viewers) ---------- */
@@ -119,16 +120,16 @@
   --blur-lg: 24px;
   --blur-xl: 40px;
 
-  /* ---------- Elevation / shadow (soft, light-theme) ---------- */
+  /* ---------- Elevation / shadow (warm, diffused) ---------- */
   --shadow-*: initial;
-  --shadow-ambient: 0 1px 2px rgba(16, 24, 40, 0.06), 0 2px 8px rgba(16, 24, 40, 0.06);
-  --shadow-ambient-lg: 0 8px 24px rgba(16, 24, 40, 0.12);
-  --shadow-glow-volt: 0 6px 18px -6px rgba(37, 99, 235, 0.4);
-  --shadow-glow-ember: 0 6px 18px -6px rgba(200, 30, 74, 0.35);
-  --shadow-glow-ocean: 0 6px 18px -6px rgba(29, 78, 216, 0.35);
-  --shadow-glow-mint: 0 6px 18px -6px rgba(4, 120, 87, 0.35);
-  --shadow-glow-iris: 0 6px 18px -6px rgba(109, 40, 217, 0.35);
-  --shadow-glow-solar: 0 6px 18px -6px rgba(180, 83, 9, 0.35);
+  --shadow-ambient: 0 1px 2px rgba(28, 25, 23, 0.05), 0 6px 16px rgba(28, 25, 23, 0.07);
+  --shadow-ambient-lg: 0 12px 32px rgba(28, 25, 23, 0.14);
+  --shadow-glow-volt: 0 8px 20px -6px rgba(14, 138, 78, 0.4);
+  --shadow-glow-ember: 0 8px 20px -6px rgba(194, 51, 77, 0.35);
+  --shadow-glow-ocean: 0 8px 20px -6px rgba(36, 86, 196, 0.35);
+  --shadow-glow-mint: 0 8px 20px -6px rgba(14, 122, 82, 0.35);
+  --shadow-glow-iris: 0 8px 20px -6px rgba(109, 58, 209, 0.35);
+  --shadow-glow-solar: 0 8px 20px -6px rgba(179, 98, 12, 0.35);
 
   /* ---------- Motion ---------- */
   --ease-*: initial;
@@ -150,20 +151,21 @@
    The "gradients" are now FLAT solid colors — one calm, saturated tone per
    category family, dark enough that white text always passes. Simple. */
 :root {
-  --gradient-ember: linear-gradient(0deg, #c81e4a, #c81e4a);
-  --gradient-ocean: linear-gradient(0deg, #1d4ed8, #1d4ed8);
-  --gradient-mint: linear-gradient(0deg, #047857, #047857);
-  --gradient-iris: linear-gradient(0deg, #6d28d9, #6d28d9);
-  --gradient-solar: linear-gradient(0deg, #b45309, #b45309);
-  --gradient-aurora: linear-gradient(0deg, #1e2433, #1e2433);
+  --gradient-ember: linear-gradient(0deg, #c2334d, #c2334d);
+  --gradient-ocean: linear-gradient(0deg, #2456c4, #2456c4);
+  --gradient-mint: linear-gradient(0deg, #0e7a52, #0e7a52);
+  --gradient-iris: linear-gradient(0deg, #6d3ad1, #6d3ad1);
+  --gradient-solar: linear-gradient(0deg, #b3620c, #b3620c);
+  /* The hero card is INK — cream numerals on near-black, the signature look. */
+  --gradient-aurora: linear-gradient(0deg, #1c1917, #1c1917);
 
   --duration-micro: 150ms;
   --duration-standard: 250ms;
 
   --dock-height: 5.5rem; /* dock + labels + breathing room, used for content padding */
 
-  /* Surface fills: plain white cards on the soft grey canvas. */
-  --surface-inset: #eef0f4;
+  /* Surface fills: white cards on the warm cream canvas. */
+  --surface-inset: #f3efe7;
   --surface-raised: #ffffff;
   --surface-floating: #ffffff;
   --surface-overlay: #ffffff;

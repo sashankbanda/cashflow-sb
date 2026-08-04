@@ -158,7 +158,7 @@ export function Sheet({
               {!hideHeader ? (
                 <div className="flex items-center justify-between gap-3 px-5 pt-3 pb-2">
                   {title ? (
-                    <h2 id={titleId} className="text-title-2">
+                    <h2 id={titleId} className="font-dot text-title-2">
                       {title}
                     </h2>
                   ) : (

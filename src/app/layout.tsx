@@ -1,14 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Manrope, Space_Grotesk } from "next/font/google";
 import { AuroraBackground } from "@/components/ui/AuroraBackground";
 import { Toaster } from "@/components/ui/Toast";
 import { WebVitals } from "@/components/pwa/WebVitals";
 import "./globals.css";
 
-/** One typeface for everything — UI and numbers alike (tabular-nums via CSS). */
-const inter = Inter({
+/** Friendly rounded-geometric UI face — listed FIRST in the stack so it
+ *  actually renders on iOS (with -apple-system first, iPhones showed SF). */
+const ui = Manrope({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-ui",
+  display: "swap",
+});
+
+/** Characterful display face for money amounts and screen titles. */
+const displayFace = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -30,7 +38,7 @@ export const metadata: Metadata = {
 const THEME_INIT = `(function(){try{var A={dusk:1,statement:1,grid:1};var k='cashflow:theme';var p=new URLSearchParams(location.search).get('theme');if(p==='base'){localStorage.removeItem(k);document.documentElement.removeAttribute('data-theme');return;}var t=p||localStorage.getItem(k);if(t&&A[t]){document.documentElement.setAttribute('data-theme',t);localStorage.setItem(k,t);}}catch(e){}})();`;
 
 export const viewport: Viewport = {
-  themeColor: "#f5f6f8",
+  themeColor: "#faf7f2",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -43,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full`}>
+    <html lang="en" className={`${ui.variable} ${displayFace.variable} h-full`}>
       <body className="min-h-full">
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <AuroraBackground />

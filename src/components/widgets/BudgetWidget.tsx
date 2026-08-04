@@ -17,7 +17,7 @@ export function BudgetWidget({ spentMinor, budgetMinor, pace }: BudgetWidgetProp
       <div className="flex items-center gap-4">
         <BudgetRing pace={pace} size={60} strokeWidth={7} />
         <div className="min-w-0 flex-1">
-          <p className="text-title-2 text-fg-1 tabular-nums">
+          <p className="font-dot text-title-2 text-fg-1 tabular-nums">
             {formatMoney(spentMinor, { compact: true })}
             <span className="text-body text-fg-3">
               {" "}

@@ -84,7 +84,7 @@ export function ScreenHeader({
         )}
       >
         <div className="mx-auto flex h-12 max-w-md items-center justify-center px-5">
-          <p className="text-headline">{title}</p>
+          <p className="font-dot text-headline">{title}</p>
         </div>
       </div>
 
@@ -97,12 +97,12 @@ export function ScreenHeader({
               <button
                 type="button"
                 onClick={onTitlePress}
-                className="text-title-1 transition-opacity duration-150 active:opacity-70"
+                className="font-dot text-title-1 transition-opacity duration-150 active:opacity-70"
               >
                 {titleContent}
               </button>
             ) : (
-              <h1 className="text-title-1">{titleContent}</h1>
+              <h1 className="font-dot text-title-1">{titleContent}</h1>
             )}
           </div>
           {trailing ? (
