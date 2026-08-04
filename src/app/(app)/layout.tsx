@@ -5,6 +5,7 @@ import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { OfflineBanner } from "@/components/pwa/OfflineBanner";
 import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar";
 import { OutboxSync } from "@/features/expenses/components/OutboxSync";
+import { TourAutoStart } from "@/features/onboarding/components/TourAutoStart";
 import { getSession } from "@/features/auth/session";
 import { getCategoriesForUser } from "@/features/categories/queries";
 import { getTagsForUser } from "@/features/categories/tags-service";
@@ -42,6 +43,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <InstallPrompt />
       <ServiceWorkerRegistrar />
       <OutboxSync />
+      <TourAutoStart />
     </>
   );
 }

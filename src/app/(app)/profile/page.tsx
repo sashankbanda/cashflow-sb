@@ -6,6 +6,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { SignOutButton } from "@/features/auth/components/SignOutButton";
 import { requireUser } from "@/features/auth/session";
+import { TourRow } from "@/features/onboarding/components/TourRow";
 
 export const metadata: Metadata = { title: "Profile" };
 
@@ -66,6 +67,7 @@ export default async function ProfilePage() {
               <ChevronRight className="size-4 text-fg-3" />
             </Link>
           ))}
+          <TourRow />
         </GlassCard>
         <SignOutButton />
       </div>
