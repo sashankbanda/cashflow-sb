@@ -3,7 +3,7 @@
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
     overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
   }
@@ -28,7 +28,7 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+    scrollbar-color: var(--color-handle) transparent;
   }
 
   ::-webkit-scrollbar {
@@ -36,7 +36,7 @@
     height: 6px;
   }
   ::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: var(--color-handle);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-track {
@@ -104,41 +104,6 @@
     border: none;
     background: #ffffff;
     box-shadow: var(--shadow-ambient);
-  }
-}
-
-/* ---------- Aurora canvas backdrop ----------
-   Static, pre-composited radial washes painted once. No animation loop: an
-   ambient loop is a never-ending full-viewport paint competing with every
-   interaction, and the colour reads the same standing still. */
-@layer components {
-  .aurora-blob {
-    position: absolute;
-    border-radius: 9999px;
-  }
-
-  .aurora-blob-1 {
-    top: -22%;
-    left: -25%;
-    width: 82vmax;
-    height: 82vmax;
-    background: radial-gradient(closest-side, rgba(240, 45, 101, 0.24), transparent 70%);
-  }
-
-  .aurora-blob-2 {
-    top: 6%;
-    right: -30%;
-    width: 74vmax;
-    height: 74vmax;
-    background: radial-gradient(closest-side, rgba(157, 123, 255, 0.26), transparent 70%);
-  }
-
-  .aurora-blob-3 {
-    bottom: -30%;
-    left: 2%;
-    width: 78vmax;
-    height: 78vmax;
-    background: radial-gradient(closest-side, rgba(46, 120, 240, 0.22), transparent 70%);
   }
 }
 

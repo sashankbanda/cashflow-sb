@@ -26,7 +26,7 @@ export function MonthSpendWidget({
       <div className="flex items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="text-title-2">
-            <NumberTicker value={formatMoney(amountMinor)} />
+            <NumberTicker value={formatMoney(amountMinor, { compact: amountMinor >= 10_000_00 })} />
           </p>
           {deltaFraction !== null ? (
             <p className={cn("mt-1 text-footnote", down ? "text-positive" : "text-warning")}>

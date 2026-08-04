@@ -44,16 +44,16 @@ function TabLink({
   return (
     <IntentLink
       href={href}
-      aria-label={label}
       aria-current={active ? "page" : undefined}
       onClick={() => haptics.tap()}
       className={cn(
-        "flex size-12 items-center justify-center rounded-full",
+        "flex w-14 flex-col items-center justify-center gap-0.5 rounded-md py-1",
         "ease-out transition-[color,transform] duration-150 active:scale-[0.97]",
-        active ? "text-volt glow-volt-icon" : "text-fg-3 hover:text-fg-2",
+        active ? "text-volt" : "text-fg-3 hover:text-fg-2",
       )}
     >
-      <Icon className="size-6" strokeWidth={active ? 2.2 : 1.8} />
+      <Icon className="size-5" strokeWidth={active ? 2.2 : 1.8} />
+      <span className={cn("text-micro", active && "font-semibold")}>{label}</span>
     </IntentLink>
   );
 }
@@ -85,24 +85,27 @@ export function TabBar({ groups, categories, tags, viewerUserId }: TabBarProps) 
         aria-label="Primary"
         className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center pb-safe"
       >
-        <div className="pointer-events-auto mb-4 flex items-center gap-1 rounded-full glass-floating px-2 py-1.5">
+        <div className="pointer-events-auto mb-3 flex items-center gap-1 rounded-full glass-floating px-3 py-1.5">
           {LEFT_TABS.map((tab) => (
             <TabLink key={tab.href} {...tab} active={isActive(tab.href)} />
           ))}
           <button
             type="button"
-            aria-label="Add expense"
+            aria-label="Add expense or income"
             onClick={() => {
               haptics.tap();
               setEverOpened(true);
               addSheet.open();
             }}
             className={cn(
-              "mx-1 flex size-12 items-center justify-center rounded-full bg-volt text-on-volt",
-              "ease-out shadow-glow-volt transition-transform duration-150 active:scale-[0.94]",
+              "mx-1 flex w-14 flex-col items-center justify-center gap-0.5 py-1 text-fg-2",
+              "ease-out transition-transform duration-150 active:scale-[0.94]",
             )}
           >
-            <Plus className="size-6" strokeWidth={2.4} />
+            <span className="flex size-9 items-center justify-center rounded-full bg-volt text-on-volt shadow-glow-volt">
+              <Plus className="size-5" strokeWidth={2.4} />
+            </span>
+            <span className="text-micro">Add</span>
           </button>
           {RIGHT_TABS.map((tab) => (
             <TabLink key={tab.href} {...tab} active={isActive(tab.href)} />

@@ -3,11 +3,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Glassmorphism gate. The look depends on frosted surfaces, so every glass
- * utility must actually apply a `backdrop-filter` blur (a regression that
- * flattens them to solid fills would kill the aesthetic), each must keep a solid
- * fallback for no-backdrop-filter / reduced transparency, and components must go
- * through those utilities rather than hand-rolling a `backdrop-blur`.
+ * Simple-surface gate. The design is deliberately plain — white cards, light
+ * borders, soft shadows, zero translucency — so this pins that: every surface
+ * utility exists and none applies a `backdrop-filter`, and no component
+ * hand-rolls a `backdrop-blur`. Visual effects creep back in one PR at a time;
+ * this makes that a failing test instead of a slow drift.
  */
 const tokens = readFileSync(join(process.cwd(), "src/styles/tokens.css"), "utf8");
 
@@ -18,26 +18,16 @@ function utilBody(name: string): string {
   return tokens.slice(start, next === -1 ? undefined : next);
 }
 
-const FROSTED = ["glass", "glass-soft", "glass-floating", "glass-overlay"];
+const SURFACES = ["glass", "glass-soft", "glass-floating", "glass-overlay"];
 
-describe("glassmorphism", () => {
-  it("every frosted surface applies a backdrop blur", () => {
-    for (const util of FROSTED) {
-      expect(utilBody(util), `${util} should be frosted glass`).toMatch(/backdrop-filter:\s*blur\(/);
+describe("simple surfaces", () => {
+  it("every surface is a plain fill — no backdrop-filter", () => {
+    for (const util of SURFACES) {
+      expect(utilBody(util), `${util} should be a plain surface`).not.toMatch(/backdrop-filter/);
     }
   });
 
-  it("each frosted surface has a solid fallback", () => {
-    for (const util of FROSTED) {
-      const body = utilBody(util);
-      expect(body, `${util} needs an @supports fallback`).toMatch(/@supports not \(backdrop-filter/);
-      expect(body, `${util} needs a reduced-transparency fallback`).toMatch(
-        /prefers-reduced-transparency: reduce/,
-      );
-    }
-  });
-
-  it("no component hand-rolls a backdrop-blur (use the glass utilities)", () => {
+  it("no component hand-rolls a backdrop-blur", () => {
     const offenders: string[] = [];
     const walk = (dir: string) => {
       for (const name of readdirSync(dir)) {

@@ -1,13 +1,8 @@
 /**
- * Fixed near-black canvas backdrop with slow-drifting aurora blobs (E0 in the
- * elevation model). Rendered once in the root layout, behind everything.
+ * The canvas is now a plain, calm token colour — no ambient backdrop. Kept as
+ * a component so the root layout stays stable if a subtle backdrop ever
+ * returns behind a theme.
  */
 export function AuroraBackground() {
-  return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <div className="aurora-blob aurora-blob-1" />
-      <div className="aurora-blob aurora-blob-2" />
-      <div className="aurora-blob aurora-blob-3" />
-    </div>
-  );
+  return null;
 }

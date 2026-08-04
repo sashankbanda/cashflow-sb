@@ -20,7 +20,10 @@ export function NetBalanceWidget({ netMinor, context }: NetBalanceWidgetProps) {
   return (
     <Widget size="lg" gradient="aurora" glow label="Net position">
       <div aria-live="polite" aria-atomic="true">
-        <DotMatrixAmount amountMinor={netMinor} options={{ sign: "always" }} />
+        <DotMatrixAmount
+          amountMinor={netMinor}
+          options={{ sign: "always", compact: Math.abs(netMinor) >= 10_000_00 }}
+        />
         <p className="mt-2 text-footnote text-fg-on-grad">
           {summary} · {context}
         </p>

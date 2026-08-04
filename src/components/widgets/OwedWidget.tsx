@@ -20,7 +20,7 @@ export function OwedWidget({ direction, amountMinor, context }: OwedWidgetProps)
       label={inbound ? "Owed to you" : "You owe"}
     >
       <p className="text-title-2 text-white">
-        <NumberTicker value={formatMoney(amountMinor)} />
+        <NumberTicker value={formatMoney(amountMinor, { compact: amountMinor >= 10_000_00 })} />
       </p>
       <p className="mt-1 text-footnote text-fg-on-grad">{context}</p>
     </Widget>

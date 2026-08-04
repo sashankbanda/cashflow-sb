@@ -58,7 +58,7 @@ export function GoogleSignInButton({ callbackURL = "/home" }: GoogleSignInButton
       disabled={pending}
       aria-busy={pending || undefined}
       className={cn(
-        "inline-flex h-14 w-full items-center justify-center gap-3 rounded-full bg-white",
+        "inline-flex h-14 w-full items-center justify-center gap-3 rounded-full border border-line bg-white",
         "text-headline text-black select-none",
         "ease-out transition-[transform,opacity] duration-150 active:scale-[0.97]",
         "disabled:pointer-events-none disabled:opacity-60",

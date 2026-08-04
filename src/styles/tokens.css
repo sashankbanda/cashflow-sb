@@ -14,23 +14,24 @@
   --color-black: #000000;
   --color-transparent: transparent;
 
-  --color-canvas: #070811;
+  /* Simple, light, calm. White cards on a soft grey canvas, dark readable
+     text, ONE clear blue accent. No aurora, no blur, no gradient noise. */
+  --color-canvas: #f5f6f8;
 
-  --color-fg-1: rgba(255, 255, 255, 0.97);
-  --color-fg-2: rgba(255, 255, 255, 0.67);
-  /* 0.52 (not 0.4) so tertiary captions clear WCAG AA 4.5:1 on inset glass. */
-  --color-fg-3: rgba(255, 255, 255, 0.52);
+  --color-fg-1: #16181d;
+  --color-fg-2: #414651;
+  /* Dark enough to clear WCAG AA 4.5:1 even on the inset surface. */
+  --color-fg-3: #595f6a;
 
-  /* Frosted-glass fills: translucent, blurred, with a bright specular top edge.
-     Slightly richer than a flat tint so the aurora reads through the glass. */
-  --color-glass: rgba(255, 255, 255, 0.07);
-  --color-glass-soft: rgba(255, 255, 255, 0.045);
-  --color-glass-border: rgba(255, 255, 255, 0.14);
-  --color-glass-highlight: rgba(255, 255, 255, 0.32);
+  /* Subtle dark tints for pressed states and quiet fills. */
+  --color-glass: rgba(15, 23, 42, 0.06);
+  --color-glass-soft: rgba(15, 23, 42, 0.04);
+  --color-glass-border: rgba(15, 23, 42, 0.12);
+  --color-glass-highlight: rgba(15, 23, 42, 0.12);
 
-  /* Accent — luminous violet, premium on frosted dark glass. */
-  --color-volt: #9d7bff;
-  --color-on-volt: #140a2e;
+  /* Accent — one clear, familiar blue. */
+  --color-volt: #2563eb;
+  --color-on-volt: #ffffff;
 
   --color-ember-1: #ff5c39;
   --color-ember-2: #f02d65;
@@ -48,42 +49,43 @@
   --color-solar-2: #f59e0b;
   --color-solar-3: #4a2a05;
 
-  --color-positive: #2ed486;
-  --color-negative: #f02d65;
-  --color-warning: #f59e0b;
+  /* Money direction: unmissable green in, red out. */
+  --color-positive: #067647;
+  --color-negative: #b42318;
+  --color-warning: #b54708;
 
-  /* Overlay lines, scrims, and on-gradient text — themeable so a light theme
-     can flip the white overlays to dark. No component uses a raw white/x or
-     black/x utility; they all resolve through these. */
-  --color-hairline: rgba(255, 255, 255, 0.06);
-  --color-line: rgba(255, 255, 255, 0.1);
-  --color-line-2: rgba(255, 255, 255, 0.15);
-  --color-handle: rgba(255, 255, 255, 0.2);
-  --color-tint: rgba(255, 255, 255, 0.25);
-  --color-fg-on-grad: rgba(255, 255, 255, 0.7);
-  --color-fg-on-grad-2: rgba(255, 255, 255, 0.8);
-  --color-scrim: rgba(0, 0, 0, 0.6);
-  --color-scrim-strong: rgba(0, 0, 0, 0.95);
-  --color-frame: rgba(0, 0, 0, 0.4);
+  /* Overlay lines, scrims, and on-panel text — themeable. No component uses a
+     raw white/x or black/x utility; they all resolve through these. */
+  --color-hairline: rgba(15, 23, 42, 0.08);
+  --color-line: rgba(15, 23, 42, 0.12);
+  --color-line-2: rgba(15, 23, 42, 0.16);
+  --color-handle: rgba(15, 23, 42, 0.25);
+  --color-tint: rgba(15, 23, 42, 0.06);
+  --color-fg-on-grad: rgba(255, 255, 255, 0.85);
+  --color-fg-on-grad-2: rgba(255, 255, 255, 0.95);
+  --color-scrim: rgba(0, 0, 0, 0.45);
+  --color-scrim-strong: rgba(0, 0, 0, 0.9);
+  --color-frame: rgba(15, 23, 42, 0.1);
 
   /* ---------- Typography ---------- */
   --font-sans:
     -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), system-ui, sans-serif;
-  --font-dot: var(--font-doto), ui-monospace, monospace;
+  /* One typeface everywhere — hero numbers use the same face as the UI. */
+  --font-dot: var(--font-sans);
 
   --text-*: initial;
-  --text-display: 3.25rem; /* 52/56 · hero amounts — big and confident */
-  --text-display--line-height: 3.5rem;
+  --text-display: 2.25rem; /* 36/44 · hero amounts — big but never clipped at 390px */
+  --text-display--line-height: 2.75rem;
   --text-display--font-weight: 700;
-  --text-display--letter-spacing: -0.03em;
-  --text-title-1: 2rem; /* 32/40 · screen titles */
-  --text-title-1--line-height: 2.5rem;
+  --text-display--letter-spacing: -0.02em;
+  --text-title-1: 1.5rem; /* 24/32 · screen titles */
+  --text-title-1--line-height: 2rem;
   --text-title-1--font-weight: 700;
-  --text-title-1--letter-spacing: -0.02em;
-  --text-title-2: 1.4375rem; /* 23/30 · widget heroes, section heads */
-  --text-title-2--line-height: 1.875rem;
+  --text-title-1--letter-spacing: -0.01em;
+  --text-title-2: 1.1875rem; /* 19/26 · widget heroes, section heads */
+  --text-title-2--line-height: 1.625rem;
   --text-title-2--font-weight: 600;
-  --text-title-2--letter-spacing: -0.015em;
+  --text-title-2--letter-spacing: -0.01em;
   --text-headline: 1.0625rem; /* 17/22 · card titles, buttons */
   --text-headline--line-height: 1.375rem;
   --text-headline--font-weight: 600;
@@ -101,32 +103,32 @@
   --text-micro--line-height: 0.875rem;
   --text-micro--font-weight: 500;
 
-  /* ---------- Radius ---------- */
+  /* ---------- Radius (calm, familiar) ---------- */
   --radius-*: initial;
-  --radius-sm: 1rem; /* 16 · chips, inputs */
-  --radius-md: 1.5rem; /* 24 · small widgets, rows */
-  --radius-lg: 1.75rem; /* 28 · standard widgets */
-  --radius-xl: 2rem; /* 32 · large cards */
-  --radius-2xl: 2.5rem; /* 40 · sheets, stacked cards */
+  --radius-sm: 0.625rem; /* 10 · chips, inputs */
+  --radius-md: 0.75rem; /* 12 · rows, small tiles */
+  --radius-lg: 1rem; /* 16 · standard cards */
+  --radius-xl: 1.25rem; /* 20 · large cards */
+  --radius-2xl: 1.5rem; /* 24 · sheets */
   --radius-full: 9999px;
 
-  /* ---------- Blur ---------- */
+  /* ---------- Blur (unused by surfaces; kept for image viewers) ---------- */
   --blur-*: initial;
   --blur-sm: 8px;
   --blur-md: 16px;
-  --blur-lg: 24px; /* default glass */
-  --blur-xl: 40px; /* dock, sheets, overlays */
+  --blur-lg: 24px;
+  --blur-xl: 40px;
 
-  /* ---------- Elevation / shadow ---------- */
+  /* ---------- Elevation / shadow (soft, light-theme) ---------- */
   --shadow-*: initial;
-  --shadow-ambient: 0 10px 34px rgba(0, 0, 0, 0.5);
-  --shadow-ambient-lg: 0 24px 60px rgba(0, 0, 0, 0.6);
-  --shadow-glow-volt: 0 16px 50px -12px rgba(157, 123, 255, 0.45);
-  --shadow-glow-ember: 0 12px 60px -12px rgba(240, 45, 101, 0.35);
-  --shadow-glow-ocean: 0 12px 60px -12px rgba(46, 99, 240, 0.35);
-  --shadow-glow-mint: 0 12px 60px -12px rgba(46, 212, 134, 0.35);
-  --shadow-glow-iris: 0 12px 60px -12px rgba(124, 58, 237, 0.35);
-  --shadow-glow-solar: 0 12px 60px -12px rgba(245, 158, 11, 0.35);
+  --shadow-ambient: 0 1px 2px rgba(16, 24, 40, 0.06), 0 2px 8px rgba(16, 24, 40, 0.06);
+  --shadow-ambient-lg: 0 8px 24px rgba(16, 24, 40, 0.12);
+  --shadow-glow-volt: 0 6px 18px -6px rgba(37, 99, 235, 0.4);
+  --shadow-glow-ember: 0 6px 18px -6px rgba(200, 30, 74, 0.35);
+  --shadow-glow-ocean: 0 6px 18px -6px rgba(29, 78, 216, 0.35);
+  --shadow-glow-mint: 0 6px 18px -6px rgba(4, 120, 87, 0.35);
+  --shadow-glow-iris: 0 6px 18px -6px rgba(109, 40, 217, 0.35);
+  --shadow-glow-solar: 0 6px 18px -6px rgba(180, 83, 9, 0.35);
 
   /* ---------- Motion ---------- */
   --ease-*: initial;
@@ -144,56 +146,27 @@
   }
 }
 
-/* Non-Tailwind tokens: gradients + motion durations, consumed via var(). */
+/* Non-Tailwind tokens: panel colors + motion durations, consumed via var().
+   The "gradients" are now FLAT solid colors — one calm, saturated tone per
+   category family, dark enough that white text always passes. Simple. */
 :root {
-  --gradient-ember: linear-gradient(
-    165deg,
-    var(--color-ember-1) 0%,
-    var(--color-ember-2) 52%,
-    var(--color-ember-3) 100%
-  );
-  --gradient-ocean: linear-gradient(
-    165deg,
-    var(--color-ocean-1) 0%,
-    var(--color-ocean-2) 52%,
-    var(--color-ocean-3) 100%
-  );
-  --gradient-mint: linear-gradient(
-    165deg,
-    var(--color-mint-1) 0%,
-    var(--color-mint-2) 52%,
-    var(--color-mint-3) 100%
-  );
-  --gradient-iris: linear-gradient(
-    165deg,
-    var(--color-iris-1) 0%,
-    var(--color-iris-2) 52%,
-    var(--color-iris-3) 100%
-  );
-  --gradient-solar: linear-gradient(
-    165deg,
-    var(--color-solar-1) 0%,
-    var(--color-solar-2) 52%,
-    var(--color-solar-3) 100%
-  );
-  --gradient-aurora:
-    radial-gradient(120% 90% at 15% 0%, rgba(240, 45, 101, 0.55) 0%, transparent 60%),
-    radial-gradient(120% 110% at 90% 15%, rgba(124, 58, 237, 0.6) 0%, transparent 65%),
-    radial-gradient(140% 120% at 50% 110%, rgba(46, 99, 240, 0.55) 0%, transparent 70%),
-    linear-gradient(180deg, #12132a 0%, #070811 100%);
+  --gradient-ember: linear-gradient(0deg, #c81e4a, #c81e4a);
+  --gradient-ocean: linear-gradient(0deg, #1d4ed8, #1d4ed8);
+  --gradient-mint: linear-gradient(0deg, #047857, #047857);
+  --gradient-iris: linear-gradient(0deg, #6d28d9, #6d28d9);
+  --gradient-solar: linear-gradient(0deg, #b45309, #b45309);
+  --gradient-aurora: linear-gradient(0deg, #1e2433, #1e2433);
 
   --duration-micro: 150ms;
   --duration-standard: 250ms;
 
-  --dock-height: 5.5rem; /* floating dock + breathing room, used for content padding */
+  --dock-height: 5.5rem; /* dock + labels + breathing room, used for content padding */
 
-  /* Solid surface fills — the fallback under `@supports not (backdrop-filter)`
-     and reduced-transparency, and the base a theme re-tones. Faintly indigo so
-     the frosted glass reads warm-cool over the aurora. */
-  --surface-inset: #0f1119;
-  --surface-raised: #151826;
-  --surface-floating: #1b1f31;
-  --surface-overlay: rgba(18, 20, 34, 0.6);
+  /* Surface fills: plain white cards on the soft grey canvas. */
+  --surface-inset: #eef0f4;
+  --surface-raised: #ffffff;
+  --surface-floating: #ffffff;
+  --surface-overlay: #ffffff;
 }
 
 /* ---------- Alternate themes (opt in via ?theme=…, persisted) ----------
@@ -202,15 +175,36 @@
    @theme. (Light themes additionally need the hard-coded `white/x` borders
    swept into tokens — see docs/DECISIONS.md D6.x.) */
 [data-theme="dusk"] {
-  /* Dark, anti-neon: slate base, one soft periwinkle accent, tonal surfaces. */
+  /* The dark option: slate base, soft periwinkle accent, tonal surfaces. */
+  color-scheme: dark;
   --color-canvas: #14161b;
+  --color-fg-1: rgba(255, 255, 255, 0.96);
+  --color-fg-2: rgba(255, 255, 255, 0.66);
+  --color-fg-3: rgba(255, 255, 255, 0.52);
+  --color-glass: rgba(255, 255, 255, 0.07);
+  --color-glass-soft: rgba(255, 255, 255, 0.045);
+  --color-glass-border: rgba(255, 255, 255, 0.14);
+  --color-glass-highlight: rgba(255, 255, 255, 0.2);
   --color-volt: #8e9bff;
   --color-on-volt: #12141a;
+  --color-positive: #4fb477;
+  --color-negative: #ff7b6b;
+  --color-warning: #f5b04b;
+  --color-hairline: rgba(255, 255, 255, 0.08);
+  --color-line: rgba(255, 255, 255, 0.12);
+  --color-line-2: rgba(255, 255, 255, 0.16);
+  --color-handle: rgba(255, 255, 255, 0.25);
+  --color-tint: rgba(255, 255, 255, 0.08);
+  --color-scrim: rgba(0, 0, 0, 0.6);
+  --color-scrim-strong: rgba(0, 0, 0, 0.95);
+  --color-frame: rgba(0, 0, 0, 0.4);
   --surface-inset: #171a21;
   --surface-raised: #1c1f27;
   --surface-floating: #232733;
-  --surface-overlay: rgba(28, 31, 39, 0.74);
-  --shadow-glow-volt: 0 12px 60px -12px rgba(142, 155, 255, 0.35);
+  --surface-overlay: #1c1f27;
+  --shadow-ambient: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-ambient-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --shadow-glow-volt: 0 12px 40px -12px rgba(142, 155, 255, 0.35);
 }
 
 /* Light editorial: warm paper, ink primary, hairline depth, mono numerals. */
@@ -300,82 +294,37 @@
 }
 
 /* ---------- Surfaces ----------
-   Frosted glass: a translucent fill blurs + saturates the aurora behind it, a
-   bright specular top edge catches the light, and a soft inner highlight gives
-   the pane depth. Elevation = more blur + a stronger border + a bigger shadow.
-   Solid fallbacks kick in where backdrop-filter is unsupported or the user has
-   reduced transparency on. */
+   Plain and simple: white cards with a light border and a soft shadow on a
+   grey canvas. No blur, no translucency, no specular tricks — nothing between
+   the user and their numbers. */
 @utility glass {
-  background-color: var(--color-glass);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--color-glass-border);
-  border-top-color: var(--color-glass-highlight);
-  box-shadow: var(--shadow-ambient), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
-
-  @supports not (backdrop-filter: blur(1px)) {
-    background-color: var(--surface-raised);
-  }
-  @media (prefers-reduced-transparency: reduce) {
-    background-color: var(--surface-raised);
-    backdrop-filter: none;
-  }
+  background-color: var(--surface-raised);
+  border: 1px solid var(--color-hairline);
+  box-shadow: var(--shadow-ambient);
 }
 
 @utility glass-soft {
-  background-color: var(--color-glass-soft);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  background-color: var(--surface-inset);
   border: 1px solid var(--color-hairline);
-
-  @supports not (backdrop-filter: blur(1px)) {
-    background-color: var(--surface-inset);
-  }
-  @media (prefers-reduced-transparency: reduce) {
-    background-color: var(--surface-inset);
-    backdrop-filter: none;
-  }
 }
 
-/* Floating chrome: dock, toasts, sticky CTAs — the most blurred, brightest edge. */
+/* Floating chrome: dock, toasts, sticky CTAs. */
 @utility glass-floating {
-  background-color: var(--color-glass);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-top-color: var(--color-glass-highlight);
-  box-shadow: var(--shadow-ambient-lg), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
-
-  @supports not (backdrop-filter: blur(1px)) {
-    background-color: var(--surface-floating);
-  }
-  @media (prefers-reduced-transparency: reduce) {
-    background-color: var(--surface-floating);
-    backdrop-filter: none;
-  }
+  background-color: var(--surface-floating);
+  border: 1px solid var(--color-line);
+  box-shadow: var(--shadow-ambient-lg);
 }
 
-/* Modal bottom sheet: the deepest frost over the scrim. */
+/* Modal bottom sheet. */
 @utility glass-overlay {
   background-color: var(--surface-overlay);
-  backdrop-filter: blur(36px) saturate(180%);
-  -webkit-backdrop-filter: blur(36px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-top-color: var(--color-glass-highlight);
-  box-shadow: var(--shadow-ambient-lg), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
-
-  @supports not (backdrop-filter: blur(1px)) {
-    background-color: var(--surface-floating);
-  }
-  @media (prefers-reduced-transparency: reduce) {
-    background-color: var(--surface-floating);
-    backdrop-filter: none;
-  }
+  border: 1px solid var(--color-line);
+  box-shadow: var(--shadow-ambient-lg);
 }
 
-/* Accent icon glow for active navigation states. */
+/* Active-tab emphasis is color + label now; no glow. */
 @utility glow-volt-icon {
-  filter: drop-shadow(0 0 12px rgba(157, 123, 255, 0.55));
+  filter: none;
 }
 
 /* Horizontal chip rows scroll without a visible bar. */
