@@ -1,4 +1,5 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { newId } from "@/lib/ids";
 import { computeSplits, SplitError, validatePayers, type SplitShare } from "@/lib/split";
@@ -17,7 +18,8 @@ import {
 } from "@/server/db/schema";
 import { forbidden, notFound, validationError } from "@/server/errors";
 import type { ActionUser } from "@/server/action-core";
-import { assertMember } from "@/features/groups/service";
+import { assertMember, createGroup } from "@/features/groups/service";
+import { addGhostMember } from "@/features/groups/members-service";
 import { notifyUsers } from "@/features/notifications/service";
 import { canModifyExpense } from "./authz";
 import type {
@@ -305,6 +307,69 @@ export async function createPersonalExpense(
 
     return { expenseId };
   });
+}
+
+/**
+ * Split a personal expense with people who may not use the app: converts it
+ * into an equal group expense in the owner's auto-managed "Splits" group,
+ * adding each name as a ghost member (reused if it already exists — ghosts can
+ * claim their history later via invite links). The owner is the sole payer;
+ * their share flows back into the personal ledger, and the original personal
+ * row is soft-deleted so nothing double-counts.
+ */
+export async function splitPersonalExpense(
+  user: ActionUser,
+  input: { expenseId: string; names: ReadonlyArray<string> },
+): Promise<{ groupId: string; expenseId: string }> {
+  const expense = await db.query.expenses.findFirst({ where: eq(expenses.id, input.expenseId) });
+  if (!expense || expense.deletedAt || expense.groupId !== null) throw notFound("Expense");
+  if (expense.createdBy !== user.id) throw forbidden("That isn't your expense.");
+  if (expense.isIncome) throw validationError("Income can't be split.", {});
+  if (!expense.categoryId) throw validationError("Set a category before splitting.", {});
+
+  // Find or create the owner's "Splits" group.
+  const existing = await db.query.groups.findFirst({
+    where: and(eq(groups.createdBy, user.id), eq(groups.name, "Splits"), isNull(groups.archivedAt)),
+  });
+  const groupId = existing ? existing.id : (await createGroup(user, { name: "Splits", emoji: "🧾", gradient: "ocean" })).groupId;
+
+  // Resolve each name to an active member, reusing matches case-insensitively.
+  const members = await db.query.groupMembers.findMany({
+    where: and(eq(groupMembers.groupId, groupId), isNull(groupMembers.leftAt)),
+  });
+  const viewerMember = members.find((member) => member.userId === user.id);
+  if (!viewerMember) throw forbidden("You aren't in your Splits group.");
+
+  const wanted = [...new Set(input.names.map((name) => name.trim()).filter(Boolean))];
+  const participantIds = [viewerMember.id];
+  for (const name of wanted) {
+    const match = members.find(
+      (member) => member.displayName.toLowerCase() === name.toLowerCase(),
+    );
+    if (match) {
+      if (match.id !== viewerMember.id) participantIds.push(match.id);
+    } else {
+      const { memberId } = await addGhostMember(user, { groupId, displayName: name });
+      participantIds.push(memberId);
+    }
+  }
+  if (participantIds.length < 2) throw validationError("Add at least one other person.", {});
+
+  const { expenseId } = await createExpense(user, {
+    groupId,
+    description: expense.description,
+    amountMinor: expense.amountMinor,
+    categoryId: expense.categoryId,
+    expenseDate: expense.expenseDate,
+    splitType: "equal",
+    participants: participantIds.map((memberId) => ({ memberId })),
+    payers: [{ memberId: viewerMember.id, amountMinor: expense.amountMinor }],
+    idempotencyKey: randomUUID(),
+    tagIds: [],
+  });
+  await deletePersonalExpense(user, input.expenseId);
+
+  return { groupId, expenseId };
 }
 
 /**

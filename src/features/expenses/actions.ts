@@ -17,6 +17,7 @@ import {
   createPersonalExpense,
   deleteExpense,
   deletePersonalExpense,
+  splitPersonalExpense,
   updateExpense,
   updatePersonalExpense,
 } from "./service";
@@ -71,6 +72,25 @@ export const createPersonalExpenseAction = authedAction({
     revalidatePath("/budgets");
     await notifyBudgetThresholds([ctx.user.id]);
     return { expenseId };
+  },
+});
+
+export const splitPersonalExpenseAction = authedAction({
+  name: "expenses.splitPersonal",
+  schema: z.object({
+    expenseId: z.string().min(1),
+    names: z.array(z.string().trim().min(1).max(50)).min(1).max(10),
+  }),
+  handler: async ({ input, ctx }) => {
+    const { groupId, expenseId } = await splitPersonalExpense(ctx.user, input);
+    revalidateTag(groupBalancesTag(groupId), "max");
+    revalidatePath(`/groups/${groupId}`);
+    revalidatePath("/groups");
+    revalidatePath("/expenses");
+    revalidatePath("/home");
+    revalidatePath("/friends");
+    revalidatePath("/budgets");
+    return { groupId, expenseId };
   },
 });
 

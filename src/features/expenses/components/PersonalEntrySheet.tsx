@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseISO } from "date-fns";
-import { Trash2 } from "lucide-react";
+import { Plus, Trash2, UsersRound, X } from "lucide-react";
 import { AmountDisplay } from "@/components/ui/AmountDisplay";
 import { AmountKeypad } from "@/components/ui/AmountKeypad";
 import { Button } from "@/components/ui/Button";
@@ -18,7 +18,7 @@ import { formatISODate } from "@/lib/dates";
 import { useAction } from "@/hooks/useAction";
 import { CategoryGlyph } from "@/features/categories/icons";
 import type { CategoryOption } from "@/features/categories/queries";
-import { updatePersonalExpenseAction } from "../actions";
+import { splitPersonalExpenseAction, updatePersonalExpenseAction } from "../actions";
 import type { LedgerEntry } from "../personal-queries";
 
 function Form({
@@ -49,6 +49,27 @@ function Form({
       router.refresh();
     },
   });
+
+  // Split with people who may not use the app — names become ghost members.
+  const [names, setNames] = useState<string[]>([]);
+  const [nameDraft, setNameDraft] = useState("");
+  const split = useAction(splitPersonalExpenseAction, {
+    successMessage: "Split saved to your Splits group",
+    optimistic: false, // converts this row into a group expense server-side
+    onSuccess: () => {
+      onClose();
+      router.refresh();
+    },
+  });
+  const addName = () => {
+    const name = nameDraft.trim();
+    if (name === "" || names.some((existing) => existing.toLowerCase() === name.toLowerCase())) {
+      setNameDraft("");
+      return;
+    }
+    setNames((current) => [...current, name]);
+    setNameDraft("");
+  };
 
   const valid = isValidAmount(amount) && description.trim().length > 0 && categoryId !== "";
 
@@ -106,6 +127,64 @@ function Form({
         <p className="text-caption text-fg-3 uppercase">Date</p>
         <DateChip value={date} onChange={setDate} />
       </div>
+
+      {entryType === "expense" ? (
+        <div className="space-y-2">
+          <p className="text-caption text-fg-3 uppercase">Split with</p>
+          <div className="flex gap-2">
+            <TextField
+              placeholder="e.g. Rahul"
+              value={nameDraft}
+              onChange={(event) => setNameDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  addName();
+                }
+              }}
+              maxLength={50}
+              className="flex-1"
+            />
+            <Button variant="glass" onClick={addName} disabled={nameDraft.trim() === ""}>
+              <Plus className="size-4" /> Add
+            </Button>
+          </div>
+          {names.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {names.map((name) => (
+                <span
+                  key={name}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full glass-soft px-3.5 text-footnote text-fg-1"
+                >
+                  {name}
+                  <button
+                    type="button"
+                    aria-label={`Remove ${name}`}
+                    onClick={() => setNames((current) => current.filter((n) => n !== name))}
+                    className="text-fg-3"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {names.length > 0 ? (
+            <Button
+              variant="glass"
+              block
+              loading={split.pending}
+              onClick={() => void split.execute({ expenseId: entry.expenseId, names })}
+            >
+              <UsersRound className="size-4" /> Split equally with {names.length + 1} people
+            </Button>
+          ) : null}
+          <p className="text-footnote text-fg-3">
+            Just their names — no account needed. They can be invited later from the Splits group
+            to claim their share.
+          </p>
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <Button
