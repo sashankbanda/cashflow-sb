@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "nodejs";
 
-/** Maskable PWA icon: full-bleed volt field with a dark ₹ in the safe zone. */
+/** Maskable PWA icon: full-bleed emerald field with a white ₹ (brand accent). */
 export function GET(request: Request): Response {
   const requested = Number(new URL(request.url).searchParams.get("size"));
   const size = requested === 512 ? 512 : 192;
@@ -15,8 +15,8 @@ export function GET(request: Request): Response {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#d4f82a",
-        color: "#050506",
+        background: "#0e8a4e",
+        color: "#ffffff",
         fontSize: size * 0.56,
         fontWeight: 800,
         fontFamily: "sans-serif",

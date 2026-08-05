@@ -16,6 +16,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { SignOutButton } from "@/features/auth/components/SignOutButton";
 import { requireUser } from "@/features/auth/session";
+import { ThemeToggle } from "@/features/onboarding/components/ThemeToggle";
 import { TourRow } from "@/features/onboarding/components/TourRow";
 
 export const metadata: Metadata = { title: "Profile" };
@@ -41,6 +42,10 @@ export default async function ProfilePage() {
             <p className="truncate text-headline">{user.name}</p>
             <p className="truncate text-footnote text-fg-3">{user.email}</p>
           </div>
+        </GlassCard>
+        <GlassCard className="space-y-2 p-4">
+          <p className="text-caption text-fg-3 uppercase">Appearance</p>
+          <ThemeToggle />
         </GlassCard>
         <GlassCard elevation="inset" className="divide-y divide-hairline">
           <Link
