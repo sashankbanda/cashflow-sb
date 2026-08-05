@@ -17,6 +17,7 @@ import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { SignOutButton } from "@/features/auth/components/SignOutButton";
 import { requireDbUser } from "@/features/auth/session";
 import { ThemeToggle } from "@/features/onboarding/components/ThemeToggle";
+import { DeleteAccountRow } from "@/features/settings/components/DeleteAccountRow";
 import { OpeningBalanceCard } from "@/features/settings/components/OpeningBalanceCard";
 import { UpiIdCard } from "@/features/settings/components/UpiIdCard";
 import { TourRow } from "@/features/onboarding/components/TourRow";
@@ -90,6 +91,7 @@ export default async function ProfilePage() {
           <TourRow />
         </GlassCard>
         <SignOutButton />
+        <DeleteAccountRow />
       </div>
     </div>
   );
