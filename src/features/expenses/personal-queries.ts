@@ -157,6 +157,53 @@ export async function getPersonalIncomeTotal(
   return Number(row?.total ?? 0);
 }
 
+export interface CashTotals {
+  /** Cash that actually left: full amounts the user PAID (not their share). */
+  paidOutMinor: number;
+  /** Cash received via settle-ups (a friend paying their share back). */
+  settleInMinor: number;
+  /** Cash paid out via settle-ups (paying a friend back). */
+  settleOutMinor: number;
+}
+
+/**
+ * Cash-true movement totals for the account balance. A split bill you covered
+ * counts at its FULL amount when paid; the part friends will give back only
+ * enters the balance when the settlement is actually recorded — money you're
+ * waiting on is never counted as received.
+ */
+export async function getCashTotals(userId: string): Promise<CashTotals> {
+  const result = await db.execute(sql`
+    select
+      coalesce((
+        select sum(ep.amount_minor)
+        from expense_payers ep
+        join expenses e on e.id = ep.expense_id
+        where ep.user_id = ${userId} and e.deleted_at is null and e.is_income = false
+      ), 0)::bigint as paid_out,
+      coalesce((
+        select sum(st.amount_minor)
+        from settlements st
+        join group_members gm on gm.id = st.to_member_id
+        where gm.user_id = ${userId} and st.deleted_at is null
+      ), 0)::bigint as settle_in,
+      coalesce((
+        select sum(st.amount_minor)
+        from settlements st
+        join group_members gm on gm.id = st.from_member_id
+        where gm.user_id = ${userId} and st.deleted_at is null
+      ), 0)::bigint as settle_out
+  `);
+  const row = result.rows[0] as
+    | { paid_out: string | number; settle_in: string | number; settle_out: string | number }
+    | undefined;
+  return {
+    paidOutMinor: Number(row?.paid_out ?? 0),
+    settleInMinor: Number(row?.settle_in ?? 0),
+    settleOutMinor: Number(row?.settle_out ?? 0),
+  };
+}
+
 /** Daily spend totals over a range, for sparklines/trends. */
 export async function getDailySpend(
   userId: string,

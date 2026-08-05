@@ -18,10 +18,7 @@ import { greetingFor } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { requireDbUser } from "@/features/auth/session";
 import { getHomeSummary } from "@/features/analytics/queries";
-import {
-  getPersonalIncomeTotal,
-  getPersonalSpendTotal,
-} from "@/features/expenses/personal-queries";
+import { getCashTotals, getPersonalIncomeTotal } from "@/features/expenses/personal-queries";
 import { getTopInsights } from "@/features/analytics/insights-queries";
 import { getOverallBudgetSnapshot } from "@/features/budgets/queries";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
@@ -45,19 +42,22 @@ async function HomeWidgets({
   const monthStart = formatISO(startOfMonth(now), { representation: "date" });
   const today = formatISO(now, { representation: "date" });
   const allTime = { from: "1970-01-01", to: today };
-  const [summary, budget, topInsights, monthIncome, allIncome, allSpend] = await Promise.all([
+  const noCash = { paidOutMinor: 0, settleInMinor: 0, settleOutMinor: 0 };
+  const [summary, budget, topInsights, monthIncome, allIncome, cash] = await Promise.all([
     getHomeSummary(userId),
     getOverallBudgetSnapshot(userId),
     getTopInsights(userId, 1),
     getPersonalIncomeTotal(userId, { from: monthStart, to: today }),
     openingBalanceMinor !== null ? getPersonalIncomeTotal(userId, allTime) : Promise.resolve(0),
-    openingBalanceMinor !== null ? getPersonalSpendTotal(userId, allTime) : Promise.resolve(0),
+    openingBalanceMinor !== null ? getCashTotals(userId) : Promise.resolve(noCash),
   ]);
-  // With a starting balance set, the hero is a true account balance; without,
-  // it's this month's income minus spending.
+  // With a starting balance set, the hero is a CASH-TRUE account balance:
+  // split bills count at the full amount you paid, and money friends will
+  // give back only enters once the settlement is actually recorded. Without
+  // a starting balance, it's this month's income minus your share of spending.
   const accountMode = openingBalanceMinor !== null;
   const heroMinor = accountMode
-    ? openingBalanceMinor + allIncome - allSpend
+    ? openingBalanceMinor + allIncome + cash.settleInMinor - cash.paidOutMinor - cash.settleOutMinor
     : monthIncome - summary.monthSpendMinor;
 
   const topInsight = topInsights[0];
@@ -73,9 +73,11 @@ async function HomeWidgets({
     <Stagger className="space-y-3">
       <NetBalanceWidget
         netMinor={heroMinor}
-        context={accountMode ? "Starting balance + in − out" : "Income minus spending"}
+        context={accountMode ? "Cash in − cash out since your start" : "Income minus spending"}
         label={accountMode ? "Account balance" : undefined}
-        summaryText={accountMode ? "Everything counted since your starting balance" : undefined}
+        summaryText={
+          accountMode ? "Money friends still have to give isn't counted until settled" : undefined
+        }
         monthInMinor={monthIncome}
         monthOutMinor={summary.monthSpendMinor}
       />
