@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { formatISO, parseISO, startOfMonth } from "date-fns";
+import { parseISO } from "date-fns";
 import { CalendarClock, ChevronRight, Search, Wallet, Zap } from "lucide-react";
+import { PeriodPicker } from "@/components/ui/PeriodPicker";
+import { resolvePeriod } from "@/lib/period";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GradientPanel } from "@/components/ui/GradientPanel";
@@ -21,16 +23,19 @@ import { getUpcomingOccurrences } from "@/features/recurring/queries";
 
 export const metadata: Metadata = { title: "Spending" };
 
-export default async function ExpensesPage() {
+export default async function ExpensesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
   const user = await requireUser();
-  const now = new Date();
-  const monthStart = formatISO(startOfMonth(now), { representation: "date" });
-  const today = formatISO(now, { representation: "date" });
+  const period = resolvePeriod(await searchParams);
+  const range = { from: period.from, to: period.to };
 
   const [entries, monthTotal, monthIncome, upcoming, categories] = await Promise.all([
-    getPersonalLedger(user.id),
-    getPersonalSpendTotal(user.id, { from: monthStart, to: today }),
-    getPersonalIncomeTotal(user.id, { from: monthStart, to: today }),
+    getPersonalLedger(user.id, range),
+    getPersonalSpendTotal(user.id, range),
+    getPersonalIncomeTotal(user.id, range),
     getUpcomingOccurrences(user.id, 3),
     getCategoriesForUser(user.id),
   ]);
@@ -40,7 +45,7 @@ export default async function ExpensesPage() {
     <div className="flex flex-col gap-6">
       <ScreenHeader
         title="Money"
-        eyebrow="This month's cashflow"
+        eyebrow={period.isDefault ? "This month's cashflow" : `Cashflow · ${period.label}`}
         trailing={
           <Link
             href="/search"
@@ -52,8 +57,9 @@ export default async function ExpensesPage() {
         }
       />
       <div className="space-y-5 px-5">
+        <PeriodPicker period={period} />
         <GradientPanel palette="aurora" className="p-6">
-          <p className="text-caption text-fg-on-grad uppercase">Net this month</p>
+          <p className="text-caption text-fg-on-grad uppercase">Net · {period.label}</p>
           <p className="mt-2 font-dot text-display font-black text-white tabular-nums">
             {formatMoney(net, { sign: "always", compact: Math.abs(net) >= 10_000_00 })}
           </p>

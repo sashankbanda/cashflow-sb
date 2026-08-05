@@ -18,7 +18,13 @@ import { greetingFor } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { requireDbUser } from "@/features/auth/session";
 import { getHomeSummary } from "@/features/analytics/queries";
-import { getCashTotals, getPersonalIncomeTotal } from "@/features/expenses/personal-queries";
+import {
+  getCashTotals,
+  getPersonalIncomeTotal,
+  getPersonalSpendTotal,
+} from "@/features/expenses/personal-queries";
+import { PeriodPicker } from "@/components/ui/PeriodPicker";
+import { resolvePeriod, type Period } from "@/lib/period";
 import { getTopInsights } from "@/features/analytics/insights-queries";
 import { getOverallBudgetSnapshot } from "@/features/budgets/queries";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
@@ -34,23 +40,28 @@ function peopleLabel(count: number, verb: string): string {
 async function HomeWidgets({
   userId,
   openingBalanceMinor,
+  period,
 }: {
   userId: string;
   openingBalanceMinor: number | null;
+  period: Period;
 }) {
-  const now = new Date();
-  const monthStart = formatISO(startOfMonth(now), { representation: "date" });
-  const today = formatISO(now, { representation: "date" });
+  const today = formatISO(new Date(), { representation: "date" });
+  const range = { from: period.from, to: period.to };
   const allTime = { from: "1970-01-01", to: today };
   const noCash = { paidOutMinor: 0, settleInMinor: 0, settleOutMinor: 0 };
-  const [summary, budget, topInsights, monthIncome, allIncome, cash] = await Promise.all([
-    getHomeSummary(userId),
-    getOverallBudgetSnapshot(userId),
-    getTopInsights(userId, 1),
-    getPersonalIncomeTotal(userId, { from: monthStart, to: today }),
-    openingBalanceMinor !== null ? getPersonalIncomeTotal(userId, allTime) : Promise.resolve(0),
-    openingBalanceMinor !== null ? getCashTotals(userId) : Promise.resolve(noCash),
-  ]);
+  const [summary, budget, topInsights, periodIncome, periodSpendRaw, allIncome, cash] =
+    await Promise.all([
+      getHomeSummary(userId),
+      getOverallBudgetSnapshot(userId),
+      getTopInsights(userId, 1),
+      getPersonalIncomeTotal(userId, range),
+      period.isDefault ? Promise.resolve(null) : getPersonalSpendTotal(userId, range),
+      openingBalanceMinor !== null ? getPersonalIncomeTotal(userId, allTime) : Promise.resolve(0),
+      openingBalanceMinor !== null ? getCashTotals(userId) : Promise.resolve(noCash),
+    ]);
+  const periodSpend = periodSpendRaw ?? summary.monthSpendMinor;
+  const monthIncome = periodIncome;
   // With a starting balance set, the hero is a CASH-TRUE account balance:
   // split bills count at the full amount you paid, and money friends will
   // give back only enters once the settlement is actually recorded. Without
@@ -58,7 +69,7 @@ async function HomeWidgets({
   const accountMode = openingBalanceMinor !== null;
   const heroMinor = accountMode
     ? openingBalanceMinor + allIncome + cash.settleInMinor - cash.paidOutMinor - cash.settleOutMinor
-    : monthIncome - summary.monthSpendMinor;
+    : monthIncome - periodSpend;
 
   const topInsight = topInsights[0];
   const insight =
@@ -74,12 +85,18 @@ async function HomeWidgets({
       <NetBalanceWidget
         netMinor={heroMinor}
         context={accountMode ? "Cash in − cash out since your start" : "Income minus spending"}
-        label={accountMode ? "Account balance" : undefined}
+        label={
+          accountMode
+            ? "Account balance"
+            : period.isDefault
+              ? undefined
+              : `Balance · ${period.label}`
+        }
         summaryText={
           accountMode ? "Money friends still have to give isn't counted until settled" : undefined
         }
         monthInMinor={monthIncome}
-        monthOutMinor={summary.monthSpendMinor}
+        monthOutMinor={periodSpend}
       />
 
       <WidgetGrid>
@@ -97,10 +114,10 @@ async function HomeWidgets({
 
       <Link href="/expenses" className="block">
         <MonthSpendWidget
-          label="This month"
-          amountMinor={summary.monthSpendMinor}
+          label={period.isDefault ? "This month" : period.label}
+          amountMinor={periodSpend}
           trend={summary.trend}
-          deltaFraction={summary.monthDeltaFraction}
+          deltaFraction={period.isDefault ? summary.monthDeltaFraction : null}
         />
       </Link>
 
@@ -170,7 +187,12 @@ function HomeSkeleton() {
   );
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
+  const period = resolvePeriod(await searchParams);
   const user = await requireDbUser();
   const greeting = greetingFor(user.timezone);
   const firstName = user.name.split(" ")[0] ?? user.name;
@@ -194,9 +216,14 @@ export default async function HomePage() {
           </>
         }
       />
-      <div className="px-5">
+      <div className="space-y-4 px-5">
+        <PeriodPicker period={period} />
         <Suspense fallback={<HomeSkeleton />}>
-          <HomeWidgets userId={user.id} openingBalanceMinor={user.openingBalanceMinor} />
+          <HomeWidgets
+            userId={user.id}
+            openingBalanceMinor={user.openingBalanceMinor}
+            period={period}
+          />
         </Suspense>
       </div>
     </div>
