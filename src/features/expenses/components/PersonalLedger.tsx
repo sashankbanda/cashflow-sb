@@ -10,6 +10,7 @@ import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 import { formatSectionLabel } from "@/lib/dates";
 import { useAction } from "@/hooks/useAction";
+import { SwipeableRow } from "@/components/motion/SwipeableRow";
 import { CategoryBadge } from "@/features/categories/icons";
 import type { CategoryOption } from "@/features/categories/queries";
 import { deletePersonalExpenseAction } from "../actions";
@@ -112,7 +113,7 @@ export function PersonalLedger({
           <h3 className="sticky top-12 z-10 px-1 pb-2 text-caption text-fg-3 uppercase">
             {formatSectionLabel(parseISO(date))}
           </h3>
-          <GlassCard elevation="inset" className="divide-y divide-hairline">
+          <GlassCard elevation="inset" className="divide-y divide-hairline overflow-hidden">
             {items.map((entry) => {
               const row = (
                 <>
@@ -151,14 +152,19 @@ export function PersonalLedger({
                 </>
               );
               return entry.isPersonal ? (
-                <button
+                <SwipeableRow
                   key={entry.id}
-                  type="button"
-                  onClick={() => setActive(entry)}
-                  className="ease-out flex w-full items-center gap-3 p-4 text-left transition-colors duration-150 active:bg-glass"
+                  onEdit={() => setActive(entry)}
+                  onDelete={() => void remove.execute({ expenseId: entry.expenseId })}
                 >
-                  {row}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setActive(entry)}
+                    className="ease-out flex w-full items-center gap-3 p-4 text-left transition-colors duration-150 active:bg-glass"
+                  >
+                    {row}
+                  </button>
+                </SwipeableRow>
               ) : (
                 <div key={entry.id} className="flex w-full items-center gap-3 p-4">
                   {row}
