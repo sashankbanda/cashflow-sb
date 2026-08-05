@@ -31,9 +31,11 @@ function groupByDay(entries: ReadonlyArray<LedgerEntry>): Array<[string, LedgerE
 export function PersonalLedger({
   entries,
   categories,
+  splitSuggestions = [],
 }: {
   entries: ReadonlyArray<LedgerEntry>;
   categories: ReadonlyArray<CategoryOption>;
+  splitSuggestions?: ReadonlyArray<string>;
 }) {
   const router = useRouter();
   const [active, setActive] = useState<LedgerEntry | null>(null);
@@ -236,6 +238,7 @@ export function PersonalLedger({
       <PersonalEntrySheet
         entry={active}
         categories={categories}
+        splitSuggestions={splitSuggestions}
         onClose={() => setActive(null)}
         onDelete={(expenseId) => {
           setActive(null);

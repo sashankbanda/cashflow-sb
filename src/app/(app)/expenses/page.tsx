@@ -18,6 +18,7 @@ import {
   getPersonalIncomeTotal,
   getPersonalLedger,
   getPersonalSpendTotal,
+  getSplitSuggestions,
 } from "@/features/expenses/personal-queries";
 import { getUpcomingOccurrences } from "@/features/recurring/queries";
 
@@ -29,13 +30,15 @@ export default async function ExpensesPage() {
   const period = resolvePeriod(parsePeriodCookie((await cookies()).get(PERIOD_COOKIE)?.value));
   const range = { from: period.from, to: period.to };
 
-  const [entries, monthTotal, monthIncome, upcoming, categories] = await Promise.all([
-    getPersonalLedger(user.id, range),
-    getPersonalSpendTotal(user.id, range),
-    getPersonalIncomeTotal(user.id, range),
-    getUpcomingOccurrences(user.id, 3),
-    getCategoriesForUser(user.id),
-  ]);
+  const [entries, monthTotal, monthIncome, upcoming, categories, splitSuggestions] =
+    await Promise.all([
+      getPersonalLedger(user.id, range),
+      getPersonalSpendTotal(user.id, range),
+      getPersonalIncomeTotal(user.id, range),
+      getUpcomingOccurrences(user.id, 3),
+      getCategoriesForUser(user.id),
+      getSplitSuggestions(user.id),
+    ]);
   const net = monthIncome - monthTotal;
 
   return (
@@ -137,7 +140,11 @@ export default async function ExpensesPage() {
             />
           </GlassCard>
         ) : (
-          <PersonalLedger entries={entries} categories={categories} />
+          <PersonalLedger
+            entries={entries}
+            categories={categories}
+            splitSuggestions={splitSuggestions}
+          />
         )}
       </div>
     </div>

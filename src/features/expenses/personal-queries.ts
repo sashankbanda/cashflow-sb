@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, sql } from "drizzle-orm";
 import { db } from "@/server/db";
-import { expenses, expenseSplits, expenseTags, tags } from "@/server/db/schema";
+import { expenses, expenseSplits, expenseTags, groupMembers, groups, tags } from "@/server/db/schema";
 
 export interface LedgerTag {
   id: string;
@@ -155,6 +155,19 @@ export async function getPersonalIncomeTotal(
       ),
     );
   return Number(row?.total ?? 0);
+}
+
+/** Names you've split with before (your Splits group) — one-tap re-picking. */
+export async function getSplitSuggestions(userId: string): Promise<string[]> {
+  const group = await db.query.groups.findFirst({
+    where: and(eq(groups.createdBy, userId), eq(groups.name, "Splits"), isNull(groups.archivedAt)),
+    with: { members: { where: isNull(groupMembers.leftAt) } },
+  });
+  if (!group) return [];
+  return group.members
+    .filter((member) => member.userId !== userId)
+    .map((member) => member.displayName)
+    .sort((a, b) => a.localeCompare(b));
 }
 
 export interface CashTotals {

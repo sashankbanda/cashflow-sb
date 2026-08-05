@@ -24,11 +24,13 @@ import type { LedgerEntry } from "../personal-queries";
 function Form({
   entry,
   categories,
+  splitSuggestions = [],
   onClose,
   onDelete,
 }: {
   entry: LedgerEntry;
   categories: ReadonlyArray<CategoryOption>;
+  splitSuggestions?: ReadonlyArray<string>;
   onClose: () => void;
   onDelete: (expenseId: string) => void;
 }) {
@@ -65,15 +67,24 @@ function Form({
       router.refresh();
     },
   });
-  const addName = () => {
-    const name = nameDraft.trim();
+  const addName = (raw?: string) => {
+    const name = (raw ?? nameDraft).trim();
     if (name === "" || names.some((existing) => existing.toLowerCase() === name.toLowerCase())) {
-      setNameDraft("");
+      if (raw === undefined) setNameDraft("");
       return;
     }
     setNames((current) => [...current, name]);
-    setNameDraft("");
+    if (raw === undefined) setNameDraft("");
   };
+  // A typed-but-not-Added name still counts — no silent loss on Split.
+  const pendingNames =
+    nameDraft.trim() !== "" &&
+    !names.some((existing) => existing.toLowerCase() === nameDraft.trim().toLowerCase())
+      ? [...names, nameDraft.trim()]
+      : names;
+  const unpickedSuggestions = splitSuggestions.filter(
+    (suggestion) => !names.some((name) => name.toLowerCase() === suggestion.toLowerCase()),
+  );
 
   const valid = isValidAmount(amount) && description.trim().length > 0 && categoryId !== "";
 
@@ -157,23 +168,37 @@ function Form({
               maxLength={50}
               className="flex-1"
             />
-            <Button variant="glass" onClick={addName} disabled={nameDraft.trim() === ""}>
+            <Button variant="glass" onClick={() => addName()} disabled={nameDraft.trim() === ""}>
               <Plus className="size-4" /> Add
             </Button>
           </div>
+          {unpickedSuggestions.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {unpickedSuggestions.map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  onClick={() => addName(suggestion)}
+                  className="ease-out inline-flex h-9 items-center gap-1.5 rounded-full glass-soft px-3.5 text-footnote text-fg-2 transition-transform duration-150 active:scale-[0.97]"
+                >
+                  <Plus className="size-3.5" />
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {names.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {names.map((name) => (
                 <span
                   key={name}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full glass-soft px-3.5 text-footnote text-fg-1"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-volt px-3.5 text-footnote font-medium text-on-volt"
                 >
                   {name}
                   <button
                     type="button"
                     aria-label={`Remove ${name}`}
                     onClick={() => setNames((current) => current.filter((n) => n !== name))}
-                    className="text-fg-3"
                   >
                     <X className="size-3.5" />
                   </button>
@@ -181,14 +206,14 @@ function Form({
               ))}
             </div>
           ) : null}
-          {names.length > 0 ? (
+          {pendingNames.length > 0 ? (
             <Button
               variant="glass"
               block
               loading={split.pending}
-              onClick={() => void split.execute({ expenseId: entry.expenseId, names })}
+              onClick={() => void split.execute({ expenseId: entry.expenseId, names: pendingNames })}
             >
-              <UsersRound className="size-4" /> Split equally with {names.length + 1} people
+              <UsersRound className="size-4" /> Split equally with {pendingNames.length + 1} people
             </Button>
           ) : null}
           <p className="text-footnote text-fg-3">
@@ -233,11 +258,13 @@ function Form({
 export function PersonalEntrySheet({
   entry,
   categories,
+  splitSuggestions,
   onClose,
   onDelete,
 }: {
   entry: LedgerEntry | null;
   categories: ReadonlyArray<CategoryOption>;
+  splitSuggestions?: ReadonlyArray<string>;
   onClose: () => void;
   onDelete: (expenseId: string) => void;
 }) {
@@ -248,6 +275,7 @@ export function PersonalEntrySheet({
           key={entry.id}
           entry={entry}
           categories={categories}
+          splitSuggestions={splitSuggestions}
           onClose={onClose}
           onDelete={onDelete}
         />
