@@ -23,7 +23,7 @@ export function UpiIdCard({ current }: { current: string | null }) {
       <div>
         <p className="text-caption text-fg-3 uppercase">Your UPI ID</p>
         <p className="mt-1 text-footnote text-fg-3">
-          Friends who owe you money get a "Pay via UPI" button in Settle up.
+          Friends who need to pay you get a &ldquo;Pay via UPI&rdquo; button in Settle up.
         </p>
       </div>
       <div className="flex gap-2">
