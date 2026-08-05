@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, Settings2, UserRoundPlus } from "lucide-react";
+import { ArrowLeft, Download, Settings2, Trash2, UserRoundPlus } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -131,19 +131,22 @@ export function GroupDetailHeader({
         group={{ id: group.id, name: group.name, emoji: group.emoji, gradient: group.gradient }}
       />
 
-      <div className="flex items-center gap-3 px-5">
+      <div className="flex flex-wrap items-center gap-2 px-5">
+        <Button variant="glass" size="sm" onClick={editSheet.open}>
+          <Settings2 className="size-4" /> Edit group
+        </Button>
+        {group.myRole === "owner" && !group.archived ? (
+          <Button variant="destructive" size="sm" onClick={archiveSheet.open}>
+            <Trash2 className="size-4" /> Delete group
+          </Button>
+        ) : null}
         <a
           href={`/api/export?type=group&groupId=${group.id}`}
           download
-          className="ease-out inline-flex items-center gap-1.5 text-footnote text-fg-3 transition-colors duration-150 hover:text-fg-1"
+          className="ease-out inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-footnote text-fg-3 transition-colors duration-150 hover:text-fg-1"
         >
           <Download className="size-4" /> Export CSV
         </a>
-        {group.myRole === "owner" && !group.archived ? (
-          <Button variant="ghost" size="sm" onClick={archiveSheet.open}>
-            Archive group
-          </Button>
-        ) : null}
       </div>
 
       <Sheet open={archiveSheet.isOpen} onClose={archiveSheet.close} title="Archive group?">
