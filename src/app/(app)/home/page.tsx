@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { formatISO, startOfMonth } from "date-fns";
 import { Search } from "lucide-react";
 import { Stagger } from "@/components/motion/Stagger";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -17,6 +18,7 @@ import { greetingFor } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { requireDbUser } from "@/features/auth/session";
 import { getHomeSummary } from "@/features/analytics/queries";
+import { getPersonalIncomeTotal } from "@/features/expenses/personal-queries";
 import { getTopInsights } from "@/features/analytics/insights-queries";
 import { getOverallBudgetSnapshot } from "@/features/budgets/queries";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
@@ -30,10 +32,14 @@ function peopleLabel(count: number, verb: string): string {
 }
 
 async function HomeWidgets({ userId }: { userId: string }) {
-  const [summary, budget, topInsights] = await Promise.all([
+  const now = new Date();
+  const monthStart = formatISO(startOfMonth(now), { representation: "date" });
+  const today = formatISO(now, { representation: "date" });
+  const [summary, budget, topInsights, monthIncome] = await Promise.all([
     getHomeSummary(userId),
     getOverallBudgetSnapshot(userId),
     getTopInsights(userId, 1),
+    getPersonalIncomeTotal(userId, { from: monthStart, to: today }),
   ]);
 
   const topInsight = topInsights[0];
@@ -47,7 +53,12 @@ async function HomeWidgets({ userId }: { userId: string }) {
 
   return (
     <Stagger className="space-y-3">
-      <NetBalanceWidget netMinor={summary.netMinor} context="Across all your groups and friends" />
+      <NetBalanceWidget
+        netMinor={summary.netMinor}
+        context="Across all your groups and friends"
+        monthInMinor={monthIncome}
+        monthOutMinor={summary.monthSpendMinor}
+      />
 
       <WidgetGrid>
         <OwedWidget

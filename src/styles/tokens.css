@@ -169,6 +169,8 @@
   --surface-raised: #ffffff;
   --surface-floating: #ffffff;
   --surface-overlay: #ffffff;
+  /* Translucent fill for the frosted dock (content blurs through it). */
+  --surface-dock: rgba(255, 255, 255, 0.72);
 }
 
 /* ---------- Alternate themes (opt in via ?theme=…, persisted) ----------
@@ -204,6 +206,7 @@
   --surface-raised: #1c1f27;
   --surface-floating: #232733;
   --surface-overlay: #1c1f27;
+  --surface-dock: rgba(30, 33, 43, 0.72);
   --shadow-ambient: 0 8px 32px rgba(0, 0, 0, 0.45);
   --shadow-ambient-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
   --shadow-glow-volt: 0 12px 40px -12px rgba(142, 155, 255, 0.35);
@@ -322,6 +325,24 @@
   background-color: var(--surface-overlay);
   border: 1px solid var(--color-line);
   box-shadow: var(--shadow-ambient-lg);
+}
+
+/* The ONE frosted surface: the floating dock. Content scrolls beneath it and
+   reads through the blur; solid fallbacks where unsupported/reduced. */
+@utility glass-dock {
+  background-color: var(--surface-dock);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid var(--color-line);
+  box-shadow: var(--shadow-ambient-lg);
+
+  @supports not (backdrop-filter: blur(1px)) {
+    background-color: var(--surface-floating);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: var(--surface-floating);
+    backdrop-filter: none;
+  }
 }
 
 /* Active-tab emphasis is color + label now; no glow. */

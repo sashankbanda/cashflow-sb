@@ -85,7 +85,7 @@ export function TabBar({ groups, categories, tags, viewerUserId }: TabBarProps) 
         aria-label="Primary"
         className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center pb-safe"
       >
-        <div className="pointer-events-auto mb-3 flex items-center gap-1 rounded-full glass-floating px-3 py-1.5">
+        <div className="pointer-events-auto mb-3 flex items-center gap-1 rounded-full glass-dock px-3 py-1.5">
           {LEFT_TABS.map((tab) => (
             <TabLink key={tab.href} {...tab} active={isActive(tab.href)} />
           ))}

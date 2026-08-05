@@ -21,10 +21,17 @@ function utilBody(name: string): string {
 const SURFACES = ["glass", "glass-soft", "glass-floating", "glass-overlay"];
 
 describe("simple surfaces", () => {
-  it("every surface is a plain fill — no backdrop-filter", () => {
+  it("every card surface is a plain fill — no backdrop-filter", () => {
     for (const util of SURFACES) {
       expect(utilBody(util), `${util} should be a plain surface`).not.toMatch(/backdrop-filter/);
     }
+  });
+
+  it("the dock is the ONE frosted surface, with solid fallbacks", () => {
+    const body = utilBody("glass-dock");
+    expect(body).toMatch(/backdrop-filter:\s*blur\(/);
+    expect(body).toMatch(/@supports not \(backdrop-filter/);
+    expect(body).toMatch(/prefers-reduced-transparency: reduce/);
   });
 
   it("no component hand-rolls a backdrop-blur", () => {
