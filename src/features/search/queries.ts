@@ -80,12 +80,12 @@ export async function searchAll(userId: string, input: SearchInput): Promise<Sea
   }
   if (filters.tagIds?.length) {
     conditions.push(
-      sql`exists (select 1 from expense_tags et where et.expense_id = ${expenses.id} and et.tag_id in ${filters.tagIds})`,
+      sql`exists (select 1 from expense_tags et where et.expense_id = ${expenses.id} and et.tag_id = any(${filters.tagIds}))`,
     );
   }
   if (filters.memberUserIds?.length) {
     conditions.push(
-      sql`exists (select 1 from expense_splits es where es.expense_id = ${expenses.id} and es.user_id in ${filters.memberUserIds})`,
+      sql`exists (select 1 from expense_splits es where es.expense_id = ${expenses.id} and es.user_id = any(${filters.memberUserIds}))`,
     );
   }
 
