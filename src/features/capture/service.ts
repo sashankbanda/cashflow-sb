@@ -1,8 +1,8 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { asc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "@/server/db";
-import { categories, users } from "@/server/db/schema";
+import { categories, expenses, users } from "@/server/db/schema";
 import { sendPushToUsers } from "@/server/push";
 import type { ActionUser } from "@/server/action-core";
 import { createPersonalExpense } from "@/features/expenses/service";
@@ -57,14 +57,33 @@ export async function captureFromText(token: string, text: string): Promise<Capt
   const parsed = parseUpiText(text);
   if (!parsed.matched || parsed.amountMinor === null) return { saved: false, reason: "no-amount" };
 
-  const fallbackCategory = await db.query.categories.findFirst({
-    where: isNull(categories.userId),
-    orderBy: [asc(categories.name)],
-  });
-  if (!fallbackCategory) return { saved: false, reason: "no-amount" };
-
   const description =
     parsed.description || (parsed.isIncome ? "Money received" : "UPI payment");
+
+  // Merchant memory: reuse the category this user last gave the same payee, so
+  // "Swiggy" only ever needs categorizing once. Falls back to a system default.
+  const [remembered] = await db
+    .select({ categoryId: expenses.categoryId })
+    .from(expenses)
+    .where(
+      and(
+        eq(expenses.createdBy, user.id),
+        isNull(expenses.groupId),
+        isNull(expenses.deletedAt),
+        isNotNull(expenses.categoryId),
+        sql`lower(${expenses.description}) = ${description.toLowerCase()}`,
+      ),
+    )
+    .orderBy(desc(expenses.createdAt))
+    .limit(1);
+
+  const fallbackCategory = remembered?.categoryId
+    ? { id: remembered.categoryId }
+    : await db.query.categories.findFirst({
+        where: isNull(categories.userId),
+        orderBy: [asc(categories.name)],
+      });
+  if (!fallbackCategory) return { saved: false, reason: "no-amount" };
   // Today in the user's timezone (en-CA formats as YYYY-MM-DD).
   const expenseDate = new Intl.DateTimeFormat("en-CA", { timeZone: user.timezone }).format(
     new Date(),
@@ -88,7 +107,9 @@ export async function captureFromText(token: string, text: string): Promise<Capt
 
   await sendPushToUsers([user.id], "expense_added", {
     title: parsed.isIncome ? "Income captured" : "Payment captured",
-    body: `${formatMoney(parsed.amountMinor)} · ${description} — tap to set a category`,
+    body: `${formatMoney(parsed.amountMinor)} · ${description}${
+      remembered?.categoryId ? " — saved" : " — tap to set a category"
+    }`,
     url: "/expenses",
     tag: `capture-${deterministicKey(user.id, text)}`,
   });
