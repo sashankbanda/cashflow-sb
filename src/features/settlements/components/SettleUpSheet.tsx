@@ -191,6 +191,25 @@ export function SettleUpSheet({
             maxLength={140}
           />
 
+          {(() => {
+            // The viewer is paying and the payee shared a UPI ID → open any
+            // UPI app pre-filled with the amount. Record the payment after.
+            const from = memberOf(balances, selected.fromMemberId);
+            const to = memberOf(balances, selected.toMemberId);
+            if (from?.userId !== viewerUserId || !to?.upiId || !isValidAmount(amount)) return null;
+            const href = `upi://pay?pa=${encodeURIComponent(to.upiId)}&pn=${encodeURIComponent(
+              to.displayName,
+            )}&am=${encodeURIComponent(amount)}&cu=INR`;
+            return (
+              <a
+                href={href}
+                className="ease-out flex h-12 w-full items-center justify-center gap-2 rounded-full glass text-body font-medium text-fg-1 transition-transform duration-150 active:scale-[0.98]"
+              >
+                Pay {to.displayName.split(" ")[0]} via UPI · {formatMoney(amountToMinor(amount))}
+              </a>
+            );
+          })()}
+
           <Button
             variant="volt"
             block

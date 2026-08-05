@@ -19,6 +19,8 @@ export const users = pgTable("users", {
   notificationPrefs: jsonb().notNull().default({}).$type<NotificationPrefs>(),
   /** Secret for the SMS auto-capture webhook (iOS Shortcut / Tasker). */
   captureToken: text().unique(),
+  /** UPI ID (VPA) so friends can pay this user straight from Settle up. */
+  upiId: text(),
   onboardedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true })

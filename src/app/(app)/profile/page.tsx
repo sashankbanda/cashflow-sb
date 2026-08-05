@@ -15,8 +15,9 @@ import { Avatar } from "@/components/ui/Avatar";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { SignOutButton } from "@/features/auth/components/SignOutButton";
-import { requireUser } from "@/features/auth/session";
+import { requireDbUser } from "@/features/auth/session";
 import { ThemeToggle } from "@/features/onboarding/components/ThemeToggle";
+import { UpiIdCard } from "@/features/settings/components/UpiIdCard";
 import { TourRow } from "@/features/onboarding/components/TourRow";
 
 export const metadata: Metadata = { title: "Profile" };
@@ -30,7 +31,7 @@ const linkRows = [
 ] as const;
 
 export default async function ProfilePage() {
-  const user = await requireUser();
+  const user = await requireDbUser();
 
   return (
     <div className="flex flex-col gap-6">
@@ -43,6 +44,7 @@ export default async function ProfilePage() {
             <p className="truncate text-footnote text-fg-3">{user.email}</p>
           </div>
         </GlassCard>
+        <UpiIdCard current={user.upiId} />
         <GlassCard className="space-y-2 p-4">
           <p className="text-caption text-fg-3 uppercase">Appearance</p>
           <ThemeToggle />

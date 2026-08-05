@@ -12,6 +12,8 @@ export interface MemberBalance {
   displayName: string;
   image: string | null;
   userId: string | null;
+  /** The member's UPI ID (VPA) when they've shared one — powers "Pay via UPI". */
+  upiId: string | null;
   netMinor: number;
   /** Total they put down (Σ payer rows). */
   paidMinor: number;
@@ -39,6 +41,7 @@ async function fetchGroupMoneyGraph(groupId: string): Promise<GroupMoneyGraph> {
       m.display_name,
       m.user_id,
       u.image,
+      u.upi_id,
       (
         coalesce(p.total, 0) - coalesce(s.total, 0)
         + coalesce(so.total, 0) - coalesce(si.total, 0)
@@ -83,6 +86,7 @@ async function fetchGroupMoneyGraph(groupId: string): Promise<GroupMoneyGraph> {
       display_name: string;
       user_id: string | null;
       image: string | null;
+      upi_id: string | null;
       net_minor: string | number;
       paid_minor: string | number;
       spent_minor: string | number;
@@ -92,6 +96,7 @@ async function fetchGroupMoneyGraph(groupId: string): Promise<GroupMoneyGraph> {
     displayName: row.display_name,
     image: row.image,
     userId: row.user_id,
+    upiId: row.upi_id,
     netMinor: Number(row.net_minor),
     paidMinor: Number(row.paid_minor),
     spentMinor: Number(row.spent_minor),
@@ -137,7 +142,7 @@ async function fetchGroupMoneyGraph(groupId: string): Promise<GroupMoneyGraph> {
 function cachedGroupMoneyGraph(groupId: string): Promise<GroupMoneyGraph> {
   // Bump the version segment whenever GroupMoneyGraph's shape changes —
   // cached entries outlive deploys.
-  return unstable_cache(() => fetchGroupMoneyGraph(groupId), ["group-money-v2", groupId], {
+  return unstable_cache(() => fetchGroupMoneyGraph(groupId), ["group-money-v3", groupId], {
     tags: [groupBalancesTag(groupId)],
   })();
 }

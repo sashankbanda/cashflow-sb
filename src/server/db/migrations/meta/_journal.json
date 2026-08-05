@@ -57,6 +57,13 @@
       "when": 1785922889182,
       "tag": "0007_shiny_dreadnoughts",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785952252221,
+      "tag": "0008_natural_mandarin",
+      "breakpoints": true
     }
   ]
 }
