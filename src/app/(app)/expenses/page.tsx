@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { formatISO, parseISO, startOfMonth } from "date-fns";
-import { CalendarClock, ChevronRight, Wallet } from "lucide-react";
+import { CalendarClock, ChevronRight, Wallet, Zap } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GradientPanel } from "@/components/ui/GradientPanel";
@@ -9,6 +9,7 @@ import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { formatDayLabel } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { requireUser } from "@/features/auth/session";
+import { getCategoriesForUser } from "@/features/categories/queries";
 import { PendingExpenses } from "@/features/expenses/components/PendingExpenses";
 import { PersonalLedger } from "@/features/expenses/components/PersonalLedger";
 import {
@@ -26,11 +27,12 @@ export default async function ExpensesPage() {
   const monthStart = formatISO(startOfMonth(now), { representation: "date" });
   const today = formatISO(now, { representation: "date" });
 
-  const [entries, monthTotal, monthIncome, upcoming] = await Promise.all([
+  const [entries, monthTotal, monthIncome, upcoming, categories] = await Promise.all([
     getPersonalLedger(user.id),
     getPersonalSpendTotal(user.id, { from: monthStart, to: today }),
     getPersonalIncomeTotal(user.id, { from: monthStart, to: today }),
     getUpcomingOccurrences(user.id, 3),
+    getCategoriesForUser(user.id),
   ]);
   const net = monthIncome - monthTotal;
 
@@ -54,6 +56,22 @@ export default async function ExpensesPage() {
             </span>
           </div>
         </GradientPanel>
+
+        <Link
+          href="/add"
+          className="ease-out flex items-center gap-3 rounded-lg glass p-4 transition-transform duration-150 active:scale-[0.99]"
+        >
+          <span className="flex size-9 items-center justify-center rounded-full bg-volt text-on-volt">
+            <Zap className="size-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-body font-medium text-fg-1">Quick add from a UPI message</span>
+            <span className="block text-footnote text-fg-3">
+              Share a receipt to Cashflow, or paste the payment SMS
+            </span>
+          </span>
+          <ChevronRight className="size-4 shrink-0 text-fg-3" />
+        </Link>
 
         <PendingExpenses />
 
@@ -96,7 +114,7 @@ export default async function ExpensesPage() {
             />
           </GlassCard>
         ) : (
-          <PersonalLedger entries={entries} />
+          <PersonalLedger entries={entries} categories={categories} />
         )}
       </div>
     </div>

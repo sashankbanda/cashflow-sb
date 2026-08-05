@@ -6,13 +6,19 @@ import { authedAction } from "@/server/action";
 import { sendPushToUsers } from "@/server/push";
 import { groupBalancesTag } from "@/features/balances/queries";
 import { notifyBudgetThresholds } from "@/features/budgets/notifications";
-import { createExpenseSchema, createPersonalExpenseSchema, updateExpenseSchema } from "./schemas";
+import {
+  createExpenseSchema,
+  createPersonalExpenseSchema,
+  updateExpenseSchema,
+  updatePersonalExpenseSchema,
+} from "./schemas";
 import {
   createExpense,
   createPersonalExpense,
   deleteExpense,
   deletePersonalExpense,
   updateExpense,
+  updatePersonalExpense,
 } from "./service";
 
 export const createExpenseAction = authedAction({
@@ -59,6 +65,20 @@ export const createPersonalExpenseAction = authedAction({
   schema: createPersonalExpenseSchema,
   handler: async ({ input, ctx }) => {
     const { expenseId } = await createPersonalExpense(ctx.user, input);
+    revalidatePath("/expenses");
+    revalidatePath("/home");
+    revalidatePath("/insights");
+    revalidatePath("/budgets");
+    await notifyBudgetThresholds([ctx.user.id]);
+    return { expenseId };
+  },
+});
+
+export const updatePersonalExpenseAction = authedAction({
+  name: "expenses.updatePersonal",
+  schema: updatePersonalExpenseSchema,
+  handler: async ({ input, ctx }) => {
+    const { expenseId } = await updatePersonalExpense(ctx.user, input);
     revalidatePath("/expenses");
     revalidatePath("/home");
     revalidatePath("/insights");

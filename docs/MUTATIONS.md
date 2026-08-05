@@ -19,6 +19,8 @@ instant-close, or an explicit `false` with a reason. Nothing is slow-by-default.
 |---|---|---|---|
 | Personal add-expense | ledger row | **Outbox overlay** | instant `PendingExpenses` row; flush online/offline (one path) |
 | Delete personal expense | ledger row | **useOptimistic overlay** | row vanishes on tap, reverts on failure |
+| Edit personal entry | ledger row | false | sheet form; ledger re-renders from the server on refresh |
+| Quick add (share/paste) | ledger row | **Outbox overlay** | same outbox path as the dock add |
 | Delete attachment | receipt grid | **useOptimistic overlay** | tile vanishes on tap, reverts on failure |
 | Archive category | custom list | **useOptimistic overlay** | row leaves on tap, reverts on failure |
 | **Settle up** | balances | **Instant-close** | sheet closes on tap, records in background; honest success/fail toast |

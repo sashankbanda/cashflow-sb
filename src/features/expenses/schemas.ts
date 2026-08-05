@@ -65,6 +65,25 @@ export const createPersonalExpenseSchema = z.object({
   isIncome: z.boolean().optional().default(false),
 });
 
+/** Edit a personal entry: amount, description, category, date, direction. */
+export const updatePersonalExpenseSchema = z.object({
+  expenseId: z.string().min(1),
+  description: z
+    .string()
+    .trim()
+    .min(1, "What was this for?")
+    .max(80, "Keep it under 80 characters."),
+  amountMinor: z
+    .number()
+    .int("Amounts are whole paise.")
+    .positive("Enter an amount.")
+    .max(MAX_AMOUNT_MINOR, "That's beyond the supported amount."),
+  categoryId: z.string().min(1, "Pick a category."),
+  expenseDate: expenseDateSchema,
+  isIncome: z.boolean().optional().default(false),
+});
+
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
 export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
 export type CreatePersonalExpenseInput = z.infer<typeof createPersonalExpenseSchema>;
+export type UpdatePersonalExpenseInput = z.infer<typeof updatePersonalExpenseSchema>;

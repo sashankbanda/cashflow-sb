@@ -20,7 +20,12 @@ import type { ActionUser } from "@/server/action-core";
 import { assertMember } from "@/features/groups/service";
 import { notifyUsers } from "@/features/notifications/service";
 import { canModifyExpense } from "./authz";
-import type { CreateExpenseInput, CreatePersonalExpenseInput, UpdateExpenseInput } from "./schemas";
+import type {
+  CreateExpenseInput,
+  CreatePersonalExpenseInput,
+  UpdateExpenseInput,
+  UpdatePersonalExpenseInput,
+} from "./schemas";
 
 interface PreparedExpense {
   group: { id: string; name: string; currency: string };
@@ -299,6 +304,48 @@ export async function createPersonalExpense(
     await attachTags(tx, user.id, expenseId, input.tagIds);
 
     return { expenseId };
+  });
+}
+
+/**
+ * Edit a personal entry (owner only): amount, description, category, date and
+ * direction. The single payer + split rows are kept in lockstep with the
+ * amount so ledger and analytics stay exact.
+ */
+export async function updatePersonalExpense(
+  user: ActionUser,
+  input: UpdatePersonalExpenseInput,
+): Promise<{ expenseId: string }> {
+  return db.transaction(async (tx) => {
+    const expense = await tx.query.expenses.findFirst({ where: eq(expenses.id, input.expenseId) });
+    if (!expense || expense.deletedAt || expense.groupId !== null) throw notFound("Expense");
+    if (expense.createdBy !== user.id) throw forbidden("That isn't your expense.");
+
+    const category = await tx.query.categories.findFirst({
+      where: eq(categories.id, input.categoryId),
+    });
+    if (!category) throw notFound("Category");
+
+    await tx
+      .update(expenses)
+      .set({
+        description: input.description,
+        amountMinor: input.amountMinor,
+        categoryId: input.categoryId,
+        expenseDate: input.expenseDate,
+        isIncome: input.isIncome ?? false,
+      })
+      .where(eq(expenses.id, input.expenseId));
+    await tx
+      .update(expensePayers)
+      .set({ amountMinor: input.amountMinor })
+      .where(eq(expensePayers.expenseId, input.expenseId));
+    await tx
+      .update(expenseSplits)
+      .set({ amountMinor: input.amountMinor })
+      .where(eq(expenseSplits.expenseId, input.expenseId));
+
+    return { expenseId: input.expenseId };
   });
 }
 

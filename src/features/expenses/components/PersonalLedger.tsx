@@ -3,19 +3,18 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseISO } from "date-fns";
-import { Repeat, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { Repeat } from "lucide-react";
 import { Chip } from "@/components/ui/Chip";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { Sheet } from "@/components/ui/Sheet";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 import { formatSectionLabel } from "@/lib/dates";
 import { useAction } from "@/hooks/useAction";
 import { CategoryBadge } from "@/features/categories/icons";
+import type { CategoryOption } from "@/features/categories/queries";
 import { deletePersonalExpenseAction } from "../actions";
 import type { LedgerEntry } from "../personal-queries";
+import { PersonalEntrySheet } from "./PersonalEntrySheet";
 
 function groupByDay(entries: ReadonlyArray<LedgerEntry>): Array<[string, LedgerEntry[]]> {
   const sections = new Map<string, LedgerEntry[]>();
@@ -28,9 +27,15 @@ function groupByDay(entries: ReadonlyArray<LedgerEntry>): Array<[string, LedgerE
 }
 
 /** Unified personal ledger: standalone spends + your share of group expenses. */
-export function PersonalLedger({ entries }: { entries: ReadonlyArray<LedgerEntry> }) {
+export function PersonalLedger({
+  entries,
+  categories,
+}: {
+  entries: ReadonlyArray<LedgerEntry>;
+  categories: ReadonlyArray<CategoryOption>;
+}) {
   const router = useRouter();
-  const [pendingDelete, setPendingDelete] = useState<LedgerEntry | null>(null);
+  const [active, setActive] = useState<LedgerEntry | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
 
   const remove = useAction(deletePersonalExpenseAction, {
@@ -124,7 +129,7 @@ export function PersonalLedger({ entries }: { entries: ReadonlyArray<LedgerEntry
                 <button
                   key={entry.id}
                   type="button"
-                  onClick={() => setPendingDelete(entry)}
+                  onClick={() => setActive(entry)}
                   className="ease-out flex w-full items-center gap-3 p-4 text-left transition-colors duration-150 active:bg-glass"
                 >
                   {row}
@@ -139,45 +144,15 @@ export function PersonalLedger({ entries }: { entries: ReadonlyArray<LedgerEntry
         </section>
       ))}
 
-      <Sheet
-        open={pendingDelete !== null}
-        onClose={() => setPendingDelete(null)}
-        title="Delete expense?"
-      >
-        {pendingDelete ? (
-          <div className="space-y-4 pt-1">
-            <div className="flex items-center gap-3">
-              <CategoryBadge
-                icon={pendingDelete.category?.icon ?? "shapes"}
-                gradient={pendingDelete.category?.gradient ?? "ocean"}
-              />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-body">{pendingDelete.description}</p>
-                <Badge variant="glass">personal</Badge>
-              </div>
-              <p className={cn("text-headline tabular-nums")}>
-                {formatMoney(pendingDelete.amountMinor)}
-              </p>
-            </div>
-            <Button
-              variant="destructive"
-              block
-              size="lg"
-              loading={remove.pending}
-              onClick={() => {
-                const expenseId = pendingDelete.expenseId;
-                setPendingDelete(null);
-                void remove.execute({ expenseId });
-              }}
-            >
-              <Trash2 className="size-4" /> Delete expense
-            </Button>
-            <Button variant="ghost" block onClick={() => setPendingDelete(null)}>
-              Keep it
-            </Button>
-          </div>
-        ) : null}
-      </Sheet>
+      <PersonalEntrySheet
+        entry={active}
+        categories={categories}
+        onClose={() => setActive(null)}
+        onDelete={(expenseId) => {
+          setActive(null);
+          void remove.execute({ expenseId });
+        }}
+      />
     </div>
   );
 }

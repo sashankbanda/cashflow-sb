@@ -3,6 +3,7 @@ import { getSessionCookie } from "better-auth/cookies";
 
 /** App areas that require a session (unauthenticated → sign-in). */
 const PROTECTED = [
+  "/add",
   "/home",
   "/groups",
   "/insights",

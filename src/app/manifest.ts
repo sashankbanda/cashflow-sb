@@ -1,8 +1,21 @@
 import type { MetadataRoute } from "next";
 
-/** PWA manifest — installable, light theme, maskable icons. */
+/**
+ * PWA manifest — installable, light theme, maskable icons, and a share target:
+ * sharing a UPI receipt / bank SMS into Cashflow opens /add with the text, so
+ * the amount and payee prefill (Android; iOS Safari has no share-target
+ * support — its path is the Paste button on /add).
+ */
 export default function manifest(): MetadataRoute.Manifest {
+  const shareTarget = {
+    share_target: {
+      action: "/add",
+      method: "GET",
+      params: { title: "title", text: "text", url: "url" },
+    },
+  };
   return {
+    ...(shareTarget as Partial<MetadataRoute.Manifest>),
     name: "Cashflow",
     short_name: "Cashflow",
     description: "Split expenses with friends and track your money — simply.",
