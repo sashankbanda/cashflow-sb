@@ -23,6 +23,8 @@ const personalTemplateSchema = z.object({
   amountMinor: amountMinorSchema,
   categoryId: z.string().min(1, "Pick a category."),
   tagIds: tagIdsSchema,
+  /** True → each occurrence records income (e.g. monthly salary). */
+  isIncome: z.boolean().optional().default(false),
 });
 
 const groupTemplateSchema = z.object({

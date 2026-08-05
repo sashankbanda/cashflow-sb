@@ -213,6 +213,7 @@ function Flow({
           amountMinor,
           categoryId: draft.categoryId,
           tagIds: draft.tagIds,
+          isIncome: entryType === "income",
         },
         frequency: recurrence.frequency,
         interval: 1,
@@ -505,9 +506,7 @@ function Flow({
                   />
                 ) : null}
 
-                {!editing && !isIncomeEntry ? (
-                  <RecurrencePicker value={recurrence} onChange={setRecurrence} />
-                ) : null}
+                {!editing ? <RecurrencePicker value={recurrence} onChange={setRecurrence} /> : null}
               </div>
 
               <div className="pt-3">
