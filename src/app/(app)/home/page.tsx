@@ -62,11 +62,12 @@ async function HomeWidgets({
     ]);
   const periodSpend = periodSpendRaw ?? summary.monthSpendMinor;
   const monthIncome = periodIncome;
-  // With a starting balance set, the hero is a CASH-TRUE account balance:
-  // split bills count at the full amount you paid, and money friends will
-  // give back only enters once the settlement is actually recorded. Without
-  // a starting balance, it's this month's income minus your share of spending.
-  const accountMode = openingBalanceMinor !== null;
+  // With a starting balance set, the DEFAULT hero is a CASH-TRUE account
+  // balance (split bills at the full paid amount; friends' shares enter only
+  // when settled). Picking any explicit period switches the hero to that
+  // window's income-minus-spending so the whole screen follows the picker;
+  // "This month" brings the account balance back.
+  const accountMode = openingBalanceMinor !== null && period.isDefault;
   const heroMinor = accountMode
     ? openingBalanceMinor + allIncome + cash.settleInMinor - cash.paidOutMinor - cash.settleOutMinor
     : monthIncome - periodSpend;

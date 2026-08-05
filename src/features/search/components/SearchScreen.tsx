@@ -90,8 +90,8 @@ export function SearchScreen({ options }: { options: SearchOptions }) {
     results.expenses.length === 0 && results.groups.length === 0 && results.friends.length === 0;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-2 px-5 pt-2">
+    <div className="flex flex-col gap-5 pt-safe">
+      <div className="flex items-center gap-2 px-5 pt-4">
         <IconButton aria-label="Back" size="sm" onClick={() => router.back()}>
           <ArrowLeft />
         </IconButton>
