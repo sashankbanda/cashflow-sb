@@ -21,13 +21,13 @@ export function NetBalanceWidget({
 }: NetBalanceWidgetProps) {
   const summary =
     netMinor > 0
-      ? "You're owed more than you owe"
+      ? "You're ahead — more came in than went out"
       : netMinor < 0
-        ? "You owe more than you're owed"
-        : "All square";
+        ? "You spent more than came in"
+        : "Break even";
 
   return (
-    <Widget size="lg" gradient="aurora" glow label="Your balance">
+    <Widget size="lg" gradient="aurora" glow label="This month's balance">
       <div aria-live="polite" aria-atomic="true">
         <DotMatrixAmount
           amountMinor={netMinor}

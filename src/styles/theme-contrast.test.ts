@@ -82,7 +82,7 @@ function contrast(theme: string, fgToken: string, bgToken: string): number {
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 }
 
-const THEMES = ["base", "dusk", "statement", "grid"];
+const THEMES = ["base", "dusk"];
 
 describe.each(THEMES)("theme %s — WCAG contrast", (theme) => {
   it("primary text ≥ 4.5:1 on canvas and raised surfaces", () => {

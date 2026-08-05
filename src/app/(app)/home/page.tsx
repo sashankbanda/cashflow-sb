@@ -54,8 +54,8 @@ async function HomeWidgets({ userId }: { userId: string }) {
   return (
     <Stagger className="space-y-3">
       <NetBalanceWidget
-        netMinor={summary.netMinor}
-        context="Across all your groups and friends"
+        netMinor={monthIncome - summary.monthSpendMinor}
+        context="Income minus spending"
         monthInMinor={monthIncome}
         monthOutMinor={summary.monthSpendMinor}
       />

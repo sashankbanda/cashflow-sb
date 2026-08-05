@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { parseISO } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Repeat } from "lucide-react";
 import { Chip } from "@/components/ui/Chip";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -37,6 +37,7 @@ export function PersonalLedger({
   const router = useRouter();
   const [active, setActive] = useState<LedgerEntry | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [monthFilter, setMonthFilter] = useState<string | null>(null);
 
   const remove = useAction(deletePersonalExpenseAction, {
     successMessage: "Expense deleted",
@@ -61,13 +62,37 @@ export function PersonalLedger({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [liveEntries]);
 
-  const visible = tagFilter
-    ? liveEntries.filter((entry) => entry.tags.some((tag) => tag.id === tagFilter))
-    : liveEntries;
+  // Months present in the ledger (newest first), as YYYY-MM keys.
+  const months = useMemo(
+    () => [...new Set(liveEntries.map((entry) => entry.expenseDate.slice(0, 7)))].sort().reverse(),
+    [liveEntries],
+  );
+
+  const visible = liveEntries.filter(
+    (entry) =>
+      (!tagFilter || entry.tags.some((tag) => tag.id === tagFilter)) &&
+      (!monthFilter || entry.expenseDate.startsWith(monthFilter)),
+  );
   const sections = groupByDay(visible);
 
   return (
     <div className="space-y-5">
+      {months.length > 1 ? (
+        <div className="-mx-1 scrollbar-none flex gap-2 overflow-x-auto px-1">
+          <Chip selected={monthFilter === null} onClick={() => setMonthFilter(null)}>
+            All
+          </Chip>
+          {months.map((month) => (
+            <Chip
+              key={month}
+              selected={monthFilter === month}
+              onClick={() => setMonthFilter(monthFilter === month ? null : month)}
+            >
+              {format(parseISO(`${month}-01`), "MMM yyyy")}
+            </Chip>
+          ))}
+        </div>
+      ) : null}
       {allTags.length > 0 ? (
         <div className="-mx-1 scrollbar-none flex gap-2 overflow-x-auto px-1">
           {allTags.map((tag) => (
