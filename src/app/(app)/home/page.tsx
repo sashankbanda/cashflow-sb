@@ -23,8 +23,9 @@ import {
   getPersonalIncomeTotal,
   getPersonalSpendTotal,
 } from "@/features/expenses/personal-queries";
+import { cookies } from "next/headers";
 import { PeriodPicker } from "@/components/ui/PeriodPicker";
-import { resolvePeriod, type Period } from "@/lib/period";
+import { PERIOD_COOKIE, parsePeriodCookie, resolvePeriod, type Period } from "@/lib/period";
 import { getTopInsights } from "@/features/analytics/insights-queries";
 import { getOverallBudgetSnapshot } from "@/features/budgets/queries";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
@@ -188,12 +189,9 @@ function HomeSkeleton() {
   );
 }
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ from?: string; to?: string }>;
-}) {
-  const period = resolvePeriod(await searchParams);
+export default async function HomePage() {
+  // The app-wide period lives in a cookie — picked here, applied everywhere.
+  const period = resolvePeriod(parsePeriodCookie((await cookies()).get(PERIOD_COOKIE)?.value));
   const user = await requireDbUser();
   const greeting = greetingFor(user.timezone);
   const firstName = user.name.split(" ")[0] ?? user.name;

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { formatISO } from "date-fns";
 import { requireUser } from "@/features/auth/session";
 import { getCategoriesForUser } from "@/features/categories/queries";
 import { QuickAddScreen } from "@/features/expenses/components/QuickAddScreen";
+import { defaultEntryDate, PERIOD_COOKIE, parsePeriodCookie, resolvePeriod } from "@/lib/period";
 import { parseUpiText } from "@/lib/upi-parse";
 
 export const metadata: Metadata = { title: "Quick add" };
@@ -20,6 +23,12 @@ export default async function QuickAddPage({
   const params = await searchParams;
   const shared = [params.title, params.text, params.url].filter(Boolean).join(" ");
   const [categories] = await Promise.all([getCategoriesForUser(user.id)]);
+  const entryDate = defaultEntryDate(
+    resolvePeriod(parsePeriodCookie((await cookies()).get(PERIOD_COOKIE)?.value)),
+    formatISO(new Date(), { representation: "date" }),
+  );
 
-  return <QuickAddScreen categories={categories} initial={parseUpiText(shared)} />;
+  return (
+    <QuickAddScreen categories={categories} initial={parseUpiText(shared)} defaultDate={entryDate} />
+  );
 }

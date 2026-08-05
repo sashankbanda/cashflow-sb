@@ -1,33 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { endOfMonth, format, formatISO, startOfMonth, startOfYear, subMonths } from "date-fns";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { TextField } from "@/components/ui/TextField";
 import { cn } from "@/lib/cn";
-import type { Period } from "@/lib/period";
+import { PERIOD_COOKIE, type Period } from "@/lib/period";
 
 const day = (date: Date): string => formatISO(date, { representation: "date" });
 
 /**
- * The one time-range control: This month, Last month, any specific month, this
- * year, all time, or a custom from–to. Writes ?from=&to= to the URL so every
- * server component on the screen re-renders for the chosen window and the
- * choice survives refresh and back/forward.
+ * THE app-wide time-range control (lives on Home): This month, Last month, any
+ * specific month, this year, all time, or a custom from–to. The choice is
+ * stored in a cookie, so every screen follows it — pick once, see it
+ * everywhere — and it survives navigation and relaunch.
  */
 export function PeriodPicker({ period }: { period: Period }) {
   const router = useRouter();
-  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [customFrom, setCustomFrom] = useState(period.isDefault ? "" : period.from);
   const [customTo, setCustomTo] = useState(period.isDefault ? "" : period.to);
 
   const apply = (from: string | null, to: string | null) => {
     setOpen(false);
-    router.replace(from && to ? `${pathname}?from=${from}&to=${to}` : pathname, { scroll: false });
+    document.cookie =
+      from && to
+        ? `${PERIOD_COOKIE}=${from}|${to}; path=/; max-age=31536000; samesite=lax`
+        : `${PERIOD_COOKIE}=; path=/; max-age=0`;
+    router.refresh();
   };
 
   const now = new Date();

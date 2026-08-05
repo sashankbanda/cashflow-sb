@@ -12,6 +12,26 @@ export interface Period {
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
+/** Cookie carrying the app-wide period as "from|to". */
+export const PERIOD_COOKIE = "cf-period";
+
+/** Parse the cookie value back into candidate params (invalid → {}). */
+export function parsePeriodCookie(value: string | undefined): { from?: string; to?: string } {
+  if (!value) return {};
+  const [from, to] = value.split("|");
+  return { from, to };
+}
+
+/**
+ * Default date for a NEW entry under the active period: inside a picked past
+ * month/range, default to its last day; otherwise (this month, all time, or a
+ * range covering today) default to today.
+ */
+export function defaultEntryDate(period: Period, todayIso: string): string {
+  if (period.isDefault || period.from === "1970-01-01") return todayIso;
+  return period.to < todayIso ? period.to : todayIso;
+}
+
 /** Parse ?from=&to= into a safe period; anything invalid → this month. */
 export function resolvePeriod(params: { from?: string; to?: string }): Period {
   const now = new Date();

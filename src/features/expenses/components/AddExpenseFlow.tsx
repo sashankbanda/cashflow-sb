@@ -72,6 +72,8 @@ export interface AddExpenseFlowProps {
   allowPersonal?: boolean;
   /** The user's tags, for the create-path tag picker. */
   availableTags?: ReadonlyArray<TagOption>;
+  /** Default date for new entries (ISO day; follows the app-wide period). */
+  defaultDate?: string;
 }
 
 /** Sentinel groupId for the personal (no-group) context. */
@@ -106,6 +108,7 @@ function Flow({
   initial,
   allowPersonal = false,
   availableTags = [],
+  defaultDate,
 }: Omit<AddExpenseFlowProps, "open">) {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
@@ -137,7 +140,11 @@ function Flow({
       categories.find((category) => category.kind === "expense")?.id ??
       categories[0]?.id ??
       "",
-    date: initial ? parseISO(initial.expenseDate) : new Date(),
+    date: initial
+      ? parseISO(initial.expenseDate)
+      : defaultDate
+        ? parseISO(defaultDate)
+        : new Date(),
     payer:
       initial?.payerDraft ??
       emptyPayerDraft(viewerMemberOf(initialGroup) ?? initialGroup?.members[0]?.id ?? null),

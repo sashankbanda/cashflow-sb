@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { parseISO } from "date-fns";
 import { ClipboardPaste } from "lucide-react";
 import { AmountDisplay } from "@/components/ui/AmountDisplay";
 import { AmountKeypad } from "@/components/ui/AmountKeypad";
@@ -32,9 +33,12 @@ import { createPersonalExpenseAction } from "../actions";
 export function QuickAddScreen({
   categories,
   initial,
+  defaultDate,
 }: {
   categories: ReadonlyArray<CategoryOption>;
   initial: ParsedUpiText;
+  /** Default entry date (ISO day; follows the app-wide period). */
+  defaultDate?: string;
 }) {
   const router = useRouter();
   const [idempotencyKey] = useState(() => crypto.randomUUID());
@@ -50,7 +54,7 @@ export function QuickAddScreen({
       categories[0]?.id ??
       "",
   );
-  const [date, setDate] = useState(() => new Date());
+  const [date, setDate] = useState(() => (defaultDate ? parseISO(defaultDate) : new Date()));
   const [saving, setSaving] = useState(false);
 
   const fallback = useAction(createPersonalExpenseAction, {

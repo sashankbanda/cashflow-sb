@@ -63,13 +63,15 @@ export interface TabBarProps {
   categories: CategoryOption[];
   tags: TagOption[];
   viewerUserId: string;
+  /** New entries default to this date (follows the app-wide period). */
+  defaultEntryDate?: string;
 }
 
 /**
  * The floating glass dock: Home · Groups · [volt Add] · Insights · Profile.
  * The volt button opens the expense flow, preselecting the group in view.
  */
-export function TabBar({ groups, categories, tags, viewerUserId }: TabBarProps) {
+export function TabBar({ groups, categories, tags, viewerUserId, defaultEntryDate }: TabBarProps) {
   const pathname = usePathname();
   const addSheet = useSheet();
   const haptics = useHaptics();
@@ -127,6 +129,7 @@ export function TabBar({ groups, categories, tags, viewerUserId }: TabBarProps) 
           defaultGroupId={groupIdInView}
           viewerUserId={viewerUserId}
           availableTags={tags}
+          defaultDate={defaultEntryDate}
           allowPersonal
         />
       ) : null}

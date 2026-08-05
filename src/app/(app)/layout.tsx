@@ -1,4 +1,7 @@
+import { cookies } from "next/headers";
+import { formatISO } from "date-fns";
 import { EdgeSwipeBack } from "@/components/motion/EdgeSwipeBack";
+import { defaultEntryDate, PERIOD_COOKIE, parsePeriodCookie, resolvePeriod } from "@/lib/period";
 import { PullToRefresh } from "@/components/motion/PullToRefresh";
 import { TabBar } from "@/components/ui/TabBar";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
@@ -39,6 +42,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         categories={categories}
         tags={tags}
         viewerUserId={session?.user.id ?? ""}
+        defaultEntryDate={defaultEntryDate(
+          resolvePeriod(parsePeriodCookie((await cookies()).get(PERIOD_COOKIE)?.value)),
+          formatISO(new Date(), { representation: "date" }),
+        )}
       />
       <InstallPrompt />
       <ServiceWorkerRegistrar />

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { parseISO } from "date-fns";
-import { CalendarClock, ChevronRight, Search, Wallet, Zap } from "lucide-react";
-import { PeriodPicker } from "@/components/ui/PeriodPicker";
-import { resolvePeriod } from "@/lib/period";
+import { CalendarClock, CalendarDays, ChevronRight, Search, Wallet, Zap } from "lucide-react";
+import { PERIOD_COOKIE, parsePeriodCookie, resolvePeriod } from "@/lib/period";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GradientPanel } from "@/components/ui/GradientPanel";
@@ -23,13 +23,10 @@ import { getUpcomingOccurrences } from "@/features/recurring/queries";
 
 export const metadata: Metadata = { title: "Spending" };
 
-export default async function ExpensesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ from?: string; to?: string }>;
-}) {
+export default async function ExpensesPage() {
   const user = await requireUser();
-  const period = resolvePeriod(await searchParams);
+  // Follows the app-wide period picked on Home.
+  const period = resolvePeriod(parsePeriodCookie((await cookies()).get(PERIOD_COOKIE)?.value));
   const range = { from: period.from, to: period.to };
 
   const [entries, monthTotal, monthIncome, upcoming, categories] = await Promise.all([
@@ -57,7 +54,15 @@ export default async function ExpensesPage({
         }
       />
       <div className="space-y-5 px-5">
-        <PeriodPicker period={period} />
+        <Link
+          href="/home"
+          className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-footnote font-medium ${
+            period.isDefault ? "glass-soft text-fg-2" : "bg-volt text-on-volt shadow-glow-volt"
+          }`}
+        >
+          <CalendarDays className="size-4" />
+          Showing {period.label} — change on Home
+        </Link>
         <GradientPanel palette="aurora" className="p-6">
           <p className="text-caption text-fg-on-grad uppercase">Net · {period.label}</p>
           <p className="mt-2 font-dot text-display font-black text-white tabular-nums">
