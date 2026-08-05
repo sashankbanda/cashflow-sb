@@ -17,6 +17,8 @@ export const users = pgTable("users", {
   defaultCurrency: char({ length: 3 }).notNull().default("INR"),
   timezone: text().notNull().default("Asia/Kolkata"),
   notificationPrefs: jsonb().notNull().default({}).$type<NotificationPrefs>(),
+  /** Secret for the SMS auto-capture webhook (iOS Shortcut / Tasker). */
+  captureToken: text().unique(),
   onboardedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true })

@@ -36,3 +36,6 @@ export const inviteLookupLimiter = createRateLimiter("invite-lookup", 10, 60);
 
 /** Receipt uploads: 30/min per user (route handler, outside authedAction). */
 export const uploadLimiter = createRateLimiter("upload", 30, 60);
+
+/** SMS auto-capture webhook: 20/min per IP (token-authed, outside sessions). */
+export const captureLimiter = createRateLimiter("capture", 20, 60);

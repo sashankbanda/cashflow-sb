@@ -1,6 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bell, ChevronRight, Download, PiggyBank, Repeat, Tags, UsersRound, Wallet } from "lucide-react";
+import {
+  Bell,
+  ChevronRight,
+  Download,
+  PiggyBank,
+  Repeat,
+  Tags,
+  UsersRound,
+  Wallet,
+  Zap,
+} from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
@@ -11,6 +21,7 @@ import { TourRow } from "@/features/onboarding/components/TourRow";
 export const metadata: Metadata = { title: "Profile" };
 
 const linkRows = [
+  { icon: Zap, label: "Auto-capture payments", href: "/settings/capture" },
   { icon: Repeat, label: "Recurring expenses", href: "/recurring" },
   { icon: Tags, label: "Categories & tags", href: "/settings/categories" },
   { icon: Bell, label: "Notifications", href: "/settings/notifications" },

@@ -32,14 +32,10 @@ export interface AmountKeypadProps {
  */
 export function AmountKeypad({ value, onChange, className }: AmountKeypadProps) {
   const haptics = useHaptics();
-  const press = (key: KeypadKey) => {
-    haptics.tap();
-    onChange(applyKeypadKey(value, key));
-  };
 
   return (
     <div
-      className={cn("grid grid-cols-3 gap-1", className)}
+      className={cn("grid grid-cols-3 gap-1.5", className)}
       role="group"
       aria-label="Amount keypad"
     >
@@ -50,14 +46,18 @@ export function AmountKeypad({ value, onChange, className }: AmountKeypadProps) 
           aria-label={
             key === "backspace" ? "Delete last digit" : key === "." ? "Decimal point" : key
           }
-          onClick={() => press(key)}
+          // Haptic fires on pointer-DOWN so the tick lands with the touch,
+          // not after the click resolves; the value updates on click.
+          onPointerDown={() => haptics.tap()}
+          onClick={() => onChange(applyKeypadKey(value, key))}
           className={cn(
-            "flex h-14 items-center justify-center rounded-md text-title-2 text-fg-1 select-none",
-            "ease-out transition-[background-color,transform] duration-150",
-            "hover:bg-glass-soft active:scale-[0.97] active:bg-glass",
+            "flex h-16 items-center justify-center rounded-lg select-none",
+            "font-dot text-title-1 font-semibold text-fg-1 tabular-nums",
+            "ease-out transition-[background-color,transform] duration-100",
+            "glass-soft hover:bg-glass active:scale-[0.94] active:bg-glass",
           )}
         >
-          {key === "backspace" ? <Delete className="size-6 text-fg-2" /> : key}
+          {key === "backspace" ? <Delete className="size-7 text-fg-2" /> : key}
         </button>
       ))}
     </div>
