@@ -79,10 +79,17 @@ export async function captureFromText(token: string, text: string): Promise<Capt
 
   const fallbackCategory = remembered?.categoryId
     ? { id: remembered.categoryId }
-    : await db.query.categories.findFirst({
+    : ((await db.query.categories.findFirst({
+        where: and(
+          isNull(categories.userId),
+          eq(categories.kind, parsed.isIncome ? "income" : "expense"),
+        ),
+        orderBy: [asc(categories.name)],
+      })) ??
+      (await db.query.categories.findFirst({
         where: isNull(categories.userId),
         orderBy: [asc(categories.name)],
-      });
+      })));
   if (!fallbackCategory) return { saved: false, reason: "no-amount" };
   // Today in the user's timezone (en-CA formats as YYYY-MM-DD).
   const expenseDate = new Intl.DateTimeFormat("en-CA", { timeZone: user.timezone }).format(

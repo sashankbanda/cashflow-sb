@@ -8,6 +8,8 @@ export interface CategoryOption {
   name: string;
   icon: string;
   gradient: string;
+  /** "expense" | "income" — pickers show only the matching kind. */
+  kind: string;
   isSystem: boolean;
 }
 
@@ -23,6 +25,7 @@ export async function getCategoriesForUser(userId: string): Promise<CategoryOpti
       name: categories.name,
       icon: categories.icon,
       gradient: categories.gradient,
+      kind: categories.kind,
       userId: categories.userId,
       sort: categories.sort,
       usage: sql<number>`(
@@ -48,6 +51,7 @@ export async function getCategoriesForUser(userId: string): Promise<CategoryOpti
       name: row.name,
       icon: row.icon,
       gradient: row.gradient,
+      kind: row.kind,
       isSystem: row.userId === null,
     }));
 }

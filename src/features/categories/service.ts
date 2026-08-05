@@ -31,6 +31,7 @@ export async function createCategory(
     name: input.name,
     icon: input.icon,
     gradient: input.gradient,
+    kind: input.kind,
     sort: 100,
   });
   return { categoryId };
@@ -40,7 +41,7 @@ export async function updateCategory(user: ActionUser, input: UpdateCategoryInpu
   await assertOwnCategory(user.id, input.categoryId);
   await db
     .update(categories)
-    .set({ name: input.name, icon: input.icon, gradient: input.gradient })
+    .set({ name: input.name, icon: input.icon, gradient: input.gradient, kind: input.kind })
     .where(eq(categories.id, input.categoryId));
 }
 

@@ -1,5 +1,7 @@
 import {
   Baby,
+  Banknote,
+  Briefcase,
   Clapperboard,
   Dumbbell,
   Fuel,
@@ -17,6 +19,8 @@ import {
   Smartphone,
   Sparkles,
   TrainFront,
+  TrendingUp,
+  Undo2,
   UtensilsCrossed,
   Wine,
   type LucideIcon,
@@ -50,6 +54,10 @@ export const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "paw-print": PawPrint,
   baby: Baby,
   sparkles: Sparkles,
+  banknote: Banknote,
+  briefcase: Briefcase,
+  "undo-2": Undo2,
+  "trending-up": TrendingUp,
 };
 
 export const CATEGORY_ICON_NAMES = Object.keys(CATEGORY_ICONS);

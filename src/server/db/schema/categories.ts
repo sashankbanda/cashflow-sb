@@ -10,6 +10,8 @@ export const categories = pgTable(
     name: text().notNull(),
     icon: text().notNull(),
     gradient: text().notNull(),
+    /** "expense" | "income" — pickers only show the matching kind. */
+    kind: text().notNull().default("expense"),
     sort: integer().notNull().default(0),
     archivedAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),

@@ -38,7 +38,11 @@ function Form({
   );
   const [amount, setAmount] = useState(minorToAmount(entry.amountMinor));
   const [description, setDescription] = useState(entry.description);
-  const [categoryId, setCategoryId] = useState(entry.category?.id ?? categories[0]?.id ?? "");
+  const [categoryId, setCategoryId] = useState(
+    entry.category?.id ??
+      categories.find((c) => c.kind === (entry.isIncome ? "income" : "expense"))?.id ??
+      "",
+  );
   const [date, setDate] = useState(() => parseISO(entry.expenseDate));
 
   const update = useAction(updatePersonalExpenseAction, {
@@ -78,7 +82,13 @@ function Form({
       <SegmentedControl
         aria-label="Entry type"
         value={entryType}
-        onChange={setEntryType}
+        onChange={(next) => {
+          setEntryType(next);
+          const wanted = next === "income" ? "income" : "expense";
+          if (categories.find((c) => c.id === categoryId)?.kind !== wanted) {
+            setCategoryId(categories.find((c) => c.kind === wanted)?.id ?? "");
+          }
+        }}
         options={[
           { value: "expense", label: "Expense" },
           { value: "income", label: "Income" },
@@ -99,7 +109,9 @@ function Form({
       <div className="space-y-2">
         <p className="text-caption text-fg-3 uppercase">Category</p>
         <div className="flex flex-wrap gap-2">
-          {categories.map((category) => {
+          {categories
+            .filter((c) => c.kind === (entryType === "income" ? "income" : "expense"))
+            .map((category) => {
             const selected = category.id === categoryId;
             return (
               <button

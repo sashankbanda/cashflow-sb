@@ -10,6 +10,8 @@ export const categoryFormSchema = z.object({
     .max(30, "Keep it under 30 characters."),
   icon: z.enum(CATEGORY_ICON_NAMES as [string, ...string[]]),
   gradient: z.enum(PALETTES),
+  /** Which pickers this category appears in. */
+  kind: z.enum(["expense", "income"]).optional().default("expense"),
 });
 
 export const createCategorySchema = categoryFormSchema;

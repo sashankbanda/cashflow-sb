@@ -54,7 +54,8 @@ function Form({
     if (!hasOverall) {
       list.push({ categoryId: null, name: "Overall", icon: "wallet", gradient: "aurora" });
     }
-    for (const category of addable) {
+    // Budgets are for spending — income categories don't belong here.
+    for (const category of addable.filter((option) => option.kind !== "income")) {
       list.push({
         categoryId: category.id,
         name: category.name,

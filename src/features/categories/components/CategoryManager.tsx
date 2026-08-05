@@ -78,6 +78,7 @@ export function CategoryManager({ data }: { data: CategoryManagerData }) {
       name: category.name,
       icon: category.icon,
       gradient: asPalette(category.gradient),
+      kind: category.kind === "income" ? "income" : "expense",
     });
     formSheet.open();
   };

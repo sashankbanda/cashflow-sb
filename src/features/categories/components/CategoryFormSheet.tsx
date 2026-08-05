@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Sheet } from "@/components/ui/Sheet";
 import { TextField } from "@/components/ui/TextField";
 import { PALETTES, paletteBg, type Palette } from "@/components/ui/palette";
@@ -16,6 +17,7 @@ export interface CategoryFormValues {
   name: string;
   icon: string;
   gradient: Palette;
+  kind: "expense" | "income";
 }
 
 interface CategoryFormSheetProps {
@@ -30,6 +32,7 @@ function Form({ category, onClose }: { category?: CategoryFormValues; onClose: (
   const [name, setName] = useState(category?.name ?? "");
   const [icon, setIcon] = useState(category?.icon ?? CATEGORY_ICON_NAMES[0] ?? "shapes");
   const [gradient, setGradient] = useState<Palette>(category?.gradient ?? "ocean");
+  const [kind, setKind] = useState<"expense" | "income">(category?.kind ?? "expense");
 
   const create = useAction(createCategoryAction, {
     successMessage: "Category created",
@@ -52,9 +55,9 @@ function Form({ category, onClose }: { category?: CategoryFormValues; onClose: (
 
   const submit = () => {
     if (editing && category?.id) {
-      void update.execute({ categoryId: category.id, name, icon, gradient });
+      void update.execute({ categoryId: category.id, name, icon, gradient, kind });
     } else {
-      void create.execute({ name, icon, gradient });
+      void create.execute({ name, icon, gradient, kind });
     }
   };
 
@@ -76,6 +79,16 @@ function Form({ category, onClose }: { category?: CategoryFormValues; onClose: (
           <CategoryGlyph icon={icon} />
         </span>
       </div>
+
+      <SegmentedControl
+        aria-label="Category for"
+        value={kind}
+        onChange={setKind}
+        options={[
+          { value: "expense", label: "Expenses" },
+          { value: "income", label: "Income" },
+        ]}
+      />
 
       <TextField
         label="Name"

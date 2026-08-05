@@ -45,7 +45,11 @@ export function QuickAddScreen({
     initial.amountMinor !== null ? minorToAmount(initial.amountMinor) : "",
   );
   const [description, setDescription] = useState(initial.description);
-  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
+  const [categoryId, setCategoryId] = useState(
+    categories.find((c) => c.kind === (initial.isIncome ? "income" : "expense"))?.id ??
+      categories[0]?.id ??
+      "",
+  );
   const [date, setDate] = useState(() => new Date());
   const [saving, setSaving] = useState(false);
 
@@ -122,7 +126,13 @@ export function QuickAddScreen({
         <SegmentedControl
           aria-label="Entry type"
           value={entryType}
-          onChange={setEntryType}
+          onChange={(next) => {
+            setEntryType(next);
+            setCategoryId(
+              categories.find((c) => c.kind === (next === "income" ? "income" : "expense"))?.id ??
+                "",
+            );
+          }}
           options={[
             { value: "expense", label: "Expense" },
             { value: "income", label: "Income" },
@@ -143,7 +153,9 @@ export function QuickAddScreen({
         <div className="space-y-2">
           <p className="text-caption text-fg-3 uppercase">Category</p>
           <div className="flex flex-wrap gap-2">
-            {categories.map((category) => {
+            {categories
+              .filter((c) => c.kind === (entryType === "income" ? "income" : "expense"))
+              .map((category) => {
               const selected = category.id === categoryId;
               return (
                 <button

@@ -132,7 +132,11 @@ function Flow({
     groupId: initialContext,
     amount: initial?.amount ?? "",
     description: initial?.description ?? "",
-    categoryId: initial?.categoryId ?? categories[0]?.id ?? "",
+    categoryId:
+      initial?.categoryId ??
+      categories.find((category) => category.kind === "expense")?.id ??
+      categories[0]?.id ??
+      "",
     date: initial ? parseISO(initial.expenseDate) : new Date(),
     payer:
       initial?.payerDraft ??
@@ -143,6 +147,10 @@ function Flow({
 
   const isPersonal = draft.groupId === PERSONAL;
   const isIncomeEntry = isPersonal && entryType === "income";
+  // Income and expenses have their own category sets.
+  const kindCategories = categories.filter(
+    (category) => category.kind === (isIncomeEntry ? "income" : "expense"),
+  );
   const group = groups.find((candidate) => candidate.id === draft.groupId) ?? null;
 
   const create = useAction(createExpenseAction, {
@@ -411,7 +419,13 @@ function Flow({
                 <SegmentedControl
                   aria-label="Entry type"
                   value={entryType}
-                  onChange={setEntryType}
+                  onChange={(next) => {
+                    setEntryType(next);
+                    const first = categories.find(
+                      (category) => category.kind === (next === "income" ? "income" : "expense"),
+                    );
+                    setDraft((current) => ({ ...current, categoryId: first?.id ?? "" }));
+                  }}
                   options={[
                     { value: "expense", label: "Expense" },
                     { value: "income", label: "Income" },
@@ -464,7 +478,7 @@ function Flow({
                 <div className="space-y-2">
                   <p className="text-caption text-fg-3 uppercase">Category</p>
                   <div className="flex flex-wrap gap-2">
-                    {categories.map((category) => {
+                    {kindCategories.map((category) => {
                       const selected = category.id === draft.categoryId;
                       return (
                         <button
