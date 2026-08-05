@@ -135,7 +135,10 @@ export async function searchAll(userId: string, input: SearchInput): Promise<Sea
     : [];
   const friendHits: SearchFriendHit[] = term
     ? friends
-        .filter((friend) => friend.name.toLowerCase().includes(lowerTerm))
+        .filter(
+          (friend): friend is typeof friend & { userId: string } =>
+            friend.userId !== null && friend.name.toLowerCase().includes(lowerTerm),
+        )
         .map((friend) => ({ userId: friend.userId, name: friend.name, image: friend.image }))
     : [];
 
@@ -161,6 +164,8 @@ export async function getSearchOptions(userId: string): Promise<SearchOptions> {
     categories,
     tags,
     groups: groups.map((group) => ({ id: group.id, name: group.name, emoji: group.emoji })),
-    people: friends.map((friend) => ({ userId: friend.userId, name: friend.name })),
+    people: friends
+      .filter((friend): friend is typeof friend & { userId: string } => friend.userId !== null)
+      .map((friend) => ({ userId: friend.userId, name: friend.name })),
   };
 }

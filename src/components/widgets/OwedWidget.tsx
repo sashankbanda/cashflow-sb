@@ -17,7 +17,7 @@ export function OwedWidget({ direction, amountMinor, context }: OwedWidgetProps)
       size="sm"
       gradient={inbound ? "mint" : "ember"}
       glow
-      label={inbound ? "Owed to you" : "You owe"}
+      label={inbound ? "You get" : "You give"}
     >
       <p className="font-dot text-title-2 text-white tabular-nums">
         <NumberTicker value={formatMoney(amountMinor, { compact: amountMinor >= 10_000_00 })} />

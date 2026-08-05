@@ -35,7 +35,7 @@ export default async function FriendsPage() {
             {friends.map((friend) => {
               const label = myBalanceLabel(friend.netMinor);
               return (
-                <div key={friend.userId} className="space-y-2 p-4">
+                <div key={friend.userId ?? `ghost-${friend.name}`} className="space-y-2 p-4">
                   <div className="flex items-center gap-3">
                     <Avatar name={friend.name} image={friend.image} size="md" />
                     <div className="min-w-0 flex-1">
@@ -78,7 +78,7 @@ export default async function FriendsPage() {
                         );
                       })}
                   </div>
-                  {friend.netMinor > 0 ? (
+                  {friend.netMinor > 0 && friend.userId ? (
                     <RemindButton
                       toUserId={friend.userId}
                       groupId={

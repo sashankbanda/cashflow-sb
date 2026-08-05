@@ -46,9 +46,9 @@ async function HomeWidgets({ userId }: { userId: string }) {
   const insight =
     topInsight?.text ??
     (summary.owedToYouMinor > 0
-      ? `You're owed ${formatMoney(summary.owedToYouMinor)} across ${summary.owedFromCount} ${summary.owedFromCount === 1 ? "friend" : "friends"}.`
+      ? `You get ${formatMoney(summary.owedToYouMinor)} back from ${summary.owedFromCount} ${summary.owedFromCount === 1 ? "friend" : "friends"}.`
       : summary.youOweMinor > 0
-        ? `You owe ${formatMoney(summary.youOweMinor)} — settle up to clear it.`
+        ? `You give ${formatMoney(summary.youOweMinor)} — settle up to clear it.`
         : "You're all square with everyone. Nice.");
 
   return (

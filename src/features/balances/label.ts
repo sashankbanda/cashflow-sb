@@ -7,17 +7,17 @@ export interface BalanceLabel {
   tone: BalanceTone;
 }
 
-/** Viewer-perspective balance line: "You are owed ₹1,250" / "You owe ₹850". */
+/** Viewer-perspective balance line, in plain words: get money / give money. */
 export function myBalanceLabel(netMinor: number): BalanceLabel {
-  if (netMinor > 0) return { text: `You are owed ${formatMoney(netMinor)}`, tone: "positive" };
-  if (netMinor < 0) return { text: `You owe ${formatMoney(-netMinor)}`, tone: "negative" };
-  return { text: "Settled up", tone: "settled" };
+  if (netMinor > 0) return { text: `You get ${formatMoney(netMinor)}`, tone: "positive" };
+  if (netMinor < 0) return { text: `You give ${formatMoney(-netMinor)}`, tone: "negative" };
+  return { text: "All settled", tone: "settled" };
 }
 
-/** Third-person balance line: "gets back ₹300" / "owes ₹120" / "settled". */
+/** Third-person balance line: "gets ₹300" / "gives ₹120" / "settled". */
 export function memberBalanceLabel(netMinor: number): BalanceLabel {
-  if (netMinor > 0) return { text: `gets back ${formatMoney(netMinor)}`, tone: "positive" };
-  if (netMinor < 0) return { text: `owes ${formatMoney(-netMinor)}`, tone: "negative" };
+  if (netMinor > 0) return { text: `gets ${formatMoney(netMinor)}`, tone: "positive" };
+  if (netMinor < 0) return { text: `gives ${formatMoney(-netMinor)}`, tone: "negative" };
   return { text: "settled", tone: "settled" };
 }
 

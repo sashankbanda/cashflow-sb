@@ -182,7 +182,8 @@ export interface FriendGroupLine {
 }
 
 export interface FriendBalance {
-  userId: string;
+  /** Null for ghost members — people added by name who have no account yet. */
+  userId: string | null;
   name: string;
   image: string | null;
   /** Positive → the friend owes you. */
@@ -211,9 +212,12 @@ export async function getFriendBalances(userId: string): Promise<FriendBalance[]
   for (const { membership, graph } of graphs) {
     const ledger = new Map(graph.ledger);
     for (const other of graph.members) {
-      if (!other.userId || other.userId === userId) continue;
+      // Skip yourself; INCLUDE ghosts (userId null) — money they owe is real
+      // even before they have an account.
+      if (other.memberId === membership.id || other.userId === userId) continue;
+      const key = other.userId ?? `ghost:${other.memberId}`;
       const net = pairNet(ledger, membership.id, other.memberId);
-      const existing = friends.get(other.userId) ?? {
+      const existing = friends.get(key) ?? {
         userId: other.userId,
         name: other.displayName,
         image: other.image,
@@ -228,7 +232,7 @@ export async function getFriendBalances(userId: string): Promise<FriendBalance[]
         emoji: membership.group.emoji,
         netMinor: net,
       });
-      friends.set(other.userId, existing);
+      friends.set(key, existing);
     }
   }
 

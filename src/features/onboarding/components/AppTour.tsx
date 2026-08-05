@@ -20,7 +20,7 @@ const STEPS: TourStep[] = [
     icon: Wallet,
     palette: "mint",
     title: "Welcome to Cashflow",
-    body: "One place for what you spend, what you earn, and who owes who.",
+    body: "One place for what you spend, what you earn, and who gets what back.",
   },
   {
     icon: Plus,
