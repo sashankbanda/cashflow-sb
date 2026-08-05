@@ -56,7 +56,7 @@ export async function GET(request: Request): Promise<Response> {
 
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 30 }}>
         <span style={{ opacity: 0.85 }}>
-          {report.netMinor >= 0 ? "Owed to you" : "You owe"}{" "}
+          {report.netMinor >= 0 ? "You get" : "You give"}{" "}
           {formatMoney(Math.abs(report.netMinor))}
         </span>
         <span style={{ fontWeight: 800 }}>Cashflow</span>

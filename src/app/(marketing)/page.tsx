@@ -128,7 +128,7 @@ export default function RootPage() {
           Split anything. <span className="text-volt">Settle beautifully.</span>
         </h1>
         <p className="mt-3 text-pretty text-body text-fg-2">
-          Cashflow shares group bills to the exact paise, untangles who owes who, and keeps your
+          Cashflow shares group bills to the exact paise, shows who gets what back, and keeps your
           personal spending in one calm, private place.
         </p>
         <Link href="/sign-in" className={`mt-7 ${VOLT_PILL}`}>

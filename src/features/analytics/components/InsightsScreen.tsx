@@ -96,9 +96,9 @@ function CashflowCard({ cashflow }: { cashflow: Cashflow }) {
       </div>
       {cashflow.owedToYouMinor > 0 || cashflow.youOweMinor > 0 ? (
         <p className="mt-3 text-footnote text-fg-3">
-          {cashflow.owedToYouMinor > 0 ? `Owed to you ${formatMoney(cashflow.owedToYouMinor)}` : ""}
+          {cashflow.owedToYouMinor > 0 ? `You get ${formatMoney(cashflow.owedToYouMinor)}` : ""}
           {cashflow.owedToYouMinor > 0 && cashflow.youOweMinor > 0 ? " · " : ""}
-          {cashflow.youOweMinor > 0 ? `You owe ${formatMoney(cashflow.youOweMinor)}` : ""}
+          {cashflow.youOweMinor > 0 ? `You give ${formatMoney(cashflow.youOweMinor)}` : ""}
         </p>
       ) : null}
     </GlassCard>

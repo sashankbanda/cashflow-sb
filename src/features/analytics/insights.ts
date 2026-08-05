@@ -103,7 +103,7 @@ export function generateInsights(input: InsightInput): Insight[] {
   if (input.owedToYouMinor > 0) {
     insights.push({
       key: "owed",
-      text: `You're owed ${formatMoney(input.owedToYouMinor)} across ${input.owedFromCount} ${
+      text: `You get ${formatMoney(input.owedToYouMinor)} back across ${input.owedFromCount} ${
         input.owedFromCount === 1 ? "friend" : "friends"
       }.`,
       palette: "mint",
@@ -113,7 +113,7 @@ export function generateInsights(input: InsightInput): Insight[] {
   } else if (input.youOweMinor > 0) {
     insights.push({
       key: "owe",
-      text: `You owe ${formatMoney(input.youOweMinor)} across ${input.oweToCount} ${
+      text: `You give ${formatMoney(input.youOweMinor)} across ${input.oweToCount} ${
         input.oweToCount === 1 ? "friend" : "friends"
       } — settle up to clear it.`,
       palette: "ember",

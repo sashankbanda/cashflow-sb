@@ -116,7 +116,7 @@ export function SettleUpSheet({
             icon={<PartyPopper />}
             palette="mint"
             title="All settled"
-            description="Nobody owes anybody. Go celebrate."
+            description="Everyone's even. Go celebrate."
           />
         ) : (
           <div className="space-y-3 pt-1">

@@ -51,8 +51,8 @@ export function ReportsView({
           <p className="mt-1 text-footnote text-fg-on-grad">
             {formatMoney(report.avgPerDayMinor)}/day ·{" "}
             {report.netMinor >= 0
-              ? `owed ${formatMoney(report.netMinor)}`
-              : `you owe ${formatMoney(-report.netMinor)}`}
+              ? `you get ${formatMoney(report.netMinor)}`
+              : `you give ${formatMoney(-report.netMinor)}`}
           </p>
         </GradientPanel>
 
