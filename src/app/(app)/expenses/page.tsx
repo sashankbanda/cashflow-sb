@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { formatISO, parseISO, startOfMonth } from "date-fns";
-import { CalendarClock, ChevronRight, Wallet, Zap } from "lucide-react";
+import { CalendarClock, ChevronRight, Search, Wallet, Zap } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GradientPanel } from "@/components/ui/GradientPanel";
@@ -38,7 +38,19 @@ export default async function ExpensesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <ScreenHeader title="Money" eyebrow="This month's cashflow" />
+      <ScreenHeader
+        title="Money"
+        eyebrow="This month's cashflow"
+        trailing={
+          <Link
+            href="/search"
+            aria-label="Search"
+            className="ease-out inline-flex size-9 items-center justify-center rounded-full glass text-fg-2 transition-transform duration-150 active:scale-[0.97] [&_svg]:size-4"
+          >
+            <Search />
+          </Link>
+        }
+      />
       <div className="space-y-5 px-5">
         <GradientPanel palette="aurora" className="p-6">
           <p className="text-caption text-fg-on-grad uppercase">Net this month</p>

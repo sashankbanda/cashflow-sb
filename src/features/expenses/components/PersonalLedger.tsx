@@ -39,6 +39,7 @@ export function PersonalLedger({
   const [active, setActive] = useState<LedgerEntry | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [monthFilter, setMonthFilter] = useState<string | null>(null);
+  const [sort, setSort] = useState<"new" | "old" | "high" | "low">("new");
 
   const remove = useAction(deletePersonalExpenseAction, {
     successMessage: "Expense deleted",
@@ -74,7 +75,21 @@ export function PersonalLedger({
       (!tagFilter || entry.tags.some((tag) => tag.id === tagFilter)) &&
       (!monthFilter || entry.expenseDate.startsWith(monthFilter)),
   );
-  const sections = groupByDay(visible);
+
+  // Date sorts keep the day sections; amount sorts render one flat list.
+  let sections: Array<[string, LedgerEntry[]]>;
+  if (sort === "high" || sort === "low") {
+    const byAmount = [...visible].sort((a, b) =>
+      sort === "high" ? b.amountMinor - a.amountMinor : a.amountMinor - b.amountMinor,
+    );
+    sections = byAmount.length > 0 ? [[sort === "high" ? "Highest first" : "Lowest first", byAmount]] : [];
+  } else {
+    const byDay = groupByDay(visible);
+    sections = (sort === "old" ? [...byDay].reverse() : byDay).map(([date, items]) => [
+      formatSectionLabel(parseISO(date)),
+      sort === "old" ? [...items].reverse() : items,
+    ]);
+  }
 
   return (
     <div className="space-y-5">
@@ -108,10 +123,25 @@ export function PersonalLedger({
         </div>
       ) : null}
 
-      {sections.map(([date, items]) => (
-        <section key={date} aria-label={formatSectionLabel(parseISO(date))}>
+      <div className="-mx-1 scrollbar-none flex gap-2 overflow-x-auto px-1">
+        {(
+          [
+            ["new", "Newest"],
+            ["old", "Oldest"],
+            ["high", "Highest"],
+            ["low", "Lowest"],
+          ] as const
+        ).map(([key, label]) => (
+          <Chip key={key} selected={sort === key} onClick={() => setSort(key)}>
+            {label}
+          </Chip>
+        ))}
+      </div>
+
+      {sections.map(([label, items]) => (
+        <section key={label} aria-label={label}>
           <h3 className="sticky top-12 z-10 px-1 pb-2 text-caption text-fg-3 uppercase">
-            {formatSectionLabel(parseISO(date))}
+            {label}
           </h3>
           <GlassCard elevation="inset" className="divide-y divide-hairline overflow-hidden">
             {items.map((entry) => {
