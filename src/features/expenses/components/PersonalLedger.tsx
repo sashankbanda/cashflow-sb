@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { ChevronRight, Repeat } from "lucide-react";
@@ -13,7 +13,7 @@ import { useAction } from "@/hooks/useAction";
 import { SwipeableRow } from "@/components/motion/SwipeableRow";
 import { CategoryBadge } from "@/features/categories/icons";
 import type { CategoryOption } from "@/features/categories/queries";
-import { deletePersonalExpenseAction } from "../actions";
+import { deletePersonalExpenseAction, restorePersonalExpenseAction } from "../actions";
 import type { LedgerEntry } from "../personal-queries";
 import { PersonalEntrySheet } from "./PersonalEntrySheet";
 
@@ -53,6 +53,28 @@ export function PersonalLedger({
   // Render from the optimistic overlay: a deleted row vanishes on tap and
   // comes back if the server rejects it.
   const liveEntries = remove.optimisticState;
+
+  // The regret window: after a delete, a 6-second Undo pill restores the row
+  // (soft-delete makes this a one-column flip server-side).
+  const [undoId, setUndoId] = useState<string | null>(null);
+  const undoTimer = useRef<number | null>(null);
+  const restore = useAction(restorePersonalExpenseAction, {
+    successMessage: "Restored",
+    optimistic: false, // the ledger re-renders from the server on refresh
+    onSuccess: () => router.refresh(),
+  });
+  const deleteWithUndo = (expenseId: string) => {
+    void remove.execute({ expenseId });
+    if (undoTimer.current !== null) window.clearTimeout(undoTimer.current);
+    setUndoId(expenseId);
+    undoTimer.current = window.setTimeout(() => setUndoId(null), 6000);
+  };
+  useEffect(
+    () => () => {
+      if (undoTimer.current !== null) window.clearTimeout(undoTimer.current);
+    },
+    [],
+  );
 
   const allTags = useMemo(() => {
     const byId = new Map<string, string>();
@@ -185,7 +207,7 @@ export function PersonalLedger({
                 <SwipeableRow
                   key={entry.id}
                   onEdit={() => setActive(entry)}
-                  onDelete={() => void remove.execute({ expenseId: entry.expenseId })}
+                  onDelete={() => deleteWithUndo(entry.expenseId)}
                 >
                   <button
                     type="button"
@@ -217,9 +239,28 @@ export function PersonalLedger({
         onClose={() => setActive(null)}
         onDelete={(expenseId) => {
           setActive(null);
-          void remove.execute({ expenseId });
+          deleteWithUndo(expenseId);
         }}
       />
+
+      {undoId ? (
+        <div className="fixed inset-x-0 bottom-[calc(var(--dock-height)+env(safe-area-inset-bottom))] z-40 flex justify-center px-5">
+          <div className="flex items-center gap-4 rounded-full glass-floating px-5 py-2.5">
+            <span className="text-footnote text-fg-2">Entry deleted</span>
+            <button
+              type="button"
+              onClick={() => {
+                const expenseId = undoId;
+                setUndoId(null);
+                void restore.execute({ expenseId });
+              }}
+              className="text-footnote font-bold text-volt"
+            >
+              Undo
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

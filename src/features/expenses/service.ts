@@ -414,6 +414,16 @@ export async function updatePersonalExpense(
   });
 }
 
+/** Undo a personal soft-delete (owner only) — the 5-second regret window. */
+export async function restorePersonalExpense(user: ActionUser, expenseId: string): Promise<void> {
+  await db.transaction(async (tx) => {
+    const expense = await tx.query.expenses.findFirst({ where: eq(expenses.id, expenseId) });
+    if (!expense || !expense.deletedAt || expense.groupId !== null) throw notFound("Expense");
+    if (expense.createdBy !== user.id) throw forbidden("That isn't your expense.");
+    await tx.update(expenses).set({ deletedAt: null }).where(eq(expenses.id, expenseId));
+  });
+}
+
 /** Soft-delete a personal expense (owner only). */
 export async function deletePersonalExpense(user: ActionUser, expenseId: string): Promise<void> {
   await db.transaction(async (tx) => {

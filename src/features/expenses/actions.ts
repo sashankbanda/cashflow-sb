@@ -17,6 +17,7 @@ import {
   createPersonalExpense,
   deleteExpense,
   deletePersonalExpense,
+  restorePersonalExpense,
   splitPersonalExpense,
   updateExpense,
   updatePersonalExpense,
@@ -72,6 +73,19 @@ export const createPersonalExpenseAction = authedAction({
     revalidatePath("/budgets");
     await notifyBudgetThresholds([ctx.user.id]);
     return { expenseId };
+  },
+});
+
+export const restorePersonalExpenseAction = authedAction({
+  name: "expenses.restorePersonal",
+  schema: z.object({ expenseId: z.string().min(1) }),
+  handler: async ({ input, ctx }) => {
+    await restorePersonalExpense(ctx.user, input.expenseId);
+    revalidatePath("/expenses");
+    revalidatePath("/home");
+    revalidatePath("/insights");
+    revalidatePath("/budgets");
+    return { restored: true };
   },
 });
 
