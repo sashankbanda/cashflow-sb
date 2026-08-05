@@ -19,6 +19,8 @@ export interface LedgerEntry {
   category: { id: string; icon: string; gradient: string; name: string } | null;
   /** Group name when this is my share of a group expense, else null. */
   source: string | null;
+  /** Group id for navigation when this is a group share, else null. */
+  groupId: string | null;
   /** True for standalone personal expenses (deletable from the ledger). */
   isPersonal: boolean;
   /** True when this expense was materialized from a recurring rule. */
@@ -105,6 +107,7 @@ export async function getPersonalLedger(
         }
       : null,
     source: row.groupId ? (row.groupName ?? "Group") : null,
+    groupId: row.groupId,
     isPersonal: row.groupId === null,
     isRecurring: row.recurringRuleId !== null,
     isIncome: row.isIncome,

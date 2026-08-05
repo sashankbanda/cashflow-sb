@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { Repeat } from "lucide-react";
+import { ChevronRight, Repeat } from "lucide-react";
 import { Chip } from "@/components/ui/Chip";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { cn } from "@/lib/cn";
@@ -166,9 +166,15 @@ export function PersonalLedger({
                   </button>
                 </SwipeableRow>
               ) : (
-                <div key={entry.id} className="flex w-full items-center gap-3 p-4">
+                <button
+                  key={entry.id}
+                  type="button"
+                  onClick={() => entry.groupId && router.push(`/groups/${entry.groupId}`)}
+                  className="ease-out flex w-full items-center gap-3 p-4 text-left transition-colors duration-150 active:bg-glass"
+                >
                   {row}
-                </div>
+                  <ChevronRight className="size-4 shrink-0 text-fg-3" aria-hidden />
+                </button>
               );
             })}
           </GlassCard>
