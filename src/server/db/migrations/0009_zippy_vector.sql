@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "opening_balance_minor" bigint;

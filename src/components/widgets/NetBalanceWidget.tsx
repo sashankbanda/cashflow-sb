@@ -10,6 +10,10 @@ export interface NetBalanceWidgetProps {
   /** This month's cashflow, for the in/out row. */
   monthInMinor?: number;
   monthOutMinor?: number;
+  /** Override the caption (e.g. "Account balance"). */
+  label?: string;
+  /** Override the derived summary line. */
+  summaryText?: string;
 }
 
 /** The Home hero: your balance, plus this month's money in / out at a glance. */
@@ -18,16 +22,19 @@ export function NetBalanceWidget({
   context,
   monthInMinor,
   monthOutMinor,
+  label,
+  summaryText,
 }: NetBalanceWidgetProps) {
   const summary =
-    netMinor > 0
+    summaryText ??
+    (netMinor > 0
       ? "You're ahead — more came in than went out"
       : netMinor < 0
         ? "You spent more than came in"
-        : "Break even";
+        : "Break even");
 
   return (
-    <Widget size="lg" gradient="aurora" glow label="This month's balance">
+    <Widget size="lg" gradient="aurora" glow label={label ?? "This month's balance"}>
       <div aria-live="polite" aria-atomic="true">
         <DotMatrixAmount
           amountMinor={netMinor}

@@ -1,4 +1,4 @@
-import { boolean, char, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { bigint, boolean, char, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 /** Per-type push preferences; an absent key means enabled. */
 export type NotificationPrefs = Partial<Record<string, boolean>>;
@@ -21,6 +21,8 @@ export const users = pgTable("users", {
   captureToken: text().unique(),
   /** UPI ID (VPA) so friends can pay this user straight from Settle up. */
   upiId: text(),
+  /** Starting balance in paise; when set, Home shows a true account balance. */
+  openingBalanceMinor: bigint({ mode: "number" }),
   onboardedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true })

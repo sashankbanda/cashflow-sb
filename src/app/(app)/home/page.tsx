@@ -18,7 +18,10 @@ import { greetingFor } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { requireDbUser } from "@/features/auth/session";
 import { getHomeSummary } from "@/features/analytics/queries";
-import { getPersonalIncomeTotal } from "@/features/expenses/personal-queries";
+import {
+  getPersonalIncomeTotal,
+  getPersonalSpendTotal,
+} from "@/features/expenses/personal-queries";
 import { getTopInsights } from "@/features/analytics/insights-queries";
 import { getOverallBudgetSnapshot } from "@/features/budgets/queries";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
@@ -31,16 +34,31 @@ function peopleLabel(count: number, verb: string): string {
   return `${verb} ${count} ${count === 1 ? "person" : "people"}`;
 }
 
-async function HomeWidgets({ userId }: { userId: string }) {
+async function HomeWidgets({
+  userId,
+  openingBalanceMinor,
+}: {
+  userId: string;
+  openingBalanceMinor: number | null;
+}) {
   const now = new Date();
   const monthStart = formatISO(startOfMonth(now), { representation: "date" });
   const today = formatISO(now, { representation: "date" });
-  const [summary, budget, topInsights, monthIncome] = await Promise.all([
+  const allTime = { from: "1970-01-01", to: today };
+  const [summary, budget, topInsights, monthIncome, allIncome, allSpend] = await Promise.all([
     getHomeSummary(userId),
     getOverallBudgetSnapshot(userId),
     getTopInsights(userId, 1),
     getPersonalIncomeTotal(userId, { from: monthStart, to: today }),
+    openingBalanceMinor !== null ? getPersonalIncomeTotal(userId, allTime) : Promise.resolve(0),
+    openingBalanceMinor !== null ? getPersonalSpendTotal(userId, allTime) : Promise.resolve(0),
   ]);
+  // With a starting balance set, the hero is a true account balance; without,
+  // it's this month's income minus spending.
+  const accountMode = openingBalanceMinor !== null;
+  const heroMinor = accountMode
+    ? openingBalanceMinor + allIncome - allSpend
+    : monthIncome - summary.monthSpendMinor;
 
   const topInsight = topInsights[0];
   const insight =
@@ -54,8 +72,10 @@ async function HomeWidgets({ userId }: { userId: string }) {
   return (
     <Stagger className="space-y-3">
       <NetBalanceWidget
-        netMinor={monthIncome - summary.monthSpendMinor}
-        context="Income minus spending"
+        netMinor={heroMinor}
+        context={accountMode ? "Starting balance + in − out" : "Income minus spending"}
+        label={accountMode ? "Account balance" : undefined}
+        summaryText={accountMode ? "Everything counted since your starting balance" : undefined}
         monthInMinor={monthIncome}
         monthOutMinor={summary.monthSpendMinor}
       />
@@ -174,7 +194,7 @@ export default async function HomePage() {
       />
       <div className="px-5">
         <Suspense fallback={<HomeSkeleton />}>
-          <HomeWidgets userId={user.id} />
+          <HomeWidgets userId={user.id} openingBalanceMinor={user.openingBalanceMinor} />
         </Suspense>
       </div>
     </div>

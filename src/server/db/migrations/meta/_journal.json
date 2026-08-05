@@ -64,6 +64,13 @@
       "when": 1785952252221,
       "tag": "0008_natural_mandarin",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785952660200,
+      "tag": "0009_zippy_vector",
+      "breakpoints": true
     }
   ]
 }
