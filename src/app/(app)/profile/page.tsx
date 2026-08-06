@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
+  AtSign,
   Bell,
   ChevronRight,
+  Coins,
   Download,
   PiggyBank,
   Repeat,
+  SunMoon,
   Tags,
   UsersRound,
   Wallet,
   Zap,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { SignOutButton } from "@/features/auth/components/SignOutButton";
@@ -46,11 +50,16 @@ export default async function ProfilePage() {
             <p className="truncate text-footnote text-fg-3">{user.email}</p>
           </div>
         </GlassCard>
-        <OpeningBalanceCard current={user.openingBalanceMinor} />
-        <UpiIdCard current={user.upiId} />
-        <GlassCard className="space-y-2 p-4">
-          <p className="text-caption text-fg-3 uppercase">Appearance</p>
-          <ThemeToggle />
+        <GlassCard elevation="inset" className="divide-y divide-hairline">
+          <Disclosure label="Starting balance" icon={Coins}>
+            <OpeningBalanceCard current={user.openingBalanceMinor} />
+          </Disclosure>
+          <Disclosure label="Your UPI ID" icon={AtSign}>
+            <UpiIdCard current={user.upiId} />
+          </Disclosure>
+          <Disclosure label="Appearance" icon={SunMoon}>
+            <ThemeToggle />
+          </Disclosure>
         </GlassCard>
         <GlassCard elevation="inset" className="divide-y divide-hairline">
           <Link

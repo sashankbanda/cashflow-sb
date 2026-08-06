@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { TextField } from "@/components/ui/TextField";
 import { useAction } from "@/hooks/useAction";
 import { updateUpiIdAction } from "../actions";
 
-/** Profile card: set your UPI ID so friends can pay you from Settle up. */
+/** Profile row content: set your UPI ID so friends can pay you from Settle up. */
 export function UpiIdCard({ current }: { current: string | null }) {
   const router = useRouter();
   const [value, setValue] = useState(current ?? "");
@@ -19,13 +18,10 @@ export function UpiIdCard({ current }: { current: string | null }) {
   });
 
   return (
-    <GlassCard className="space-y-3 p-4">
-      <div>
-        <p className="text-caption text-fg-3 uppercase">Your UPI ID</p>
-        <p className="mt-1 text-footnote text-fg-3">
-          Friends who need to pay you get a &ldquo;Pay via UPI&rdquo; button in Settle up.
-        </p>
-      </div>
+    <div className="space-y-3">
+      <p className="text-footnote text-fg-3">
+        Friends who need to pay you get a &ldquo;Pay via UPI&rdquo; button in Settle up.
+      </p>
       <div className="flex gap-2">
         <TextField
           placeholder="name@bank"
@@ -44,6 +40,6 @@ export function UpiIdCard({ current }: { current: string | null }) {
           Save
         </Button>
       </div>
-    </GlassCard>
+    </div>
   );
 }

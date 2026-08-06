@@ -3,13 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { TextField } from "@/components/ui/TextField";
 import { amountToMinor, isValidAmount, minorToAmount } from "@/lib/amount-input";
 import { useAction } from "@/hooks/useAction";
 import { updateOpeningBalanceAction } from "../actions";
 
-/** Profile card: set a starting balance so Home shows a true account balance. */
+/** Profile row content: set a starting balance so Home shows a true account balance. */
 export function OpeningBalanceCard({ current }: { current: number | null }) {
   const router = useRouter();
   const [value, setValue] = useState(current !== null ? minorToAmount(current) : "");
@@ -23,14 +22,11 @@ export function OpeningBalanceCard({ current }: { current: number | null }) {
   const valid = value.trim() === "" || isValidAmount(value);
 
   return (
-    <GlassCard className="space-y-3 p-4">
-      <div>
-        <p className="text-caption text-fg-3 uppercase">Starting balance</p>
-        <p className="mt-1 text-footnote text-fg-3">
-          What you have right now (₹). Home then shows your account balance — this amount plus
-          everything in, minus everything out. Leave empty to show monthly balance instead.
-        </p>
-      </div>
+    <div className="space-y-3">
+      <p className="text-footnote text-fg-3">
+        What you have right now (₹). Home then shows your account balance — this amount plus
+        everything in, minus everything out. Leave empty to show monthly balance instead.
+      </p>
       <div className="flex gap-2">
         <TextField
           placeholder="e.g. 25000"
@@ -50,6 +46,6 @@ export function OpeningBalanceCard({ current }: { current: number | null }) {
           Save
         </Button>
       </div>
-    </GlassCard>
+    </div>
   );
 }
