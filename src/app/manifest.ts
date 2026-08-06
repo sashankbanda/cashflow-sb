@@ -30,5 +30,15 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/manifest-icon?size=512", sizes: "512x512", type: "image/png", purpose: "any" },
       { src: "/manifest-icon?size=512", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
+    // Long-press the installed app icon → jump straight to Quick add (Android).
+    shortcuts: [
+      {
+        name: "Quick add",
+        short_name: "Quick add",
+        description: "Log a payment fast",
+        url: "/add",
+        icons: [{ src: "/manifest-icon?size=192", sizes: "192x192", type: "image/png" }],
+      },
+    ],
   };
 }

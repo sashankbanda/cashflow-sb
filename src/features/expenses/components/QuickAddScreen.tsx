@@ -22,7 +22,7 @@ import { parseUpiText, type ParsedUpiText } from "@/lib/upi-parse";
 import { useAction } from "@/hooks/useAction";
 import { CategoryGlyph } from "@/features/categories/icons";
 import type { CategoryOption } from "@/features/categories/queries";
-import { createPersonalExpenseAction } from "../actions";
+import { createPersonalExpenseAction, createSplitExpenseAction } from "../actions";
 
 /**
  * One-screen fast entry for payments made elsewhere. Reached by sharing a UPI
@@ -34,11 +34,14 @@ export function QuickAddScreen({
   categories,
   initial,
   defaultDate,
+  splitSuggestions = [],
 }: {
   categories: ReadonlyArray<CategoryOption>;
   initial: ParsedUpiText;
   /** Default entry date (ISO day; follows the app-wide period). */
   defaultDate?: string;
+  /** Names from the viewer's Splits group, offered as one-tap chips. */
+  splitSuggestions?: ReadonlyArray<string>;
 }) {
   const router = useRouter();
   const [idempotencyKey] = useState(() => crypto.randomUUID());
@@ -56,12 +59,27 @@ export function QuickAddScreen({
   );
   const [date, setDate] = useState(() => (defaultDate ? parseISO(defaultDate) : new Date()));
   const [saving, setSaving] = useState(false);
+  const [splitNames, setSplitNames] = useState<string[]>([...initial.splitWith]);
+  const [splitDraft, setSplitDraft] = useState("");
 
   const fallback = useAction(createPersonalExpenseAction, {
     successMessage: "Saved",
     optimistic: false, // no-IndexedDB fallback only; the outbox is the fast path
     onSuccess: () => router.push("/expenses"),
   });
+  const createSplit = useAction(createSplitExpenseAction, {
+    successMessage: "Split added",
+    optimistic: false, // creates a group expense; balances reconcile server-side
+    onSuccess: () => router.push("/expenses"),
+  });
+
+  // A typed-but-not-Added split name still counts (no silent loss).
+  const pendingSplitNames =
+    splitDraft.trim() !== "" &&
+    !splitNames.some((name) => name.toLowerCase() === splitDraft.trim().toLowerCase())
+      ? [...splitNames, splitDraft.trim()]
+      : splitNames;
+  const splitting = entryType === "expense" && pendingSplitNames.length > 0;
 
   const paste = async () => {
     try {
@@ -74,6 +92,7 @@ export function QuickAddScreen({
       setAmount(minorToAmount(parsed.amountMinor ?? 0));
       if (parsed.description) setDescription(parsed.description);
       setEntryType(parsed.isIncome ? "income" : "expense");
+      if (parsed.splitWith.length > 0) setSplitNames([...parsed.splitWith]);
       toast.success("Filled from your copied message");
     } catch {
       toast.error("Couldn't read the clipboard — paste into the fields instead.");
@@ -84,6 +103,17 @@ export function QuickAddScreen({
     const amountMinor = amountToMinor(amount);
     const income = entryType === "income";
     const category = categories.find((option) => option.id === categoryId);
+    if (splitting) {
+      // Add-and-split in one go — books straight into the Splits group.
+      void createSplit.execute({
+        description,
+        amountMinor,
+        categoryId,
+        expenseDate: formatISODate(date),
+        names: pendingSplitNames,
+      });
+      return;
+    }
     setSaving(true);
     const queued = await enqueueExpense({
       id: idempotencyKey,
@@ -188,15 +218,77 @@ export function QuickAddScreen({
           <DateChip value={date} onChange={setDate} />
         </div>
 
+        {entryType === "expense" ? (
+          <div className="space-y-2">
+            <p className="text-caption text-fg-3 uppercase">Split with (optional)</p>
+            <div className="flex gap-2">
+              <TextField
+                placeholder="e.g. Rahul"
+                value={splitDraft}
+                onChange={(event) => setSplitDraft(event.target.value)}
+                maxLength={50}
+                className="flex-1"
+              />
+              <Button
+                variant="glass"
+                disabled={splitDraft.trim() === ""}
+                onClick={() => {
+                  const name = splitDraft.trim();
+                  if (
+                    name !== "" &&
+                    !splitNames.some((n) => n.toLowerCase() === name.toLowerCase())
+                  ) {
+                    setSplitNames((current) => [...current, name]);
+                  }
+                  setSplitDraft("");
+                }}
+              >
+                Add
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {splitSuggestions
+                .filter((s) => !splitNames.some((n) => n.toLowerCase() === s.toLowerCase()))
+                .map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setSplitNames((current) => [...current, suggestion])}
+                    className="ease-out inline-flex h-9 items-center gap-1.5 rounded-full glass-soft px-3.5 text-footnote text-fg-2 transition-transform duration-150 active:scale-[0.97]"
+                  >
+                    + {suggestion}
+                  </button>
+                ))}
+              {splitNames.map((name) => (
+                <span
+                  key={name}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-volt px-3.5 text-footnote font-medium text-on-volt"
+                >
+                  {name}
+                  <button
+                    type="button"
+                    aria-label={`Remove ${name}`}
+                    onClick={() => setSplitNames((current) => current.filter((n) => n !== name))}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         <Button
           variant="volt"
           block
           size="lg"
-          loading={saving || fallback.pending}
+          loading={saving || fallback.pending || createSplit.pending}
           disabled={!valid}
           onClick={() => void save()}
         >
-          Save {entryType} · {formatMoney(amountToMinor(amount))}
+          {splitting
+            ? `Split with ${pendingSplitNames.length + 1} people · ${formatMoney(amountToMinor(amount))}`
+            : `Save ${entryType} · ${formatMoney(amountToMinor(amount))}`}
         </Button>
       </div>
     </div>

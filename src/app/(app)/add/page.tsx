@@ -4,6 +4,7 @@ import { formatISO } from "date-fns";
 import { requireUser } from "@/features/auth/session";
 import { getCategoriesForUser } from "@/features/categories/queries";
 import { QuickAddScreen } from "@/features/expenses/components/QuickAddScreen";
+import { getSplitSuggestions } from "@/features/expenses/personal-queries";
 import { defaultEntryDate, PERIOD_COOKIE, parsePeriodCookie, resolvePeriod } from "@/lib/period";
 import { parseUpiText } from "@/lib/upi-parse";
 
@@ -22,13 +23,21 @@ export default async function QuickAddPage({
   const user = await requireUser();
   const params = await searchParams;
   const shared = [params.title, params.text, params.url].filter(Boolean).join(" ");
-  const [categories] = await Promise.all([getCategoriesForUser(user.id)]);
+  const [categories, splitSuggestions] = await Promise.all([
+    getCategoriesForUser(user.id),
+    getSplitSuggestions(user.id),
+  ]);
   const entryDate = defaultEntryDate(
     resolvePeriod(parsePeriodCookie((await cookies()).get(PERIOD_COOKIE)?.value)),
     formatISO(new Date(), { representation: "date" }),
   );
 
   return (
-    <QuickAddScreen categories={categories} initial={parseUpiText(shared)} defaultDate={entryDate} />
+    <QuickAddScreen
+      categories={categories}
+      initial={parseUpiText(shared)}
+      defaultDate={entryDate}
+      splitSuggestions={splitSuggestions}
+    />
   );
 }

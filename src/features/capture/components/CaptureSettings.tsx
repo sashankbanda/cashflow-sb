@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Copy, RefreshCw, Trash2 } from "lucide-react";
+import { Copy, MessageSquareText, RefreshCw, Share2, Smartphone, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { toast } from "@/components/ui/Toast";
 import { useAction } from "@/hooks/useAction";
@@ -97,33 +98,109 @@ export function CaptureSettings({ token, origin }: { token: string | null; origi
         )}
       </GlassCard>
 
-      <GlassCard elevation="inset" className="space-y-3 p-5">
-        <h2 className="font-dot text-title-2">iPhone — automatic (no taps)</h2>
-        <ol className="list-decimal space-y-2 pl-5 text-body text-fg-2">
-          <li>Open the Shortcuts app → Automation → New Automation → Message.</li>
-          <li>
-            Set “Message Contains” to <span className="text-fg-1">debited</span> and choose Run
-            Immediately. Repeat later for <span className="text-fg-1">credited</span>.
-          </li>
-          <li>Add the action “Get Contents of URL”, paste the Webhook URL above.</li>
-          <li>Method POST · Request Body JSON → add “token” (your token) and “text” (Shortcut Input).</li>
-        </ol>
-        <p className="text-footnote text-fg-3">
-          From then on, every bank SMS books itself — you just tap the notification and pick a
-          category. Splits work too: if the text ends with{" "}
-          <span className="text-fg-1">split with Rahul, Sandeep</span> (e.g. add an optional
-          &ldquo;Split with?&rdquo; prompt to an app-closed automation), the equal split is booked
-          directly.
-        </p>
-      </GlassCard>
+      <GlassCard elevation="inset" className="divide-y divide-hairline">
+        <Disclosure
+          label="iPhone — 3-question automation"
+          icon={<Smartphone className="size-5 text-fg-2" />}
+        >
+          <div className="space-y-3">
+            <p className="text-footnote text-fg-3">
+              Close your UPI app after paying → three quick questions → the expense logs itself,
+              split and all. One-time setup:
+            </p>
+            <ol className="list-decimal space-y-2 pl-5 text-body text-fg-2">
+              <li>
+                Shortcuts app → Automation → <span className="text-fg-1">+</span> → App → choose
+                your UPI apps → tick <span className="text-fg-1">Is Closed</span> → Run
+                Immediately → Next → New Blank Automation.
+              </li>
+              <li>
+                Add three <span className="text-fg-1">Ask for Input</span> actions: a{" "}
+                <span className="text-fg-1">Number</span> one asking “How much?”, a Text one
+                asking “Where did you spend?”, and a Text one asking “Split with?”.
+              </li>
+              <li>
+                Add a <span className="text-fg-1">Text</span> action reading:{" "}
+                <span className="text-fg-1">Paid ₹ … to … split with …</span> — where each “…” is
+                a variable. Insert every variable via{" "}
+                <span className="text-fg-1">Select Variable</span>, then tap the bubble hanging{" "}
+                <em>directly under the matching question</em>. Don&rsquo;t use the keyboard-bar
+                suggestions — they can bind to the wrong question.
+              </li>
+              <li>
+                Add <span className="text-fg-1">Get Contents of URL</span>: type the Webhook URL
+                above <em>by hand</em> into the URL box (a pasted “chip” fails with a Rich Text
+                error). Expand it → Method <span className="text-fg-1">POST</span> → Request Body{" "}
+                <span className="text-fg-1">JSON</span> → add field{" "}
+                <span className="text-fg-1">token</span> (paste your token) and field{" "}
+                <span className="text-fg-1">text</span> (Select Variable → the bubble under the
+                Text action — never “Shortcut Input”).
+              </li>
+              <li>
+                Test with ▶: the reply echoes <span className="text-fg-1">received</span> — it
+                must contain all three answers. Leave “Split with?” empty for a normal expense;
+                answer <span className="text-fg-1">Rahul, Sandeep</span> to book the equal split
+                instantly.
+              </li>
+            </ol>
+          </div>
+        </Disclosure>
 
-      <GlassCard elevation="inset" className="space-y-3 p-5">
-        <h2 className="font-dot text-title-2">iPhone — from the Share sheet</h2>
-        <ol className="list-decimal space-y-2 pl-5 text-body text-fg-2">
-          <li>Shortcuts → New Shortcut → enable “Show in Share Sheet”.</li>
-          <li>Add “URL”: {origin}/add?text= followed by the Shortcut Input (URL-encoded).</li>
-          <li>Add “Open URL”. Now share any receipt to this shortcut and Cashflow opens prefilled.</li>
-        </ol>
+        <Disclosure
+          label="iPhone — fully automatic from SMS"
+          icon={<MessageSquareText className="size-5 text-fg-2" />}
+        >
+          <div className="space-y-3">
+            <p className="text-footnote text-fg-3">
+              If your bank texts you on every payment, skip the questions entirely:
+            </p>
+            <ol className="list-decimal space-y-2 pl-5 text-body text-fg-2">
+              <li>Shortcuts → Automation → New Automation → Message.</li>
+              <li>
+                Set “Message Contains” to <span className="text-fg-1">debited</span> and choose
+                Run Immediately. Repeat later for <span className="text-fg-1">credited</span>.
+              </li>
+              <li>
+                Add “Get Contents of URL” (URL typed by hand, POST, JSON body) with{" "}
+                <span className="text-fg-1">token</span> = your token and{" "}
+                <span className="text-fg-1">text</span> = Shortcut Input (here it IS the SMS).
+              </li>
+            </ol>
+            <p className="text-footnote text-fg-3">
+              Every bank SMS then books itself — tap the notification to pick a category once per
+              merchant; after that it&rsquo;s remembered.
+            </p>
+          </div>
+        </Disclosure>
+
+        <Disclosure
+          label="Android — share a receipt (no extra apps)"
+          icon={<Share2 className="size-5 text-fg-2" />}
+        >
+          <div className="space-y-3">
+            <ol className="list-decimal space-y-2 pl-5 text-body text-fg-2">
+              <li>
+                Install Cashflow: open it in Chrome → menu ⋮ →{" "}
+                <span className="text-fg-1">Add to Home screen → Install</span>.
+              </li>
+              <li>
+                After any payment, tap <span className="text-fg-1">Share</span> on the
+                GPay/PhonePe/bank receipt (or long-press the SMS → Share) → pick{" "}
+                <span className="text-fg-1">Cashflow</span>.
+              </li>
+              <li>
+                The entry opens prefilled — amount, payee, expense/income. Tap name chips under
+                “Split with” to split it, then Save.
+              </li>
+            </ol>
+            <p className="text-footnote text-fg-3">
+              Long-press the app icon → <span className="text-fg-1">Quick add</span> jumps
+              straight to this screen; the Paste button works with any copied payment text too.
+              Power users can also point any HTTP automation app at the webhook above — same
+              token, same body.
+            </p>
+          </div>
+        </Disclosure>
       </GlassCard>
     </div>
   );
