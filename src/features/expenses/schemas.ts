@@ -65,6 +65,24 @@ export const createPersonalExpenseSchema = z.object({
   isIncome: z.boolean().optional().default(false),
 });
 
+/** Add-and-split in one go: an equal split with named people (no group UI). */
+export const createSplitExpenseSchema = z.object({
+  description: z
+    .string()
+    .trim()
+    .min(1, "What was this for?")
+    .max(80, "Keep it under 80 characters."),
+  amountMinor: z
+    .number()
+    .int("Amounts are whole paise.")
+    .positive("Enter an amount.")
+    .max(MAX_AMOUNT_MINOR, "That's beyond the supported amount."),
+  categoryId: z.string().min(1, "Pick a category."),
+  expenseDate: expenseDateSchema,
+  names: z.array(z.string().trim().min(1).max(50)).min(1).max(10),
+});
+export type CreateSplitExpenseInput = z.infer<typeof createSplitExpenseSchema>;
+
 /** Edit a personal entry: amount, description, category, date, direction. */
 export const updatePersonalExpenseSchema = z.object({
   expenseId: z.string().min(1),

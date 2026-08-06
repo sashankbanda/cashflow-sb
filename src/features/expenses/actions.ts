@@ -9,12 +9,14 @@ import { notifyBudgetThresholds } from "@/features/budgets/notifications";
 import {
   createExpenseSchema,
   createPersonalExpenseSchema,
+  createSplitExpenseSchema,
   updateExpenseSchema,
   updatePersonalExpenseSchema,
 } from "./schemas";
 import {
   createExpense,
   createPersonalExpense,
+  createSplitExpense,
   deleteExpense,
   deletePersonalExpense,
   restorePersonalExpense,
@@ -86,6 +88,22 @@ export const restorePersonalExpenseAction = authedAction({
     revalidatePath("/insights");
     revalidatePath("/budgets");
     return { restored: true };
+  },
+});
+
+export const createSplitExpenseAction = authedAction({
+  name: "expenses.createSplit",
+  schema: createSplitExpenseSchema,
+  handler: async ({ input, ctx }) => {
+    const { groupId, expenseId } = await createSplitExpense(ctx.user, input);
+    revalidateTag(groupBalancesTag(groupId), "max");
+    revalidatePath(`/groups/${groupId}`);
+    revalidatePath("/groups");
+    revalidatePath("/expenses");
+    revalidatePath("/home");
+    revalidatePath("/friends");
+    revalidatePath("/budgets");
+    return { groupId, expenseId };
   },
 });
 

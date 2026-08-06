@@ -317,16 +317,22 @@ export async function createPersonalExpense(
  * their share flows back into the personal ledger, and the original personal
  * row is soft-deleted so nothing double-counts.
  */
-export async function splitPersonalExpense(
-  user: ActionUser,
-  input: { expenseId: string; names: ReadonlyArray<string> },
-): Promise<{ groupId: string; expenseId: string }> {
-  const expense = await db.query.expenses.findFirst({ where: eq(expenses.id, input.expenseId) });
-  if (!expense || expense.deletedAt || expense.groupId !== null) throw notFound("Expense");
-  if (expense.createdBy !== user.id) throw forbidden("That isn't your expense.");
-  if (expense.isIncome) throw validationError("Income can't be split.", {});
-  if (!expense.categoryId) throw validationError("Set a category before splitting.", {});
+export interface SplitByNamesInput {
+  description: string;
+  amountMinor: number;
+  categoryId: string;
+  expenseDate: string;
+  names: ReadonlyArray<string>;
+}
 
+/**
+ * Create an equal split with named people directly (no pre-existing personal
+ * row needed) — the one engine behind add-and-split and edit-and-split.
+ */
+export async function createSplitExpense(
+  user: ActionUser,
+  input: SplitByNamesInput,
+): Promise<{ groupId: string; expenseId: string }> {
   // Find or create the owner's "Splits" group.
   const existing = await db.query.groups.findFirst({
     where: and(eq(groups.createdBy, user.id), eq(groups.name, "Splits"), isNull(groups.archivedAt)),
@@ -357,19 +363,40 @@ export async function splitPersonalExpense(
 
   const { expenseId } = await createExpense(user, {
     groupId,
+    description: input.description,
+    amountMinor: input.amountMinor,
+    categoryId: input.categoryId,
+    expenseDate: input.expenseDate,
+    splitType: "equal",
+    participants: participantIds.map((memberId) => ({ memberId })),
+    payers: [{ memberId: viewerMember.id, amountMinor: input.amountMinor }],
+    idempotencyKey: randomUUID(),
+    tagIds: [],
+  });
+
+  return { groupId, expenseId };
+}
+
+/** Convert an existing personal expense into a split (edit-sheet path). */
+export async function splitPersonalExpense(
+  user: ActionUser,
+  input: { expenseId: string; names: ReadonlyArray<string> },
+): Promise<{ groupId: string; expenseId: string }> {
+  const expense = await db.query.expenses.findFirst({ where: eq(expenses.id, input.expenseId) });
+  if (!expense || expense.deletedAt || expense.groupId !== null) throw notFound("Expense");
+  if (expense.createdBy !== user.id) throw forbidden("That isn't your expense.");
+  if (expense.isIncome) throw validationError("Income can't be split.", {});
+  if (!expense.categoryId) throw validationError("Set a category before splitting.", {});
+
+  const result = await createSplitExpense(user, {
     description: expense.description,
     amountMinor: expense.amountMinor,
     categoryId: expense.categoryId,
     expenseDate: expense.expenseDate,
-    splitType: "equal",
-    participants: participantIds.map((memberId) => ({ memberId })),
-    payers: [{ memberId: viewerMember.id, amountMinor: expense.amountMinor }],
-    idempotencyKey: randomUUID(),
-    tagIds: [],
+    names: input.names,
   });
   await deletePersonalExpense(user, input.expenseId);
-
-  return { groupId, expenseId };
+  return result;
 }
 
 /**

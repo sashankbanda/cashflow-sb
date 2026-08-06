@@ -34,7 +34,12 @@ import {
   RecurrencePicker,
   type RecurrenceValue,
 } from "@/features/recurring/components/RecurrencePicker";
-import { createExpenseAction, createPersonalExpenseAction, updateExpenseAction } from "../actions";
+import {
+  createExpenseAction,
+  createPersonalExpenseAction,
+  createSplitExpenseAction,
+  updateExpenseAction,
+} from "../actions";
 import {
   emptyPayerDraft,
   emptySplitDraft,
@@ -74,6 +79,8 @@ export interface AddExpenseFlowProps {
   availableTags?: ReadonlyArray<TagOption>;
   /** Default date for new entries (ISO day; follows the app-wide period). */
   defaultDate?: string;
+  /** Names split with before — one-tap picks for add-and-split. */
+  splitSuggestions?: ReadonlyArray<string>;
 }
 
 /** Sentinel groupId for the personal (no-group) context. */
@@ -109,6 +116,7 @@ function Flow({
   allowPersonal = false,
   availableTags = [],
   defaultDate,
+  splitSuggestions = [],
 }: Omit<AddExpenseFlowProps, "open">) {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
@@ -122,6 +130,9 @@ function Flow({
   });
   // Personal entries can be a spend or income (money in). Groups are spends.
   const [entryType, setEntryType] = useState<"expense" | "income">("expense");
+  // Split right while adding — names picked here make the CTA a split.
+  const [splitNames, setSplitNames] = useState<string[]>([]);
+  const [splitDraft, setSplitDraft] = useState("");
 
   const initialGroup = groups.find((group) => group.id === defaultGroupId) ?? groups[0] ?? null;
   // From within a group → that group; from the global dock → Personal;
@@ -184,6 +195,14 @@ function Flow({
       router.refresh();
     },
   });
+  const createSplit = useAction(createSplitExpenseAction, {
+    successMessage: "Split added",
+    optimistic: false, // creates a group expense; balances reconcile server-side
+    onSuccess: () => {
+      onClose();
+      router.refresh();
+    },
+  });
   const createRecurring = useAction(createRecurringRuleAction, {
     successMessage: "Recurring expense added",
     optimistic: false, // creates a rule shown on another screen
@@ -193,7 +212,18 @@ function Flow({
     },
   });
   const pending =
-    create.pending || update.pending || createPersonal.pending || createRecurring.pending;
+    create.pending ||
+    update.pending ||
+    createPersonal.pending ||
+    createRecurring.pending ||
+    createSplit.pending;
+  // A typed-but-not-Added split name still counts (no silent loss).
+  const pendingSplitNames =
+    splitDraft.trim() !== "" &&
+    !splitNames.some((name) => name.toLowerCase() === splitDraft.trim().toLowerCase())
+      ? [...splitNames, splitDraft.trim()]
+      : splitNames;
+  const splitting = isPersonal && !isIncomeEntry && pendingSplitNames.length > 0;
   const fieldError = (field: string) =>
     create.fieldError(field) ??
     update.fieldError(field) ??
@@ -220,6 +250,17 @@ function Flow({
   };
 
   const submitPersonal = async () => {
+    // Add-and-split in one go — no add-then-edit dance.
+    if (splitting && !recurrence.enabled) {
+      void createSplit.execute({
+        description: draft.description,
+        amountMinor,
+        categoryId: draft.categoryId,
+        expenseDate: formatISODate(draft.date),
+        names: pendingSplitNames,
+      });
+      return;
+    }
     if (recurrence.enabled) {
       void createRecurring.execute({
         template: {
@@ -527,7 +568,71 @@ function Flow({
                   />
                 ) : null}
 
-                {!editing ? <RecurrencePicker value={recurrence} onChange={setRecurrence} /> : null}
+                {isPersonal && !editing && !isIncomeEntry && !recurrence.enabled ? (
+                  <div className="space-y-2">
+                    <p className="text-caption text-fg-3 uppercase">Split with (optional)</p>
+                    <div className="flex gap-2">
+                      <TextField
+                        placeholder="e.g. Rahul"
+                        value={splitDraft}
+                        onChange={(event) => setSplitDraft(event.target.value)}
+                        maxLength={50}
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="glass"
+                        disabled={splitDraft.trim() === ""}
+                        onClick={() => {
+                          const name = splitDraft.trim();
+                          if (
+                            name !== "" &&
+                            !splitNames.some((n) => n.toLowerCase() === name.toLowerCase())
+                          ) {
+                            setSplitNames((current) => [...current, name]);
+                          }
+                          setSplitDraft("");
+                        }}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {splitSuggestions
+                        .filter((s) => !splitNames.some((n) => n.toLowerCase() === s.toLowerCase()))
+                        .map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() => setSplitNames((current) => [...current, suggestion])}
+                            className="ease-out inline-flex h-9 items-center gap-1.5 rounded-full glass-soft px-3.5 text-footnote text-fg-2 transition-transform duration-150 active:scale-[0.97]"
+                          >
+                            + {suggestion}
+                          </button>
+                        ))}
+                      {splitNames.map((name) => (
+                        <span
+                          key={name}
+                          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-volt px-3.5 text-footnote font-medium text-on-volt"
+                        >
+                          {name}
+                          <button
+                            type="button"
+                            aria-label={`Remove ${name}`}
+                            onClick={() =>
+                              setSplitNames((current) => current.filter((n) => n !== name))
+                            }
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {!editing && !splitting ? (
+                  <RecurrencePicker value={recurrence} onChange={setRecurrence} />
+                ) : null}
               </div>
 
               <div className="pt-3">
@@ -543,7 +648,9 @@ function Flow({
                   }}
                 >
                   {isPersonal
-                    ? `Add ${isIncomeEntry ? "income" : "expense"} · ${formatMoney(amountMinor)}`
+                    ? splitting
+                      ? `Split with ${pendingSplitNames.length + 1} people · ${formatMoney(amountMinor)}`
+                      : `Add ${isIncomeEntry ? "income" : "expense"} · ${formatMoney(amountMinor)}`
                     : "Next"}
                 </Button>
               </div>
