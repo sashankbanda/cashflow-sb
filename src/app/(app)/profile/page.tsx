@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Coins,
   Download,
+  FileDown,
   PiggyBank,
   Repeat,
   SunMoon,
@@ -97,6 +98,15 @@ export default async function ProfilePage() {
               <ChevronRight className="size-4 text-fg-3" />
             </Link>
           ))}
+          <a
+            href="/api/export/all"
+            download
+            className="ease-out flex items-center gap-3 p-4 transition-colors duration-150 active:bg-glass"
+          >
+            <FileDown className="size-5 text-fg-2" />
+            <p className="flex-1 text-body">Download my data</p>
+            <ChevronRight className="size-4 text-fg-3" />
+          </a>
           <TourRow />
         </GlassCard>
         <SignOutButton />
