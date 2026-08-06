@@ -58,10 +58,12 @@ export async function addGhostMember(
 ): Promise<{ memberId: string }> {
   return db.transaction(async (tx) => {
     await assertMember(tx, user.id, input.groupId);
+    // Case-insensitive, matching how split-by-name resolves members — "rahul"
+    // and "Rahul" must be the same person, not two ghosts sharing debts.
     const clash = await tx.query.groupMembers.findFirst({
       where: and(
         eq(groupMembers.groupId, input.groupId),
-        eq(groupMembers.displayName, input.displayName),
+        sql`lower(${groupMembers.displayName}) = ${input.displayName.toLowerCase()}`,
         isNull(groupMembers.leftAt),
       ),
     });
@@ -143,6 +145,15 @@ function assertInviteUsable(invite: Invite): void {
   if (invite.maxUses !== null && invite.useCount >= invite.maxUses) throw notFound("Invite");
 }
 
+/** A still-valid token must not admit anyone into an archived group. */
+async function assertGroupLive(tx: Db, groupId: string): Promise<void> {
+  const group = await tx.query.groups.findFirst({
+    where: eq(groups.id, groupId),
+    columns: { archivedAt: true },
+  });
+  if (!group || group.archivedAt) throw notFound("Group");
+}
+
 /** Public token lookup for the /join landing. Throws NOT_FOUND when unusable. */
 export async function getInviteByToken(token: string): Promise<PublicInvite> {
   const invite = await db.query.invites.findFirst({ where: eq(invites.token, token) });
@@ -183,6 +194,7 @@ export async function joinViaInvite(user: ActionUser, token: string): Promise<{ 
     const invite = await tx.query.invites.findFirst({ where: eq(invites.token, token) });
     if (!invite) throw notFound("Invite");
     assertInviteUsable(invite);
+    await assertGroupLive(tx, invite.groupId);
     if (invite.memberId) {
       throw conflict("This link claims a specific member — pick your name instead.");
     }
@@ -233,6 +245,7 @@ export async function claimGhost(
     const invite = await tx.query.invites.findFirst({ where: eq(invites.token, token) });
     if (!invite) throw notFound("Invite");
     assertInviteUsable(invite);
+    await assertGroupLive(tx, invite.groupId);
     if (invite.memberId && invite.memberId !== memberId) {
       throw forbidden("This link is for a different member.");
     }

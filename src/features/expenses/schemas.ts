@@ -29,8 +29,11 @@ const expenseCoreSchema = z.object({
   categoryId: z.string().min(1, "Pick a category."),
   expenseDate: expenseDateSchema,
   splitType: z.enum(["equal", "exact", "percent", "shares"]),
-  participants: z.array(participantSchema).min(1, "Pick at least one person to split with."),
-  payers: z.array(payerSchema).min(1, "Who paid?"),
+  participants: z
+    .array(participantSchema)
+    .min(1, "Pick at least one person to split with.")
+    .max(100),
+  payers: z.array(payerSchema).min(1, "Who paid?").max(100),
 });
 
 const tagIdsSchema = z.array(z.string().min(1)).max(8).optional();

@@ -33,8 +33,10 @@ export async function getFullExport(userId: string): Promise<Record<string, unkn
     },
   });
 
+  // Active memberships only — after leaving a group, its later activity is
+  // other people's data and must not keep flowing into this user's export.
   const memberships = await db.query.groupMembers.findMany({
-    where: eq(groupMembers.userId, userId),
+    where: and(eq(groupMembers.userId, userId), isNull(groupMembers.leftAt)),
   });
   const groupIds = memberships.map((membership) => membership.groupId);
 

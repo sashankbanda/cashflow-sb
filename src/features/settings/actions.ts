@@ -11,6 +11,7 @@ import {
   categories,
   expenses,
   groupMembers,
+  invites,
   notifications,
   pushSubscriptions,
   recurringRules,
@@ -77,6 +78,12 @@ export const deleteAccountAction = authedAction({
         .where(eq(categories.userId, userId));
       await tx.delete(notifications).where(eq(notifications.userId, userId));
       await tx.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+      // Outstanding invite links die with the account — a deleted user's
+      // tokens must not keep admitting people to groups.
+      await tx
+        .update(invites)
+        .set({ revokedAt: now })
+        .where(and(eq(invites.createdBy, userId), isNull(invites.revokedAt)));
       // Unlink from shared groups: memberships become named ghosts, so group
       // history and balances stay exact for everyone else.
       await tx.update(groupMembers).set({ userId: null }).where(eq(groupMembers.userId, userId));

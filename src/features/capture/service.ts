@@ -77,7 +77,9 @@ export async function captureFromText(token: string, text: string): Promise<Capt
   };
   // Same amount already logged today through another channel? Save anyway
   // (true retries dedupe by idempotency) but say so in the notification.
-  const idempotencyKey = deterministicUuid(user.id, text);
+  // The key includes the DAY so identical SMS texts on later days (recurring
+  // payments with no reference number) still book — same-day retries dedupe.
+  const idempotencyKey = deterministicUuid(user.id, expenseDate, text);
   const duplicate = await findDuplicateEntry(user.id, {
     amountMinor: parsed.amountMinor,
     expenseDate,
@@ -97,7 +99,7 @@ export async function captureFromText(token: string, text: string): Promise<Capt
       idempotencyKey,
     });
   } else {
-    await createPersonalExpense(actor, {
+    const result = await createPersonalExpense(actor, {
       description,
       amountMinor: parsed.amountMinor,
       categoryId: resolved.categoryId,
@@ -106,6 +108,16 @@ export async function captureFromText(token: string, text: string): Promise<Capt
       tagIds: [],
       isIncome: parsed.isIncome,
     });
+    if (!result.created) {
+      // Same text delivered again today — already booked; don't re-notify.
+      return {
+        saved: true,
+        amountMinor: parsed.amountMinor,
+        description,
+        isIncome: parsed.isIncome,
+        splitWith: parsed.splitWith,
+      };
+    }
   }
 
   const duplicateNote = duplicate ? ` · looks like a duplicate of “${duplicate.description}”` : "";

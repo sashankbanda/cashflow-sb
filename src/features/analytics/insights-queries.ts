@@ -88,6 +88,7 @@ export async function categorySpendInRange(
     .where(
       and(
         eq(expenseSplits.userId, userId),
+        eq(expenses.isIncome, false),
         isNull(expenses.deletedAt),
         gte(expenses.expenseDate, range.from),
         lte(expenses.expenseDate, range.to),

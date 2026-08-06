@@ -39,7 +39,9 @@ export const expenses = pgTable(
       .notNull()
       .references(() => users.id),
     recurringRuleId: text().references(() => recurringRules.id),
-    idempotencyKey: text().unique(),
+    /** Client/dedup key — unique PER USER (see index), so one user's key can
+     *  never collide with (or block) another user's insert. */
+    idempotencyKey: text(),
     deletedAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true })
@@ -59,6 +61,7 @@ export const expenses = pgTable(
     index("expenses_creator_category_idx")
       .on(table.createdBy, table.categoryId)
       .where(sql`deleted_at is null`),
+    uniqueIndex("expenses_owner_idempotency_uq").on(table.createdBy, table.idempotencyKey),
     check("expenses_amount_positive", sql`amount_minor > 0`),
   ],
 );

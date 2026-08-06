@@ -4,6 +4,7 @@ import { and, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import { newId } from "@/lib/ids";
 import { computeSplits, SplitError, validatePayers, type SplitShare } from "@/lib/split";
 import { db, type Transaction } from "@/server/db";
+import { deterministicUuid } from "@/server/hash-id";
 import {
   activityLogs,
   categories,
@@ -51,7 +52,12 @@ async function prepare(
   if (!group || group.archivedAt) throw notFound("Group");
 
   const category = await tx.query.categories.findFirst({
-    where: eq(categories.id, input.categoryId),
+    // Must be visible to THIS user (system or their own) and not archived.
+    where: and(
+      eq(categories.id, input.categoryId),
+      or(isNull(categories.userId), eq(categories.userId, user.id)),
+      isNull(categories.archivedAt),
+    ),
   });
   if (!category) throw notFound("Category");
 
@@ -165,12 +171,15 @@ export async function createExpense(
         recurringRuleId: options?.recurringRuleId ?? null,
         idempotencyKey: input.idempotencyKey,
       })
-      .onConflictDoNothing({ target: expenses.idempotencyKey })
+      .onConflictDoNothing({ target: [expenses.createdBy, expenses.idempotencyKey] })
       .returning({ id: expenses.id });
 
     if (inserted.length === 0) {
       const existing = await tx.query.expenses.findFirst({
-        where: eq(expenses.idempotencyKey, input.idempotencyKey),
+        where: and(
+          eq(expenses.createdBy, user.id),
+          eq(expenses.idempotencyKey, input.idempotencyKey),
+        ),
         columns: { id: true },
       });
       if (!existing) throw notFound("Expense");
@@ -255,7 +264,12 @@ export async function createPersonalExpense(
 ): Promise<{ expenseId: string; created: boolean }> {
   return db.transaction(async (tx) => {
     const category = await tx.query.categories.findFirst({
-      where: eq(categories.id, input.categoryId),
+      // Must be visible to THIS user (system or their own) and not archived.
+      where: and(
+        eq(categories.id, input.categoryId),
+        or(isNull(categories.userId), eq(categories.userId, user.id)),
+        isNull(categories.archivedAt),
+      ),
     });
     if (!category) throw notFound("Category");
 
@@ -276,12 +290,15 @@ export async function createPersonalExpense(
         recurringRuleId: options?.recurringRuleId ?? null,
         idempotencyKey: input.idempotencyKey,
       })
-      .onConflictDoNothing({ target: expenses.idempotencyKey })
+      .onConflictDoNothing({ target: [expenses.createdBy, expenses.idempotencyKey] })
       .returning({ id: expenses.id });
 
     if (inserted.length === 0) {
       const existing = await tx.query.expenses.findFirst({
-        where: eq(expenses.idempotencyKey, input.idempotencyKey),
+        where: and(
+          eq(expenses.createdBy, user.id),
+          eq(expenses.idempotencyKey, input.idempotencyKey),
+        ),
         columns: { id: true },
       });
       if (!existing) throw notFound("Expense");
@@ -465,6 +482,9 @@ export async function splitPersonalExpense(
     expenseDate: expense.expenseDate,
     names: input.names,
     exactShares: input.exactShares,
+    // Deterministic per source row: a double-submit or a crash-then-retry
+    // converges on ONE group expense instead of double-booking the money.
+    idempotencyKey: deterministicUuid(user.id, "split-personal", input.expenseId),
   });
   await deletePersonalExpense(user, input.expenseId);
   return result;
@@ -485,7 +505,12 @@ export async function updatePersonalExpense(
     if (expense.createdBy !== user.id) throw forbidden("That isn't your expense.");
 
     const category = await tx.query.categories.findFirst({
-      where: eq(categories.id, input.categoryId),
+      // Must be visible to THIS user (system or their own) and not archived.
+      where: and(
+        eq(categories.id, input.categoryId),
+        or(isNull(categories.userId), eq(categories.userId, user.id)),
+        isNull(categories.archivedAt),
+      ),
     });
     if (!category) throw notFound("Category");
 

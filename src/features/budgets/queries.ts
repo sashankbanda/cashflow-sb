@@ -61,6 +61,7 @@ async function categorySpendForMonth(
     .where(
       and(
         eq(expenseSplits.userId, userId),
+        eq(expenses.isIncome, false),
         isNull(expenses.deletedAt),
         gte(expenses.expenseDate, window.start),
         lte(expenses.expenseDate, window.end),

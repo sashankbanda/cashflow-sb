@@ -1,0 +1,2 @@
+ALTER TABLE "expenses" DROP CONSTRAINT "expenses_idempotencyKey_unique";--> statement-breakpoint
+CREATE UNIQUE INDEX "expenses_owner_idempotency_uq" ON "expenses" USING btree ("created_by","idempotency_key");
