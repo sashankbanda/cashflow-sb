@@ -36,6 +36,7 @@ export interface CaptureResult {
   amountMinor?: number;
   description?: string;
   isIncome?: boolean;
+  splitWith?: string[];
 }
 
 /** Format a sha256 as a UUID so repeated deliveries of the same SMS dedupe. */
@@ -141,5 +142,6 @@ export async function captureFromText(token: string, text: string): Promise<Capt
     amountMinor: parsed.amountMinor,
     description,
     isIncome: parsed.isIncome,
+    splitWith: parsed.splitWith,
   };
 }

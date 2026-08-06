@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { formatISO, startOfMonth } from "date-fns";
+import { formatISO } from "date-fns";
 import { Search } from "lucide-react";
 import { Stagger } from "@/components/motion/Stagger";
 import { GlassCard } from "@/components/ui/GlassCard";

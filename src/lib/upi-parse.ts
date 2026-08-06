@@ -59,11 +59,17 @@ export function parseUpiText(text: string | null | undefined): ParsedUpiText {
     ? Math.round(Number.parseFloat(amountMatch[1]!.replace(/,/g, "")) * 100)
     : null;
 
+  // Read the payee from the text WITHOUT the split clause, so an empty payee
+  // ("Paid ₹100 to  split with Rahul") can't swallow the clause as a name.
+  const splitMatch = SPLIT_RE.exec(source);
+  const body = splitMatch
+    ? `${source.slice(0, splitMatch.index)} ${source.slice(splitMatch.index + splitMatch[0].length)}`
+    : source;
+
   const isIncome = CREDIT_RE.test(source);
-  const nameMatch = isIncome ? (FROM_RE.exec(source) ?? TO_RE.exec(source)) : TO_RE.exec(source);
+  const nameMatch = isIncome ? (FROM_RE.exec(body) ?? TO_RE.exec(body)) : TO_RE.exec(body);
   const description = nameMatch ? cleanName(nameMatch[1]!) : "";
 
-  const splitMatch = SPLIT_RE.exec(source);
   const splitWith = splitMatch
     ? [
         ...new Set(

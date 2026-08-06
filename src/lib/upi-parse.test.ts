@@ -49,6 +49,13 @@ describe("parseUpiText", () => {
     expect(parsed.splitWith).toEqual(["Rahul", "Sandeep", "Priya"]);
   });
 
+  it("keeps the split even when the payee is missing", () => {
+    const parsed = parseUpiText("Paid ₹1000 to  split with Sandeep");
+    expect(parsed.matched).toBe(true);
+    expect(parsed.description).toBe("");
+    expect(parsed.splitWith).toEqual(["Sandeep"]);
+  });
+
   it("returns no split names when the clause is absent or empty", () => {
     expect(parseUpiText("Paid ₹450 to Zomato").splitWith).toEqual([]);
     expect(parseUpiText("Paid ₹450 to Zomato split with ").splitWith).toEqual([]);

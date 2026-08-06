@@ -30,8 +30,11 @@ export async function POST(request: NextRequest) {
   if (result.reason === "bad-token") {
     return NextResponse.json({ ok: false, error: "Invalid token" }, { status: 401 });
   }
+  // `received` echoes the text back so a Shortcut's result box doubles as a
+  // debugger — a truncated echo means the automation's variables never arrived.
+  const received = text.length > 200 ? `${text.slice(0, 200)}…` : text;
   if (!result.saved) {
-    return NextResponse.json({ ok: true, saved: false, error: "No amount found" });
+    return NextResponse.json({ ok: true, saved: false, error: "No amount found", received });
   }
 
   revalidatePath("/expenses");
@@ -44,5 +47,7 @@ export async function POST(request: NextRequest) {
     amountMinor: result.amountMinor,
     description: result.description,
     isIncome: result.isIncome,
+    splitWith: result.splitWith ?? [],
+    received,
   });
 }
