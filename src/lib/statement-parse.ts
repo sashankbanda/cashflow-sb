@@ -131,6 +131,85 @@ function mapColumns(headers: string[]): ColumnMap | null {
   return { date, description, debit, credit, amount };
 }
 
+const LINE_DATE_RE =
+  /^(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}[ /-][A-Za-z]{3,9}[ /-]\d{2,4})\b/;
+
+/**
+ * Parse free-form statement text (one transaction per line — the shape a PDF
+ * statement collapses to). A line is `date … description … [amount] balance`;
+ * direction comes from the running balance (it went up = money in), falling
+ * back to a trailing Cr/Dr marker, else defaults to a spend.
+ */
+export function parseStatementLines(lines: ReadonlyArray<string>): StatementParseResult {
+  const rows: StatementRow[] = [];
+  let skipped = 0;
+  let previousBalance: number | null = null;
+
+  for (const raw of lines) {
+    if (rows.length >= MAX_ROWS) break;
+    const line = raw.trim();
+    const dateMatch = LINE_DATE_RE.exec(line);
+    if (!dateMatch) continue; // header/footer noise, not a transaction line
+    const date = parseStatementDate(dateMatch[1]!);
+    if (!date) {
+      skipped += 1;
+      continue;
+    }
+
+    // Collect trailing numeric tokens (amount column(s) + running balance),
+    // tolerating a Cr/Dr marker between or after them.
+    const tokens = line.slice(dateMatch[0].length).trim().split(/\s+/);
+    const numbers: number[] = [];
+    let marker: "cr" | "dr" | null = null;
+    let cut = tokens.length;
+    for (let i = tokens.length - 1; i >= 0 && numbers.length < 3; i -= 1) {
+      const token = tokens[i]!;
+      if (/^(cr|dr)\.?$/i.test(token)) {
+        marker = token.slice(0, 2).toLowerCase() as "cr" | "dr";
+        cut = i;
+        continue;
+      }
+      const value = parseStatementAmount(token);
+      if (value === null) break;
+      numbers.unshift(value);
+      cut = i;
+    }
+    if (numbers.length === 0) {
+      skipped += 1;
+      continue;
+    }
+
+    const description =
+      tokens.slice(0, cut).join(" ").replace(/\s{2,}/g, " ").trim().slice(0, 80) ||
+      "Imported entry";
+
+    // One number = the amount. Two+ = […, amount, balance].
+    const balance = numbers.length >= 2 ? numbers[numbers.length - 1]! : null;
+    let amountMinor =
+      numbers.length >= 2 ? Math.abs(numbers[numbers.length - 2]!) : Math.abs(numbers[0]!);
+    let isIncome = false;
+    if (balance !== null && previousBalance !== null) {
+      const delta = balance - previousBalance;
+      isIncome = delta > 0;
+      // Three numbers = withdrawal + deposit + balance; the delta says which.
+      if (numbers.length >= 3 && Math.abs(delta) > 0) amountMinor = Math.abs(delta);
+    } else if (marker) {
+      isIncome = marker === "cr";
+    } else if (numbers.length === 1 && numbers[0]! < 0) {
+      isIncome = false;
+    }
+    if (balance !== null) previousBalance = balance;
+
+    if (amountMinor <= 0) {
+      skipped += 1;
+      continue;
+    }
+    rows.push({ date, description, amountMinor, isIncome });
+  }
+
+  return { rows, skipped };
+}
+
 /** Parse a whole statement CSV. Returns matched rows plus a skipped count. */
 export function parseStatementCsv(text: string): StatementParseResult {
   const lines = (text ?? "").split(/\r?\n/).filter((line) => line.trim() !== "");

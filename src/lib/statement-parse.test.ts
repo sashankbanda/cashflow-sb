@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseStatementAmount, parseStatementCsv, parseStatementDate } from "./statement-parse";
+import {
+  parseStatementAmount,
+  parseStatementCsv,
+  parseStatementDate,
+  parseStatementLines,
+} from "./statement-parse";
 
 describe("parseStatementDate", () => {
   it("reads the common Indian formats", () => {
@@ -74,5 +79,42 @@ describe("parseStatementCsv", () => {
   it("returns nothing for text that isn't a statement", () => {
     expect(parseStatementCsv("hello\nworld").rows).toEqual([]);
     expect(parseStatementCsv("").rows).toEqual([]);
+  });
+});
+
+describe("parseStatementLines (PDF-style text)", () => {
+  it("uses the running balance for direction", () => {
+    const { rows } = parseStatementLines([
+      "HDFC BANK — Statement of account",
+      "01/08/2026 UPI-SWIGGY-ORDER123 450.00 11,550.00",
+      "02/08/2026 SALARY AUG 50,000.00 61,550.00",
+      "03/08/2026 UPI-CHAI POINT 20.00 61,530.00",
+      "Page 1 of 2",
+    ]);
+    expect(rows).toEqual([
+      {
+        date: "2026-08-01",
+        description: "UPI-SWIGGY-ORDER123",
+        amountMinor: 45000,
+        isIncome: false,
+      },
+      { date: "2026-08-02", description: "SALARY AUG", amountMinor: 5000000, isIncome: true },
+      { date: "2026-08-03", description: "UPI-CHAI POINT", amountMinor: 2000, isIncome: false },
+    ]);
+  });
+
+  it("falls back to Cr/Dr markers when there's no balance column", () => {
+    const { rows } = parseStatementLines([
+      "01-Aug-26 REFUND AMAZON 120.00 Cr",
+      "02-Aug-26 ATM WDL 500.00 Dr",
+    ]);
+    expect(rows[0]).toMatchObject({ amountMinor: 12000, isIncome: true });
+    expect(rows[1]).toMatchObject({ amountMinor: 50000, isIncome: false });
+  });
+
+  it("ignores non-transaction lines without counting them as skipped", () => {
+    const result = parseStatementLines(["Opening Balance 12,000.00", "", "Statement period"]);
+    expect(result.rows).toEqual([]);
+    expect(result.skipped).toBe(0);
   });
 });
