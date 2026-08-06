@@ -41,15 +41,20 @@ function peopleLabel(count: number, verb: string): string {
 async function HomeWidgets({
   userId,
   openingBalanceMinor,
+  openingBalanceSetOn,
   period,
 }: {
   userId: string;
   openingBalanceMinor: number | null;
+  openingBalanceSetOn: string | null;
   period: Period;
 }) {
   const today = formatISO(new Date(), { representation: "date" });
   const range = { from: period.from, to: period.to };
-  const allTime = { from: "1970-01-01", to: today };
+  // The balance only moves with entries dated on/after the day it was
+  // captured — older history is already inside the entered figure.
+  const anchor = openingBalanceSetOn ?? "1970-01-01";
+  const sinceAnchor = { from: anchor, to: today };
   const noCash = { paidOutMinor: 0, settleInMinor: 0, settleOutMinor: 0 };
   const [summary, budget, topInsights, periodIncome, periodSpendRaw, allIncome, cash] =
     await Promise.all([
@@ -58,8 +63,10 @@ async function HomeWidgets({
       getTopInsights(userId, 1),
       getPersonalIncomeTotal(userId, range),
       period.isDefault ? Promise.resolve(null) : getPersonalSpendTotal(userId, range),
-      openingBalanceMinor !== null ? getPersonalIncomeTotal(userId, allTime) : Promise.resolve(0),
-      openingBalanceMinor !== null ? getCashTotals(userId) : Promise.resolve(noCash),
+      openingBalanceMinor !== null
+        ? getPersonalIncomeTotal(userId, sinceAnchor)
+        : Promise.resolve(0),
+      openingBalanceMinor !== null ? getCashTotals(userId, anchor) : Promise.resolve(noCash),
     ]);
   const periodSpend = periodSpendRaw ?? summary.monthSpendMinor;
   const monthIncome = periodIncome;
@@ -221,6 +228,7 @@ export default async function HomePage() {
           <HomeWidgets
             userId={user.id}
             openingBalanceMinor={user.openingBalanceMinor}
+            openingBalanceSetOn={user.openingBalanceSetOn}
             period={period}
           />
         </Suspense>

@@ -24,8 +24,9 @@ export function OpeningBalanceCard({ current }: { current: number | null }) {
   return (
     <div className="space-y-3">
       <p className="text-footnote text-fg-3">
-        What you have right now (₹). Home then shows your account balance — this amount plus
-        everything in, minus everything out. Leave empty to show monthly balance instead.
+        What you have right now (₹). Home then shows your account balance — this amount moved by
+        every entry from today onward (older entries are already inside it). Re-save anytime to
+        match your bank. Leave empty to show monthly balance instead.
       </p>
       <div className="flex gap-2">
         <TextField

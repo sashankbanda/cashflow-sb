@@ -92,6 +92,7 @@ export const deleteAccountAction = authedAction({
           captureToken: null,
           upiId: null,
           openingBalanceMinor: null,
+          openingBalanceSetOn: null,
           notificationPrefs: {},
         })
         .where(eq(users.id, userId));
@@ -107,9 +108,22 @@ export const updateOpeningBalanceAction = authedAction({
     amountMinor: z.number().int().min(0).max(MAX_AMOUNT_MINOR).nullable(),
   }),
   handler: async ({ input, ctx }) => {
+    // Anchor the balance to the day it was captured (user's timezone): only
+    // entries dated on/after this day move it — older history is already
+    // inside the entered figure and would double-count.
+    const row = await db.query.users.findFirst({
+      where: eq(users.id, ctx.user.id),
+      columns: { timezone: true },
+    });
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: row?.timezone ?? "Asia/Kolkata",
+    }).format(new Date());
     await db
       .update(users)
-      .set({ openingBalanceMinor: input.amountMinor })
+      .set({
+        openingBalanceMinor: input.amountMinor,
+        openingBalanceSetOn: input.amountMinor === null ? null : today,
+      })
       .where(eq(users.id, ctx.user.id));
     revalidatePath("/profile");
     revalidatePath("/home");

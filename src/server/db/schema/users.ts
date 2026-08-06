@@ -1,4 +1,4 @@
-import { bigint, boolean, char, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { bigint, boolean, char, date, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 /** Per-type push preferences; an absent key means enabled. */
 export type NotificationPrefs = Partial<Record<string, boolean>>;
@@ -23,6 +23,12 @@ export const users = pgTable("users", {
   upiId: text(),
   /** Starting balance in paise; when set, Home shows a true account balance. */
   openingBalanceMinor: bigint({ mode: "number" }),
+  /**
+   * Day the starting balance was captured (user's timezone). Only entries
+   * dated on/after it move the account balance — history before it is already
+   * inside the entered figure and must not be replayed.
+   */
+  openingBalanceSetOn: date({ mode: "string" }),
   onboardedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true })

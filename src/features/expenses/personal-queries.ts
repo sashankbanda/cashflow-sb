@@ -183,9 +183,11 @@ export interface CashTotals {
  * Cash-true movement totals for the account balance. A split bill you covered
  * counts at its FULL amount when paid; the part friends will give back only
  * enters the balance when the settlement is actually recorded — money you're
- * waiting on is never counted as received.
+ * waiting on is never counted as received. `since` anchors the sums to the day
+ * the starting balance was captured — older movements are already inside that
+ * figure and must not be replayed.
  */
-export async function getCashTotals(userId: string): Promise<CashTotals> {
+export async function getCashTotals(userId: string, since = "1970-01-01"): Promise<CashTotals> {
   const result = await db.execute(sql`
     select
       coalesce((
@@ -193,18 +195,21 @@ export async function getCashTotals(userId: string): Promise<CashTotals> {
         from expense_payers ep
         join expenses e on e.id = ep.expense_id
         where ep.user_id = ${userId} and e.deleted_at is null and e.is_income = false
+          and e.expense_date >= ${since}
       ), 0)::bigint as paid_out,
       coalesce((
         select sum(st.amount_minor)
         from settlements st
         join group_members gm on gm.id = st.to_member_id
         where gm.user_id = ${userId} and st.deleted_at is null
+          and st.settled_at >= ${since}::date
       ), 0)::bigint as settle_in,
       coalesce((
         select sum(st.amount_minor)
         from settlements st
         join group_members gm on gm.id = st.from_member_id
         where gm.user_id = ${userId} and st.deleted_at is null
+          and st.settled_at >= ${since}::date
       ), 0)::bigint as settle_out
   `);
   const row = result.rows[0] as
