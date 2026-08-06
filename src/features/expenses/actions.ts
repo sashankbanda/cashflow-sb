@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
+import { MAX_AMOUNT_MINOR } from "@/lib/money";
 import { authedAction } from "@/server/action";
 import { sendPushToUsers } from "@/server/push";
 import { groupBalancesTag } from "@/features/balances/queries";
@@ -25,6 +26,38 @@ import {
   updateExpense,
   updatePersonalExpense,
 } from "./service";
+
+import { importStatementRows } from "./import-service";
+
+/**
+ * Bulk-book parsed bank-statement rows as personal entries. Content-derived
+ * idempotency keys make re-imports of overlapping CSVs safe.
+ */
+export const importStatementAction = authedAction({
+  name: "expenses.importStatement",
+  schema: z.object({
+    rows: z
+      .array(
+        z.object({
+          date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          description: z.string().trim().min(1).max(80),
+          amountMinor: z.number().int().positive().max(MAX_AMOUNT_MINOR),
+          isIncome: z.boolean(),
+        }),
+      )
+      .min(1)
+      .max(500),
+  }),
+  handler: async ({ input, ctx }) => {
+    const result = await importStatementRows(ctx.user, input.rows);
+    revalidatePath("/expenses");
+    revalidatePath("/home");
+    revalidatePath("/insights");
+    revalidatePath("/budgets");
+    await notifyBudgetThresholds([ctx.user.id]);
+    return result;
+  },
+});
 
 /**
  * Soft pre-save check: is there already a live entry with this amount today?

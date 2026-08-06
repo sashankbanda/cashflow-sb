@@ -7,6 +7,7 @@ import {
   Coins,
   Download,
   FileDown,
+  FileUp,
   PiggyBank,
   Repeat,
   SunMoon,
@@ -31,6 +32,7 @@ export const metadata: Metadata = { title: "Profile" };
 
 const linkRows = [
   { icon: Zap, label: "Auto-capture payments", href: "/settings/capture" },
+  { icon: FileUp, label: "Import bank statement", href: "/settings/import" },
   { icon: Repeat, label: "Recurring expenses", href: "/recurring" },
   { icon: Tags, label: "Categories & tags", href: "/settings/categories" },
   { icon: Bell, label: "Notifications", href: "/settings/notifications" },

@@ -1,10 +1,12 @@
 import "server-only";
-import { createHash, randomBytes } from "node:crypto";
-import { and, asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { db } from "@/server/db";
-import { categories, expenses, users } from "@/server/db/schema";
+import { users } from "@/server/db/schema";
+import { deterministicUuid } from "@/server/hash-id";
 import { sendPushToUsers } from "@/server/push";
 import type { ActionUser } from "@/server/action-core";
+import { resolveCategoryId } from "@/features/expenses/categorize";
 import {
   createPersonalExpense,
   createSplitExpense,
@@ -43,12 +45,6 @@ export interface CaptureResult {
   splitWith?: string[];
 }
 
-/** Format a sha256 as a UUID so repeated deliveries of the same SMS dedupe. */
-function deterministicKey(userId: string, text: string): string {
-  const hex = createHash("sha256").update(`${userId}\n${text}`).digest("hex");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
-}
-
 /**
  * The webhook body: an SMS/receipt text sent by an iOS Shortcut automation (or
  * Tasker etc). Parses the amount/payee, saves a personal entry under a default
@@ -65,51 +61,9 @@ export async function captureFromText(token: string, text: string): Promise<Capt
   const description =
     parsed.description || (parsed.isIncome ? "Money received" : "UPI payment");
 
-  // Merchant memory: reuse the category this user last gave the same payee —
-  // exact name first, then first-word prefix so "SWIGGY*ORDER123" still finds
-  // "Swiggy". Falls back to a kind-matching system default.
-  const normalized = description.toLowerCase();
-  const firstWord = normalized
-    .replace(/[^a-z0-9 ]+/g, " ")
-    .trim()
-    .split(/\s+/)[0] ?? "";
-  const rememberedWhere = (match: ReturnType<typeof sql>) =>
-    and(
-      eq(expenses.createdBy, user.id),
-      isNull(expenses.groupId),
-      isNull(expenses.deletedAt),
-      isNotNull(expenses.categoryId),
-      match,
-    );
-  let [remembered] = await db
-    .select({ categoryId: expenses.categoryId })
-    .from(expenses)
-    .where(rememberedWhere(sql`lower(${expenses.description}) = ${normalized}`))
-    .orderBy(desc(expenses.createdAt))
-    .limit(1);
-  if (!remembered && firstWord.length >= 4) {
-    [remembered] = await db
-      .select({ categoryId: expenses.categoryId })
-      .from(expenses)
-      .where(rememberedWhere(sql`lower(${expenses.description}) like ${`${firstWord}%`}`))
-      .orderBy(desc(expenses.createdAt))
-      .limit(1);
-  }
-
-  const fallbackCategory = remembered?.categoryId
-    ? { id: remembered.categoryId }
-    : ((await db.query.categories.findFirst({
-        where: and(
-          isNull(categories.userId),
-          eq(categories.kind, parsed.isIncome ? "income" : "expense"),
-        ),
-        orderBy: [asc(categories.name)],
-      })) ??
-      (await db.query.categories.findFirst({
-        where: isNull(categories.userId),
-        orderBy: [asc(categories.name)],
-      })));
-  if (!fallbackCategory) return { saved: false, reason: "no-amount" };
+  // Merchant memory + kind-matching fallback (shared with statement import).
+  const resolved = await resolveCategoryId(user.id, description, parsed.isIncome);
+  if (!resolved) return { saved: false, reason: "no-amount" };
   // Today in the user's timezone (en-CA formats as YYYY-MM-DD).
   const expenseDate = new Intl.DateTimeFormat("en-CA", { timeZone: user.timezone }).format(
     new Date(),
@@ -123,7 +77,7 @@ export async function captureFromText(token: string, text: string): Promise<Capt
   };
   // Same amount already logged today through another channel? Save anyway
   // (true retries dedupe by idempotency) but say so in the notification.
-  const idempotencyKey = deterministicKey(user.id, text);
+  const idempotencyKey = deterministicUuid(user.id, text);
   const duplicate = await findDuplicateEntry(user.id, {
     amountMinor: parsed.amountMinor,
     expenseDate,
@@ -137,7 +91,7 @@ export async function captureFromText(token: string, text: string): Promise<Capt
     await createSplitExpense(actor, {
       description,
       amountMinor: parsed.amountMinor,
-      categoryId: fallbackCategory.id,
+      categoryId: resolved.categoryId,
       expenseDate,
       names: parsed.splitWith,
       idempotencyKey,
@@ -146,7 +100,7 @@ export async function captureFromText(token: string, text: string): Promise<Capt
     await createPersonalExpense(actor, {
       description,
       amountMinor: parsed.amountMinor,
-      categoryId: fallbackCategory.id,
+      categoryId: resolved.categoryId,
       expenseDate,
       idempotencyKey,
       tagIds: [],
@@ -160,7 +114,7 @@ export async function captureFromText(token: string, text: string): Promise<Capt
     body: wantsSplit
       ? `${formatMoney(parsed.amountMinor)} · ${description} — split with ${parsed.splitWith.length}${duplicateNote}`
       : `${formatMoney(parsed.amountMinor)} · ${description}${
-          remembered?.categoryId ? " — saved" : " — tap to set a category"
+          resolved.remembered ? " — saved" : " — tap to set a category"
         }${duplicateNote}`,
     url: wantsSplit ? "/groups" : "/expenses",
     tag: `capture-${idempotencyKey}`,

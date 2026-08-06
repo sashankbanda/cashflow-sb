@@ -252,7 +252,7 @@ export async function createPersonalExpense(
   user: ActionUser,
   input: CreatePersonalExpenseInput,
   options?: { recurringRuleId?: string },
-): Promise<{ expenseId: string }> {
+): Promise<{ expenseId: string; created: boolean }> {
   return db.transaction(async (tx) => {
     const category = await tx.query.categories.findFirst({
       where: eq(categories.id, input.categoryId),
@@ -285,7 +285,7 @@ export async function createPersonalExpense(
         columns: { id: true },
       });
       if (!existing) throw notFound("Expense");
-      return { expenseId: existing.id };
+      return { expenseId: existing.id, created: false };
     }
 
     await tx.insert(expensePayers).values({
@@ -305,7 +305,7 @@ export async function createPersonalExpense(
     });
     await attachTags(tx, user.id, expenseId, input.tagIds);
 
-    return { expenseId };
+    return { expenseId, created: true };
   });
 }
 
