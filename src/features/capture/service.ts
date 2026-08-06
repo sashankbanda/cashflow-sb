@@ -5,7 +5,7 @@ import { db } from "@/server/db";
 import { categories, expenses, users } from "@/server/db/schema";
 import { sendPushToUsers } from "@/server/push";
 import type { ActionUser } from "@/server/action-core";
-import { createPersonalExpense } from "@/features/expenses/service";
+import { createPersonalExpense, createSplitExpense } from "@/features/expenses/service";
 import { formatMoney } from "@/lib/format";
 import { parseUpiText } from "@/lib/upi-parse";
 
@@ -102,22 +102,37 @@ export async function captureFromText(token: string, text: string): Promise<Capt
     email: user.email,
     image: user.image ?? null,
   };
-  await createPersonalExpense(actor, {
-    description,
-    amountMinor: parsed.amountMinor,
-    categoryId: fallbackCategory.id,
-    expenseDate,
-    idempotencyKey: deterministicKey(user.id, text),
-    tagIds: [],
-    isIncome: parsed.isIncome,
-  });
+  const wantsSplit = !parsed.isIncome && parsed.splitWith.length > 0;
+  if (wantsSplit) {
+    // "… split with Rahul, Sandeep" → book the equal split directly.
+    await createSplitExpense(actor, {
+      description,
+      amountMinor: parsed.amountMinor,
+      categoryId: fallbackCategory.id,
+      expenseDate,
+      names: parsed.splitWith,
+      idempotencyKey: deterministicKey(user.id, text),
+    });
+  } else {
+    await createPersonalExpense(actor, {
+      description,
+      amountMinor: parsed.amountMinor,
+      categoryId: fallbackCategory.id,
+      expenseDate,
+      idempotencyKey: deterministicKey(user.id, text),
+      tagIds: [],
+      isIncome: parsed.isIncome,
+    });
+  }
 
   await sendPushToUsers([user.id], "expense_added", {
-    title: parsed.isIncome ? "Income captured" : "Payment captured",
-    body: `${formatMoney(parsed.amountMinor)} · ${description}${
-      remembered?.categoryId ? " — saved" : " — tap to set a category"
-    }`,
-    url: "/expenses",
+    title: parsed.isIncome ? "Income captured" : wantsSplit ? "Split captured" : "Payment captured",
+    body: wantsSplit
+      ? `${formatMoney(parsed.amountMinor)} · ${description} — split with ${parsed.splitWith.length}`
+      : `${formatMoney(parsed.amountMinor)} · ${description}${
+          remembered?.categoryId ? " — saved" : " — tap to set a category"
+        }`,
+    url: wantsSplit ? "/groups" : "/expenses",
     tag: `capture-${deterministicKey(user.id, text)}`,
   });
 

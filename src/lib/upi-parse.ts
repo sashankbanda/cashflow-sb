@@ -11,6 +11,8 @@ export interface ParsedUpiText {
   description: string;
   /** True when the text reads as money received (credit). */
   isIncome: boolean;
+  /** Names after "split with …" — an automation can request a split inline. */
+  splitWith: string[];
   /** True when an amount was recognised — the signal the parse is usable. */
   matched: boolean;
 }
@@ -19,12 +21,13 @@ const AMOUNT_RE = /(?:₹|\brs\.?|\binr\.?)\s*([\d,]+(?:\.\d{1,2})?)/i;
 const CREDIT_RE = /\b(?:received|credited|credit of)\b/i;
 const TO_RE = /\b(?:to|towards|at)[:\s]+([A-Za-z][A-Za-z0-9 @._&'-]{1,50})/i;
 const FROM_RE = /\bfrom[:\s]+([A-Za-z][A-Za-z0-9 @._&'-]{1,50})/i;
+const SPLIT_RE = /\bsplit\s+with[:\s]+([^.\n]+)/i;
 
 /** Trim a captured name at common SMS boilerplate and tidy it up. */
 function cleanName(raw: string): string {
   let name = raw;
   // Cut at the usual trailing clauses banks append.
-  const cutAt = /\s+(?:on|via|using|upi|ref|refno|txn|a\/c|ac|info|not you|call|sms|avl|bal)\b|[(\n\r.]/i.exec(
+  const cutAt = /\s+(?:on|via|using|upi|ref|refno|txn|a\/c|ac|info|not you|call|sms|avl|bal|split)\b|[(\n\r.]/i.exec(
     name,
   );
   if (cutAt) name = name.slice(0, cutAt.index);
@@ -48,7 +51,7 @@ function cleanName(raw: string): string {
 export function parseUpiText(text: string | null | undefined): ParsedUpiText {
   const source = (text ?? "").trim();
   if (source === "") {
-    return { amountMinor: null, description: "", isIncome: false, matched: false };
+    return { amountMinor: null, description: "", isIncome: false, splitWith: [], matched: false };
   }
 
   const amountMatch = AMOUNT_RE.exec(source);
@@ -60,10 +63,23 @@ export function parseUpiText(text: string | null | undefined): ParsedUpiText {
   const nameMatch = isIncome ? (FROM_RE.exec(source) ?? TO_RE.exec(source)) : TO_RE.exec(source);
   const description = nameMatch ? cleanName(nameMatch[1]!) : "";
 
+  const splitMatch = SPLIT_RE.exec(source);
+  const splitWith = splitMatch
+    ? [
+        ...new Set(
+          splitMatch[1]!
+            .split(/,|&|\band\b/i)
+            .map((part) => cleanName(part.trim()))
+            .filter((name) => name !== ""),
+        ),
+      ].slice(0, 10)
+    : [];
+
   return {
     amountMinor: amountMinor !== null && amountMinor > 0 ? amountMinor : null,
     description,
     isIncome,
+    splitWith,
     matched: amountMinor !== null && amountMinor > 0,
   };
 }

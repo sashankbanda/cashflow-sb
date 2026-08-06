@@ -323,6 +323,8 @@ export interface SplitByNamesInput {
   categoryId: string;
   expenseDate: string;
   names: ReadonlyArray<string>;
+  /** Pass a deterministic key for webhook retries; defaults to a fresh UUID. */
+  idempotencyKey?: string;
 }
 
 /**
@@ -370,7 +372,7 @@ export async function createSplitExpense(
     splitType: "equal",
     participants: participantIds.map((memberId) => ({ memberId })),
     payers: [{ memberId: viewerMember.id, amountMinor: input.amountMinor }],
-    idempotencyKey: randomUUID(),
+    idempotencyKey: input.idempotencyKey ?? randomUUID(),
     tagIds: [],
   });
 

@@ -42,6 +42,18 @@ describe("parseUpiText", () => {
     expect(parsed.description).toBe("");
   });
 
+  it("extracts split names from an automation-style clause", () => {
+    const parsed = parseUpiText("Paid ₹450 to Zomato split with Rahul, sandeep & Priya");
+    expect(parsed.amountMinor).toBe(45000);
+    expect(parsed.description).toBe("Zomato");
+    expect(parsed.splitWith).toEqual(["Rahul", "Sandeep", "Priya"]);
+  });
+
+  it("returns no split names when the clause is absent or empty", () => {
+    expect(parseUpiText("Paid ₹450 to Zomato").splitWith).toEqual([]);
+    expect(parseUpiText("Paid ₹450 to Zomato split with ").splitWith).toEqual([]);
+  });
+
   it("rejects unrelated text and empty input", () => {
     expect(parseUpiText("hello, lunch tomorrow?").matched).toBe(false);
     expect(parseUpiText("").matched).toBe(false);

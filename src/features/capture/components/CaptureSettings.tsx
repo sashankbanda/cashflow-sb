@@ -110,7 +110,10 @@ export function CaptureSettings({ token, origin }: { token: string | null; origi
         </ol>
         <p className="text-footnote text-fg-3">
           From then on, every bank SMS books itself — you just tap the notification and pick a
-          category.
+          category. Splits work too: if the text ends with{" "}
+          <span className="text-fg-1">split with Rahul, Sandeep</span> (e.g. add an optional
+          &ldquo;Split with?&rdquo; prompt to an app-closed automation), the equal split is booked
+          directly.
         </p>
       </GlassCard>
 
