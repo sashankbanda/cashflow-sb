@@ -70,15 +70,19 @@ async function HomeWidgets({
     ]);
   const periodSpend = periodSpendRaw ?? summary.monthSpendMinor;
   const monthIncome = periodIncome;
-  // With a starting balance set, the DEFAULT hero is a CASH-TRUE account
-  // balance (split bills at the full paid amount; friends' shares enter only
-  // when settled). Picking any explicit period switches the hero to that
-  // window's income-minus-spending so the whole screen follows the picker;
-  // "This month" brings the account balance back.
-  const accountMode = openingBalanceMinor !== null && period.isDefault;
-  const heroMinor = accountMode
-    ? openingBalanceMinor + allIncome + cash.settleInMinor - cash.paidOutMinor - cash.settleOutMinor
-    : monthIncome - periodSpend;
+  // The hero is ALWAYS the picked window's flow — money in minus money out
+  // for exactly that month/range (owner decision 2026-08-06). The cash-true
+  // account balance (starting balance + settled cash since it was saved)
+  // rides along as the summary line instead of replacing the hero.
+  const heroMinor = monthIncome - periodSpend;
+  const accountBalanceMinor =
+    openingBalanceMinor !== null && period.isDefault
+      ? openingBalanceMinor +
+        allIncome +
+        cash.settleInMinor -
+        cash.paidOutMinor -
+        cash.settleOutMinor
+      : null;
 
   const topInsight = topInsights[0];
   const insight =
@@ -93,16 +97,12 @@ async function HomeWidgets({
     <Stagger className="space-y-3">
       <NetBalanceWidget
         netMinor={heroMinor}
-        context={accountMode ? "Cash in − cash out since your start" : "Income minus spending"}
-        label={
-          accountMode
-            ? "Account balance"
-            : period.isDefault
-              ? undefined
-              : `Balance · ${period.label}`
-        }
+        context="Money in minus money out, this period only"
+        label={`Balance · ${period.label}`}
         summaryText={
-          accountMode ? "Money friends still have to give isn't counted until settled" : undefined
+          accountBalanceMinor !== null
+            ? `Account balance ${formatMoney(accountBalanceMinor)} — only cash that's actually moved`
+            : undefined
         }
         monthInMinor={monthIncome}
         monthOutMinor={periodSpend}
