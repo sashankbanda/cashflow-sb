@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import { newId } from "@/lib/ids";
 import { computeSplits, SplitError, validatePayers, type SplitShare } from "@/lib/split";
 import { db, type Transaction } from "@/server/db";
@@ -307,6 +307,45 @@ export async function createPersonalExpense(
 
     return { expenseId };
   });
+}
+
+/**
+ * Soft duplicate signal: another live entry this user paid with the same
+ * amount on the same day. Used to WARN, never block — the same payment often
+ * arrives through two channels (automation + manual, share + SMS).
+ */
+export async function findDuplicateEntry(
+  userId: string,
+  probe: {
+    amountMinor: number;
+    expenseDate: string;
+    isIncome?: boolean;
+    /** Skip the row this very request may have already created (retries). */
+    excludeIdempotencyKey?: string;
+  },
+): Promise<{ description: string } | null> {
+  const conditions = [
+    eq(expensePayers.userId, userId),
+    isNull(expenses.deletedAt),
+    eq(expenses.amountMinor, probe.amountMinor),
+    eq(expenses.expenseDate, probe.expenseDate),
+    eq(expenses.isIncome, probe.isIncome ?? false),
+  ];
+  if (probe.excludeIdempotencyKey) {
+    conditions.push(
+      or(
+        isNull(expenses.idempotencyKey),
+        ne(expenses.idempotencyKey, probe.excludeIdempotencyKey),
+      )!,
+    );
+  }
+  const [row] = await db
+    .select({ description: expenses.description })
+    .from(expenses)
+    .innerJoin(expensePayers, eq(expensePayers.expenseId, expenses.id))
+    .where(and(...conditions))
+    .limit(1);
+  return row ?? null;
 }
 
 /**

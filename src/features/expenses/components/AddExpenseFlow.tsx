@@ -35,6 +35,7 @@ import {
   type RecurrenceValue,
 } from "@/features/recurring/components/RecurrencePicker";
 import {
+  checkDuplicateAction,
   createExpenseAction,
   createPersonalExpenseAction,
   createSplitExpenseAction,
@@ -133,6 +134,9 @@ function Flow({
   // Split right while adding — names picked here make the CTA a split.
   const [splitNames, setSplitNames] = useState<string[]>([]);
   const [splitDraft, setSplitDraft] = useState("");
+  // Same-amount-same-day warning, keyed to the exact probe it was raised for —
+  // changing amount/date/direction re-arms the guard. Second tap saves anyway.
+  const [dupe, setDupe] = useState<{ key: string; message: string } | null>(null);
 
   const initialGroup = groups.find((group) => group.id === defaultGroupId) ?? groups[0] ?? null;
   // From within a group → that group; from the global dock → Personal;
@@ -234,6 +238,9 @@ function Flow({
   const payerResult = payerDraftToPayers(draft.payer, amountMinor);
   const splitResult = splitDraftToParticipants(draft.split, amountMinor);
 
+  const dupeProbeKey = `${amountMinor}|${formatISODate(draft.date)}|${entryType}`;
+  const dupeWarning = dupe !== null && dupe.key === dupeProbeKey ? dupe.message : null;
+
   const goTo = (next: Step) => {
     setDirection(next > step ? 1 : -1);
     setStep(next);
@@ -250,6 +257,26 @@ function Flow({
   };
 
   const submitPersonal = async () => {
+    // Warn once on a same-amount-same-day entry (not for recurring rules or
+    // edits); a second tap saves anyway. Failures never block the save.
+    if (!editing && !recurrence.enabled && dupeWarning === null) {
+      try {
+        const check = await checkDuplicateAction({
+          amountMinor,
+          expenseDate: formatISODate(draft.date),
+          isIncome: entryType === "income",
+        });
+        if (check.ok && check.data.duplicate) {
+          setDupe({
+            key: dupeProbeKey,
+            message: `${formatMoney(amountMinor)} · “${check.data.duplicate.description}” is already logged on this date.`,
+          });
+          return;
+        }
+      } catch {
+        /* offline or slow — proceed */
+      }
+    }
     // Add-and-split in one go — no add-then-edit dance.
     if (splitting && !recurrence.enabled) {
       void createSplit.execute({
@@ -635,7 +662,12 @@ function Flow({
                 ) : null}
               </div>
 
-              <div className="pt-3">
+              <div className="space-y-2 pt-3">
+                {isPersonal && dupeWarning ? (
+                  <p role="alert" className="text-center text-footnote text-negative">
+                    {dupeWarning}
+                  </p>
+                ) : null}
                 <Button
                   variant="volt"
                   block
@@ -648,9 +680,11 @@ function Flow({
                   }}
                 >
                   {isPersonal
-                    ? splitting
-                      ? `Split with ${pendingSplitNames.length + 1} people · ${formatMoney(amountMinor)}`
-                      : `Add ${isIncomeEntry ? "income" : "expense"} · ${formatMoney(amountMinor)}`
+                    ? dupeWarning
+                      ? `Save anyway · ${formatMoney(amountMinor)}`
+                      : splitting
+                        ? `Split with ${pendingSplitNames.length + 1} people · ${formatMoney(amountMinor)}`
+                        : `Add ${isIncomeEntry ? "income" : "expense"} · ${formatMoney(amountMinor)}`
                     : "Next"}
                 </Button>
               </div>

@@ -19,11 +19,29 @@ import {
   createSplitExpense,
   deleteExpense,
   deletePersonalExpense,
+  findDuplicateEntry,
   restorePersonalExpense,
   splitPersonalExpense,
   updateExpense,
   updatePersonalExpense,
 } from "./service";
+
+/**
+ * Soft pre-save check: is there already a live entry with this amount today?
+ * The add flows warn once ("Save anyway") — never block; failures are treated
+ * as "no duplicate" so the guard can't stop an offline save.
+ */
+export const checkDuplicateAction = authedAction({
+  name: "expenses.checkDuplicate",
+  schema: z.object({
+    amountMinor: z.number().int().positive(),
+    expenseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    isIncome: z.boolean().optional().default(false),
+  }),
+  handler: async ({ input, ctx }) => ({
+    duplicate: await findDuplicateEntry(ctx.user.id, input),
+  }),
+});
 
 export const createExpenseAction = authedAction({
   name: "expenses.create",

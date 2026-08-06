@@ -5,7 +5,11 @@ import { db } from "@/server/db";
 import { categories, expenses, users } from "@/server/db/schema";
 import { sendPushToUsers } from "@/server/push";
 import type { ActionUser } from "@/server/action-core";
-import { createPersonalExpense, createSplitExpense } from "@/features/expenses/service";
+import {
+  createPersonalExpense,
+  createSplitExpense,
+  findDuplicateEntry,
+} from "@/features/expenses/service";
 import { formatMoney } from "@/lib/format";
 import { parseUpiText } from "@/lib/upi-parse";
 
@@ -61,22 +65,36 @@ export async function captureFromText(token: string, text: string): Promise<Capt
   const description =
     parsed.description || (parsed.isIncome ? "Money received" : "UPI payment");
 
-  // Merchant memory: reuse the category this user last gave the same payee, so
-  // "Swiggy" only ever needs categorizing once. Falls back to a system default.
-  const [remembered] = await db
+  // Merchant memory: reuse the category this user last gave the same payee —
+  // exact name first, then first-word prefix so "SWIGGY*ORDER123" still finds
+  // "Swiggy". Falls back to a kind-matching system default.
+  const normalized = description.toLowerCase();
+  const firstWord = normalized
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .trim()
+    .split(/\s+/)[0] ?? "";
+  const rememberedWhere = (match: ReturnType<typeof sql>) =>
+    and(
+      eq(expenses.createdBy, user.id),
+      isNull(expenses.groupId),
+      isNull(expenses.deletedAt),
+      isNotNull(expenses.categoryId),
+      match,
+    );
+  let [remembered] = await db
     .select({ categoryId: expenses.categoryId })
     .from(expenses)
-    .where(
-      and(
-        eq(expenses.createdBy, user.id),
-        isNull(expenses.groupId),
-        isNull(expenses.deletedAt),
-        isNotNull(expenses.categoryId),
-        sql`lower(${expenses.description}) = ${description.toLowerCase()}`,
-      ),
-    )
+    .where(rememberedWhere(sql`lower(${expenses.description}) = ${normalized}`))
     .orderBy(desc(expenses.createdAt))
     .limit(1);
+  if (!remembered && firstWord.length >= 4) {
+    [remembered] = await db
+      .select({ categoryId: expenses.categoryId })
+      .from(expenses)
+      .where(rememberedWhere(sql`lower(${expenses.description}) like ${`${firstWord}%`}`))
+      .orderBy(desc(expenses.createdAt))
+      .limit(1);
+  }
 
   const fallbackCategory = remembered?.categoryId
     ? { id: remembered.categoryId }
@@ -103,6 +121,16 @@ export async function captureFromText(token: string, text: string): Promise<Capt
     email: user.email,
     image: user.image ?? null,
   };
+  // Same amount already logged today through another channel? Save anyway
+  // (true retries dedupe by idempotency) but say so in the notification.
+  const idempotencyKey = deterministicKey(user.id, text);
+  const duplicate = await findDuplicateEntry(user.id, {
+    amountMinor: parsed.amountMinor,
+    expenseDate,
+    isIncome: parsed.isIncome,
+    excludeIdempotencyKey: idempotencyKey,
+  });
+
   const wantsSplit = !parsed.isIncome && parsed.splitWith.length > 0;
   if (wantsSplit) {
     // "… split with Rahul, Sandeep" → book the equal split directly.
@@ -112,7 +140,7 @@ export async function captureFromText(token: string, text: string): Promise<Capt
       categoryId: fallbackCategory.id,
       expenseDate,
       names: parsed.splitWith,
-      idempotencyKey: deterministicKey(user.id, text),
+      idempotencyKey,
     });
   } else {
     await createPersonalExpense(actor, {
@@ -120,21 +148,22 @@ export async function captureFromText(token: string, text: string): Promise<Capt
       amountMinor: parsed.amountMinor,
       categoryId: fallbackCategory.id,
       expenseDate,
-      idempotencyKey: deterministicKey(user.id, text),
+      idempotencyKey,
       tagIds: [],
       isIncome: parsed.isIncome,
     });
   }
 
+  const duplicateNote = duplicate ? ` · looks like a duplicate of “${duplicate.description}”` : "";
   await sendPushToUsers([user.id], "expense_added", {
     title: parsed.isIncome ? "Income captured" : wantsSplit ? "Split captured" : "Payment captured",
     body: wantsSplit
-      ? `${formatMoney(parsed.amountMinor)} · ${description} — split with ${parsed.splitWith.length}`
+      ? `${formatMoney(parsed.amountMinor)} · ${description} — split with ${parsed.splitWith.length}${duplicateNote}`
       : `${formatMoney(parsed.amountMinor)} · ${description}${
           remembered?.categoryId ? " — saved" : " — tap to set a category"
-        }`,
+        }${duplicateNote}`,
     url: wantsSplit ? "/groups" : "/expenses",
-    tag: `capture-${deterministicKey(user.id, text)}`,
+    tag: `capture-${idempotencyKey}`,
   });
 
   return {

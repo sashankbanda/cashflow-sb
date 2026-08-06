@@ -22,7 +22,11 @@ import { parseUpiText, type ParsedUpiText } from "@/lib/upi-parse";
 import { useAction } from "@/hooks/useAction";
 import { CategoryGlyph } from "@/features/categories/icons";
 import type { CategoryOption } from "@/features/categories/queries";
-import { createPersonalExpenseAction, createSplitExpenseAction } from "../actions";
+import {
+  checkDuplicateAction,
+  createPersonalExpenseAction,
+  createSplitExpenseAction,
+} from "../actions";
 
 /**
  * One-screen fast entry for payments made elsewhere. Reached by sharing a UPI
@@ -61,6 +65,7 @@ export function QuickAddScreen({
   const [saving, setSaving] = useState(false);
   const [splitNames, setSplitNames] = useState<string[]>([...initial.splitWith]);
   const [splitDraft, setSplitDraft] = useState("");
+  const [dupeWarning, setDupeWarning] = useState<string | null>(null);
 
   const fallback = useAction(createPersonalExpenseAction, {
     successMessage: "Saved",
@@ -103,6 +108,24 @@ export function QuickAddScreen({
     const amountMinor = amountToMinor(amount);
     const income = entryType === "income";
     const category = categories.find((option) => option.id === categoryId);
+    // Warn once on a same-amount-same-day entry; a second tap saves anyway.
+    if (dupeWarning === null) {
+      try {
+        const check = await checkDuplicateAction({
+          amountMinor,
+          expenseDate: formatISODate(date),
+          isIncome: income,
+        });
+        if (check.ok && check.data.duplicate) {
+          setDupeWarning(
+            `${formatMoney(amountMinor)} · “${check.data.duplicate.description}” is already logged on this date.`,
+          );
+          return;
+        }
+      } catch {
+        /* offline or slow — the guard never blocks a save */
+      }
+    }
     if (splitting) {
       // Add-and-split in one go — books straight into the Splits group.
       void createSplit.execute({
@@ -174,7 +197,13 @@ export function QuickAddScreen({
         />
 
         <AmountDisplay value={amount} />
-        <AmountKeypad value={amount} onChange={setAmount} />
+        <AmountKeypad
+          value={amount}
+          onChange={(next) => {
+            setAmount(next);
+            setDupeWarning(null);
+          }}
+        />
 
         <TextField
           label={entryType === "income" ? "What's it from?" : "What was it for?"}
@@ -215,7 +244,13 @@ export function QuickAddScreen({
 
         <div className="space-y-2">
           <p className="text-caption text-fg-3 uppercase">Date</p>
-          <DateChip value={date} onChange={setDate} />
+          <DateChip
+            value={date}
+            onChange={(next) => {
+              setDate(next);
+              setDupeWarning(null);
+            }}
+          />
         </div>
 
         {entryType === "expense" ? (
@@ -278,6 +313,11 @@ export function QuickAddScreen({
           </div>
         ) : null}
 
+        {dupeWarning ? (
+          <p role="alert" className="text-center text-footnote text-negative">
+            {dupeWarning}
+          </p>
+        ) : null}
         <Button
           variant="volt"
           block
@@ -286,9 +326,11 @@ export function QuickAddScreen({
           disabled={!valid}
           onClick={() => void save()}
         >
-          {splitting
-            ? `Split with ${pendingSplitNames.length + 1} people · ${formatMoney(amountToMinor(amount))}`
-            : `Save ${entryType} · ${formatMoney(amountToMinor(amount))}`}
+          {dupeWarning
+            ? `Save anyway · ${formatMoney(amountToMinor(amount))}`
+            : splitting
+              ? `Split with ${pendingSplitNames.length + 1} people · ${formatMoney(amountToMinor(amount))}`
+              : `Save ${entryType} · ${formatMoney(amountToMinor(amount))}`}
         </Button>
       </div>
     </div>
