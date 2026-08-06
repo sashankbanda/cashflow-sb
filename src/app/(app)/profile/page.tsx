@@ -51,13 +51,13 @@ export default async function ProfilePage() {
           </div>
         </GlassCard>
         <GlassCard elevation="inset" className="divide-y divide-hairline">
-          <Disclosure label="Starting balance" icon={Coins}>
+          <Disclosure label="Starting balance" icon={<Coins className="size-5 text-fg-2" />}>
             <OpeningBalanceCard current={user.openingBalanceMinor} />
           </Disclosure>
-          <Disclosure label="Your UPI ID" icon={AtSign}>
+          <Disclosure label="Your UPI ID" icon={<AtSign className="size-5 text-fg-2" />}>
             <UpiIdCard current={user.upiId} />
           </Disclosure>
-          <Disclosure label="Appearance" icon={SunMoon}>
+          <Disclosure label="Appearance" icon={<SunMoon className="size-5 text-fg-2" />}>
             <ThemeToggle />
           </Disclosure>
         </GlassCard>
