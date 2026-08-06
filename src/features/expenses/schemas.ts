@@ -80,6 +80,8 @@ export const createSplitExpenseSchema = z.object({
   categoryId: z.string().min(1, "Pick a category."),
   expenseDate: expenseDateSchema,
   names: z.array(z.string().trim().min(1).max(50)).min(1).max(10),
+  /** Exact shares in paise, [you, ...names]; sum-vs-total is checked in the service. */
+  exactShares: z.array(z.number().int().nonnegative()).max(11).optional(),
 });
 export type CreateSplitExpenseInput = z.infer<typeof createSplitExpenseSchema>;
 

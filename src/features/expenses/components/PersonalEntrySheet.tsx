@@ -14,11 +14,13 @@ import { TextField } from "@/components/ui/TextField";
 import { asPalette, paletteBg } from "@/components/ui/palette";
 import { cn } from "@/lib/cn";
 import { amountToMinor, isValidAmount, minorToAmount } from "@/lib/amount-input";
+import { toast } from "@/components/ui/Toast";
 import { formatISODate } from "@/lib/dates";
 import { useAction } from "@/hooks/useAction";
 import { CategoryGlyph } from "@/features/categories/icons";
 import type { CategoryOption } from "@/features/categories/queries";
 import { splitPersonalExpenseAction, updatePersonalExpenseAction } from "../actions";
+import { assignedShareMinor, equalShareStrings, SplitSharesEditor } from "./SplitSharesEditor";
 import type { LedgerEntry } from "../personal-queries";
 
 function Form({
@@ -82,6 +84,10 @@ function Form({
     !names.some((existing) => existing.toLowerCase() === nameDraft.trim().toLowerCase())
       ? [...names, nameDraft.trim()]
       : names;
+  // Unequal shares, keyed to the people list — any change falls back to equal.
+  const [shares, setShares] = useState<{ key: string; values: string[] } | null>(null);
+  const sharesKey = pendingNames.join("|");
+  const activeShares = shares !== null && shares.key === sharesKey ? shares.values : null;
   const unpickedSuggestions = splitSuggestions.filter(
     (suggestion) => !names.some((name) => name.toLowerCase() === suggestion.toLowerCase()),
   );
@@ -206,14 +212,62 @@ function Form({
               ))}
             </div>
           ) : null}
+          {pendingNames.length > 0 && activeShares !== null ? (
+            <div className="space-y-2">
+              <SplitSharesEditor
+                totalMinor={entry.amountMinor}
+                people={["You", ...pendingNames]}
+                values={activeShares}
+                onChange={(values) => setShares({ key: sharesKey, values })}
+              />
+              <Button variant="ghost" size="sm" onClick={() => setShares(null)}>
+                Back to equal split
+              </Button>
+            </div>
+          ) : null}
+          {pendingNames.length > 0 && activeShares === null ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setShares({
+                  key: sharesKey,
+                  values: equalShareStrings(entry.amountMinor, pendingNames.length + 1),
+                })
+              }
+            >
+              Adjust shares
+            </Button>
+          ) : null}
           {pendingNames.length > 0 ? (
             <Button
               variant="glass"
               block
               loading={split.pending}
-              onClick={() => void split.execute({ expenseId: entry.expenseId, names: pendingNames })}
+              onClick={() => {
+                if (
+                  activeShares !== null &&
+                  assignedShareMinor(activeShares) !== entry.amountMinor
+                ) {
+                  toast.error("Shares must add up to the total.");
+                  return;
+                }
+                void split.execute({
+                  expenseId: entry.expenseId,
+                  names: pendingNames,
+                  exactShares:
+                    activeShares !== null
+                      ? activeShares.map((value) =>
+                          value.trim() === "" ? 0 : amountToMinor(value),
+                        )
+                      : undefined,
+                });
+              }}
             >
-              <UsersRound className="size-4" /> Split equally with {pendingNames.length + 1} people
+              <UsersRound className="size-4" />{" "}
+              {activeShares !== null
+                ? `Split with ${pendingNames.length + 1} people`
+                : `Split equally with ${pendingNames.length + 1} people`}
             </Button>
           ) : null}
           <p className="text-footnote text-fg-3">

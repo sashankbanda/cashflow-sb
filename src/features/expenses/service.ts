@@ -362,18 +362,44 @@ export interface SplitByNamesInput {
   categoryId: string;
   expenseDate: string;
   names: ReadonlyArray<string>;
+  /**
+   * Optional exact shares in paise, aligned as [you, ...names]. Must sum to
+   * amountMinor; zero shares are allowed ("I paid, it's all theirs"). Absent
+   * means equal split.
+   */
+  exactShares?: ReadonlyArray<number>;
   /** Pass a deterministic key for webhook retries; defaults to a fresh UUID. */
   idempotencyKey?: string;
 }
 
 /**
- * Create an equal split with named people directly (no pre-existing personal
- * row needed) — the one engine behind add-and-split and edit-and-split.
+ * Create a split with named people directly (no pre-existing personal row
+ * needed) — the one engine behind add-and-split and edit-and-split. Equal by
+ * default; exactShares makes it an unequal (exact-paise) split.
  */
 export async function createSplitExpense(
   user: ActionUser,
   input: SplitByNamesInput,
 ): Promise<{ groupId: string; expenseId: string }> {
+  const trimmed = input.names.map((name) => name.trim()).filter((name) => name !== "");
+  const exact = input.exactShares;
+  if (exact) {
+    // Exact shares are positional — names must stay unique and 1:1 with them.
+    if (exact.length !== trimmed.length + 1) {
+      throw validationError("Shares don't match the people.", {});
+    }
+    if (exact.some((share) => !Number.isSafeInteger(share) || share < 0)) {
+      throw validationError("Shares must be zero or more.", {});
+    }
+    if (exact.reduce((sum, share) => sum + share, 0) !== input.amountMinor) {
+      throw validationError("Shares must add up to the total.", {});
+    }
+    const lower = trimmed.map((name) => name.toLowerCase());
+    if (new Set(lower).size !== lower.length) {
+      throw validationError("Each person can appear only once.", {});
+    }
+  }
+
   // Find or create the owner's "Splits" group.
   const existing = await db.query.groups.findFirst({
     where: and(eq(groups.createdBy, user.id), eq(groups.name, "Splits"), isNull(groups.archivedAt)),
@@ -387,7 +413,7 @@ export async function createSplitExpense(
   const viewerMember = members.find((member) => member.userId === user.id);
   if (!viewerMember) throw forbidden("You aren't in your Splits group.");
 
-  const wanted = [...new Set(input.names.map((name) => name.trim()).filter(Boolean))];
+  const wanted = exact ? trimmed : [...new Set(trimmed)];
   const participantIds = [viewerMember.id];
   for (const name of wanted) {
     const match = members.find(
@@ -395,6 +421,7 @@ export async function createSplitExpense(
     );
     if (match) {
       if (match.id !== viewerMember.id) participantIds.push(match.id);
+      else if (exact) throw validationError("You're included automatically — remove your own name.", {});
     } else {
       const { memberId } = await addGhostMember(user, { groupId, displayName: name });
       participantIds.push(memberId);
@@ -408,8 +435,10 @@ export async function createSplitExpense(
     amountMinor: input.amountMinor,
     categoryId: input.categoryId,
     expenseDate: input.expenseDate,
-    splitType: "equal",
-    participants: participantIds.map((memberId) => ({ memberId })),
+    splitType: exact ? "exact" : "equal",
+    participants: participantIds.map((memberId, index) =>
+      exact ? { memberId, weight: exact[index] } : { memberId },
+    ),
     payers: [{ memberId: viewerMember.id, amountMinor: input.amountMinor }],
     idempotencyKey: input.idempotencyKey ?? randomUUID(),
     tagIds: [],
@@ -421,7 +450,7 @@ export async function createSplitExpense(
 /** Convert an existing personal expense into a split (edit-sheet path). */
 export async function splitPersonalExpense(
   user: ActionUser,
-  input: { expenseId: string; names: ReadonlyArray<string> },
+  input: { expenseId: string; names: ReadonlyArray<string>; exactShares?: ReadonlyArray<number> },
 ): Promise<{ groupId: string; expenseId: string }> {
   const expense = await db.query.expenses.findFirst({ where: eq(expenses.id, input.expenseId) });
   if (!expense || expense.deletedAt || expense.groupId !== null) throw notFound("Expense");
@@ -435,6 +464,7 @@ export async function splitPersonalExpense(
     categoryId: expense.categoryId,
     expenseDate: expense.expenseDate,
     names: input.names,
+    exactShares: input.exactShares,
   });
   await deletePersonalExpense(user, input.expenseId);
   return result;

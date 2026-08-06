@@ -51,6 +51,7 @@ import {
 } from "../split-draft";
 import { PayerEditor } from "./PayerEditor";
 import { SplitEditor } from "./SplitEditor";
+import { assignedShareMinor, equalShareStrings, SplitSharesEditor } from "./SplitSharesEditor";
 
 /** Prefill for edit mode, derived from a TimelineExpense. */
 export interface ExpenseEditInitial {
@@ -137,6 +138,8 @@ function Flow({
   // Same-amount-same-day warning, keyed to the exact probe it was raised for —
   // changing amount/date/direction re-arms the guard. Second tap saves anyway.
   const [dupe, setDupe] = useState<{ key: string; message: string } | null>(null);
+  // Unequal shares, keyed to (amount, people) — any change falls back to equal.
+  const [shares, setShares] = useState<{ key: string; values: string[] } | null>(null);
 
   const initialGroup = groups.find((group) => group.id === defaultGroupId) ?? groups[0] ?? null;
   // From within a group → that group; from the global dock → Personal;
@@ -240,6 +243,8 @@ function Flow({
 
   const dupeProbeKey = `${amountMinor}|${formatISODate(draft.date)}|${entryType}`;
   const dupeWarning = dupe !== null && dupe.key === dupeProbeKey ? dupe.message : null;
+  const sharesKey = `${amountMinor}|${pendingSplitNames.join("|")}`;
+  const activeShares = shares !== null && shares.key === sharesKey ? shares.values : null;
 
   const goTo = (next: Step) => {
     setDirection(next > step ? 1 : -1);
@@ -279,12 +284,20 @@ function Flow({
     }
     // Add-and-split in one go — no add-then-edit dance.
     if (splitting && !recurrence.enabled) {
+      if (activeShares !== null && assignedShareMinor(activeShares) !== amountMinor) {
+        toast.error("Shares must add up to the total.");
+        return;
+      }
       void createSplit.execute({
         description: draft.description,
         amountMinor,
         categoryId: draft.categoryId,
         expenseDate: formatISODate(draft.date),
         names: pendingSplitNames,
+        exactShares:
+          activeShares !== null
+            ? activeShares.map((value) => (value.trim() === "" ? 0 : amountToMinor(value)))
+            : undefined,
       });
       return;
     }
@@ -654,6 +667,37 @@ function Flow({
                         </span>
                       ))}
                     </div>
+                    {pendingSplitNames.length > 0 ? (
+                      activeShares !== null ? (
+                        <div className="space-y-2">
+                          <SplitSharesEditor
+                            totalMinor={amountMinor}
+                            people={["You", ...pendingSplitNames]}
+                            values={activeShares}
+                            onChange={(values) => setShares({ key: sharesKey, values })}
+                          />
+                          <Button variant="ghost" size="sm" onClick={() => setShares(null)}>
+                            Back to equal split
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setShares({
+                              key: sharesKey,
+                              values: equalShareStrings(
+                                amountMinor,
+                                pendingSplitNames.length + 1,
+                              ),
+                            })
+                          }
+                        >
+                          Adjust shares
+                        </Button>
+                      )
+                    ) : null}
                   </div>
                 ) : null}
 

@@ -130,6 +130,7 @@ export const splitPersonalExpenseAction = authedAction({
   schema: z.object({
     expenseId: z.string().min(1),
     names: z.array(z.string().trim().min(1).max(50)).min(1).max(10),
+    exactShares: z.array(z.number().int().nonnegative()).max(11).optional(),
   }),
   handler: async ({ input, ctx }) => {
     const { groupId, expenseId } = await splitPersonalExpense(ctx.user, input);
