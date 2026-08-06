@@ -26,7 +26,9 @@ export default async function SignInPage({
   return (
     <div className="w-full max-w-sm space-y-8">
       <div className="text-center">
-        <p className="font-dot text-display font-black text-volt tabular-nums">09:41</p>
+        <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-volt shadow-lg">
+          <span aria-hidden className="font-dot text-[34px] font-black text-on-volt">₹</span>
+        </div>
         <h1 className="mt-4 text-title-1">Cashflow</h1>
         <p className="mt-1 text-body text-fg-2">
           Group expenses and personal finance, settled beautifully.
